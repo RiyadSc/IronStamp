@@ -5,6 +5,8 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 const FAQ = () => {
   const faqs = [
@@ -23,62 +25,75 @@ const FAQ = () => {
     {
       question: "Is there a mobile app?",
       answer: "Yes! CertKeeper works perfectly on mobile browsers, and we have native iOS and Android apps coming Q2 2024. You can upload photos of certificates directly from your phone."
-    },
-    {
-      question: "What file formats are supported?",
-      answer: "We support all common formats including PDF, JPG, PNG, DOC, DOCX, and more. You can also take photos with your phone and our AI will automatically extract expiration dates."
-    },
-    {
-      question: "How do reminders work?",
-      answer: "You'll receive automatic notifications via email and SMS (team plans) at 90, 60, 30, and 7 days before expiration. You can customize these timing and preferences in your settings."
-    },
-    {
-      question: "Can I try before I buy?",
-      answer: "Yes! Individual use is completely free forever. Team plans include a 14-day free trial with full access to all features. No credit card required to start."
-    },
-    {
-      question: "What happens if I cancel?",
-      answer: "You can cancel anytime with no fees. Your data remains accessible for 30 days after cancellation, giving you time to export everything if needed."
     }
   ];
 
   return (
-    <section id="faq" className="py-20 bg-slate-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="faq" className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Frequently Asked Questions
           </h2>
-          <p className="text-xl text-slate-600">
+          <p className="text-xl text-gray-600">
             Everything you need to know about CertKeeper
           </p>
         </div>
 
-        <Accordion type="single" collapsible className="space-y-4">
-          {faqs.map((faq, index) => (
-            <AccordionItem 
-              key={index} 
-              value={`item-${index}`}
-              className="bg-white border border-slate-200 rounded-xl px-6"
-            >
-              <AccordionTrigger className="text-left font-semibold text-slate-900 hover:no-underline py-6">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-slate-600 pb-6">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          {/* Left Column - FAQs */}
+          <div>
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="bg-gray-50 border border-gray-200 rounded-xl px-6"
+                >
+                  <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline py-6">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-gray-600 pb-6">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+
+          {/* Right Column - Final CTA */}
+          <div className="bg-gray-50 p-8 rounded-xl border border-gray-200">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Ready to take control of your team's compliance?
+            </h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Join thousands of professionals who never miss a certification deadline. Start free today.
+            </p>
+            <div className="space-y-3">
+              <Button 
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium uppercase tracking-wide"
+              >
+                Start Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 px-6 py-3 rounded-xl font-medium uppercase tracking-wide"
+              >
+                Book a Demo
+              </Button>
+            </div>
+          </div>
+        </div>
 
         <div className="text-center mt-12">
-          <p className="text-slate-600 mb-4">Still have questions?</p>
+          <p className="text-gray-600 mb-4">Still have questions?</p>
           <div className="space-x-4">
-            <a href="mailto:support@certkeeper.com" className="text-blue-600 hover:text-blue-700 font-medium">
+            <a href="mailto:support@certkeeper.com" className="text-emerald-600 hover:text-emerald-700 font-medium">
               Email Support
             </a>
-            <span className="text-slate-300">•</span>
-            <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
+            <span className="text-gray-300">•</span>
+            <a href="#" className="text-emerald-600 hover:text-emerald-700 font-medium">
               Live Chat
             </a>
           </div>
