@@ -6,7 +6,7 @@ export default {
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
+		"./lib/**/*.{ts,tsx}",
 	],
 	prefix: "",
 	theme: {
@@ -62,6 +62,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			dropShadow: {
+				'strong': '0 0 15px rgba(0, 0, 0, 0.8)',
+				'ultra': '0 0 20px rgba(0, 0, 0, 0.9)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
