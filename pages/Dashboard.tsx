@@ -1,0 +1,214 @@
+import { useState, useEffect, useRef } from "react";
+import { Sidebar } from "@/components/Sidebar";
+import { StatCard } from "@/components/StatCard";
+import { ExpirationTable } from "@/components/ExpirationTable";
+
+import { PriorityWidget } from "@/components/PriorityWidget";
+import { QuickActionsWidget } from "@/components/QuickActionsWidget";
+import { ComplianceTrendChart } from "@/components/ComplianceTrendChart";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { getDashboardStats, getUserProfile, type DashboardStats, type UserProfile } from "@/lib/data-service";
+import { useAuth } from "@/hooks/useAuth";
+
+const Index = () => {
+  const { user, loading: authLoading } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalEmployees: 0,
+    activeCertifications: 0,
+    expiredCertifications: 0,
+    expiringSoon: 0
+  });
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    companyName: null,
+    teamSize: null,
+    businessFocus: null,
+    onboardingCompleted: false,
+    userEmail: null,
+    licenseNumber: null,
+    businessAddress: null,
+    phoneNumber: null,
+    businessEmail: null
+  });
+  const [loading, setLoading] = useState(true);
+  
+  // Track if we've loaded data and for which user to prevent unnecessary re-loads
+  const loadedUserRef = useRef<string | null>(null);
+  const hasLoadedRef = useRef(false);
+
+  useEffect(() => {
+    // Only load data if:
+    // 1. We have a user and auth is not loading
+    // 2. We haven't loaded data yet OR the user has changed
+    if (user && !authLoading) {
+      const currentUserId = user.id;
+      const shouldLoad = !hasLoadedRef.current || loadedUserRef.current !== currentUserId;
+      
+      if (shouldLoad) {
+        loadedUserRef.current = currentUserId;
+        loadDashboardData();
+      } else {
+        // User is the same and data is already loaded, just set loading to false
+        setLoading(false);
+      }
+    } else if (!authLoading && !user) {
+      // No user and auth loading is done - let AuthChecker handle this
+      setLoading(false);
+      hasLoadedRef.current = false;
+      loadedUserRef.current = null;
+    }
+  }, [user, authLoading]);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [dashboardStats, profileData] = await Promise.all([
+        getDashboardStats(),
+        getUserProfile()
+      ]);
+      setStats(dashboardStats);
+      setUserProfile(profileData);
+      hasLoadedRef.current = true; // Mark as successfully loaded
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      // Keep default values on error, but don't mark as loaded so it can retry
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Force refresh function (for manual refresh if needed)
+  const refreshDashboard = async () => {
+    hasLoadedRef.current = false;
+    await loadDashboardData();
+  };
+
+  // Generate display name and subtitle based on profile data
+  const getDisplayInfo = () => {
+    let displayName = 'Welcome back';
+    let subtitle = 'User';
+
+    if (userProfile.companyName) {
+      displayName = `Welcome, ${userProfile.companyName}`;
+      
+      // Create subtitle based on business focus and team size
+      if (userProfile.businessFocus && userProfile.teamSize) {
+        const focus = userProfile.businessFocus === 'both' ? 'Residential & Commercial' 
+                     : userProfile.businessFocus === 'residential' ? 'Residential HVAC'
+                     : userProfile.businessFocus === 'commercial' ? 'Commercial HVAC'
+                     : 'HVAC Services';
+        subtitle = `${focus} • ${userProfile.teamSize} employees`;
+      } else if (userProfile.businessFocus) {
+        const focus = userProfile.businessFocus === 'both' ? 'Residential & Commercial HVAC' 
+                     : userProfile.businessFocus === 'residential' ? 'Residential HVAC'
+                     : userProfile.businessFocus === 'commercial' ? 'Commercial HVAC'
+                     : 'HVAC Services';
+        subtitle = focus;
+      } else {
+        subtitle = 'HVAC Manager';
+      }
+    } else if (userProfile.userEmail) {
+      // Fallback to email if no company name
+      displayName = `Welcome back`;
+      subtitle = userProfile.userEmail;
+    } else if (user?.email) {
+      // Ultimate fallback to auth user email
+      displayName = `Welcome back`;
+      subtitle = user.email;
+    }
+
+    return { displayName, subtitle };
+  };
+
+  const { displayName, subtitle } = getDisplayInfo();
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex items-center justify-center">
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center animate-spin">
+          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex">
+      <Sidebar />
+      
+      <main className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="bg-white/70 backdrop-blur-xl border-b border-gray-200/50 px-6 py-5 sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">
+                Dashboard
+              </h1>
+              <p className="text-gray-600 mt-1 text-sm font-medium">Overview of your team's certification status</p>
+            </div>
+            <div className="text-right bg-gradient-to-br from-white to-gray-50 p-3 rounded-xl shadow-sm border border-gray-100">
+              <p className="text-xs text-gray-600 font-medium">
+                {loading ? 'Loading...' : displayName}
+              </p>
+              <p className="text-xs text-gray-500 font-medium">
+                {loading ? '...' : subtitle}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-6">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              title="Expired Certifications"
+              value={stats.expiredCertifications}
+              status="danger"
+              subtitle="Requires immediate action"
+            />
+            <StatCard
+              title="Expiring Soon"
+              value={stats.expiringSoon}
+              status="warning"
+              subtitle="Next 30 days"
+            />
+            <StatCard
+              title="Active Certifications"
+              value={stats.activeCertifications}
+              status="success"
+              subtitle="Up to date"
+            />
+            <StatCard
+              title="Employees Tracked"
+              value={stats.totalEmployees}
+              status="neutral"
+              subtitle="Total team members"
+            />
+          </div>
+
+          {/* Priority Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2">
+              <PriorityWidget />
+            </div>
+            <div>
+              <QuickActionsWidget />
+            </div>
+          </div>
+          
+          {/* Analytics and Notifications */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <ComplianceTrendChart />
+            <NotificationCenter />
+          </div>
+          
+          {/* Main Content */}
+          <div className="space-y-6">
+            <ExpirationTable />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Index;

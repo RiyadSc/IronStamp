@@ -59,6 +59,42 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Authentication & Database)
+
+## Authentication & Data Persistence
+
+This application implements **production-ready authentication** with the following features:
+
+### ✅ **Persistent User Sessions**
+- **Automatic session refresh** prevents data loss
+- **Cross-tab synchronization** maintains login state
+- **Secure PKCE flow** for enhanced security
+
+### ✅ **User Data Isolation**
+- **Row Level Security (RLS)** ensures users only see their own data
+- **User-scoped queries** protect certification data
+- **Automatic user association** for all created records
+
+### ✅ **Session Recovery**
+- **AuthChecker component** detects and recovers lost sessions
+- **Manual refresh** and re-authentication options
+- **Graceful error handling** with user-friendly messages
+
+### ✅ **Development Tools**
+- **Debug button** (dev mode only) for troubleshooting auth issues
+- **Session health monitoring** to verify data access
+- **Comprehensive logging** for development debugging
+
+### 🔧 **Troubleshooting Authentication**
+
+If you encounter "data not found" or "session expired" issues:
+
+1. **Refresh the page** - Forces session validation
+2. **Use the Debug button** (in development) to check session health
+3. **Clear browser cache** if data appears stale
+4. **Check console logs** for detailed authentication status
+
+This ensures your certification data **persists permanently** for each user account and works reliably in production environments.
 
 ## How can I deploy this project?
 

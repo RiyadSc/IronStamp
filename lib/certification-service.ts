@@ -69,8 +69,32 @@ export async function uploadCertification(file: File): Promise<UploadResult> {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Upload failed');
+      let errorMessage = 'Upload failed';
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || 'Upload failed';
+      } catch (jsonError) {
+        // If response isn't valid JSON, provide a meaningful error based on status code
+        switch (response.status) {
+          case 413:
+            errorMessage = 'File is too large. Please compress your document or try a smaller file.';
+            break;
+          case 415:
+            errorMessage = 'Unsupported file format. Please upload a PDF, DOC, or DOCX file.';
+            break;
+          case 422:
+            errorMessage = 'Unable to extract certification data from this file. Please ensure it contains clear certification information.';
+            break;
+          case 500:
+            errorMessage = 'Server error occurred while processing your file. Please try again.';
+            break;
+          default:
+            errorMessage = `Upload failed with status ${response.status}. Please try again.`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const result = await response.json();
