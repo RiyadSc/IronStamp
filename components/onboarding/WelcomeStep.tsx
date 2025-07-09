@@ -114,7 +114,7 @@ export function WelcomeStep({ onComplete, onSkip, initialData }: WelcomeStepProp
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to CertKeeper!</h1>
               <p className="text-gray-600 leading-relaxed">
-                Let's get your HVAC team's certifications<br />
+                Let&apos;s get your HVAC team&apos;s certifications<br />
                 organized in under 3 minutes.
               </p>
             </div>

@@ -398,7 +398,7 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                               Drag and drop your certificate here, or click to browse
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
-                              We'll extract employee details automatically using AI
+                              We&apos;ll extract employee details automatically using AI
                             </p>
                           </>
                         )}

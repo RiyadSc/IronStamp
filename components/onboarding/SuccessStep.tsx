@@ -32,71 +32,71 @@ export function SuccessStep({ onComplete }: SuccessStepProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const loadOnboardingSummary = async () => {
+      try {
+        if (!user) return
+
+        // Get onboarding data from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('upload_method')
+          .eq('id', user.id)
+          .single()
+
+        // Get employee count
+        const { count: employeeCount } = await supabase
+          .from('employees')
+          .select('*', { count: 'exact' })
+          .eq('user_id', user.id)
+
+        // Get certification count
+        const { count: certCount } = await supabase
+          .from('certifications')
+          .select('*', { count: 'exact' })
+          .eq('user_id', user.id)
+
+        // Get expiring soon count (next 30 days)
+        const thirtyDaysFromNow = new Date()
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+        
+        const { count: expiringSoonCount } = await supabase
+          .from('certifications')
+          .select('*', { count: 'exact' })
+          .eq('user_id', user.id)
+          .lte('expiration_date', thirtyDaysFromNow.toISOString().split('T')[0])
+          .gte('expiration_date', new Date().toISOString().split('T')[0])
+
+        // Check if notifications are enabled
+        const { data: notificationSettings } = await supabase
+          .from('notification_settings')
+          .select('email_alerts')
+          .eq('user_id', user.id)
+          .single()
+
+        setSummary({
+          employeesImported: employeeCount || 0,
+          certificationsImported: certCount || 0,
+          expiringSoon: expiringSoonCount || 0,
+          notificationsEnabled: notificationSettings?.email_alerts || false,
+          uploadMethod: profile?.upload_method || ''
+        })
+      } catch (error) {
+        console.error('Error loading onboarding summary:', error)
+        // Set some default values for demo
+        setSummary({
+          employeesImported: 47,
+          certificationsImported: 156,
+          expiringSoon: 12,
+          notificationsEnabled: true,
+          uploadMethod: 'bulk'
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
     loadOnboardingSummary()
   }, [user])
-
-  const loadOnboardingSummary = async () => {
-    try {
-      if (!user) return
-
-      // Get onboarding data from profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('upload_method')
-        .eq('id', user.id)
-        .single()
-
-      // Get employee count
-      const { count: employeeCount } = await supabase
-        .from('employees')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-
-      // Get certification count
-      const { count: certCount } = await supabase
-        .from('certifications')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-
-      // Get expiring soon count (next 30 days)
-      const thirtyDaysFromNow = new Date()
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
-      
-      const { count: expiringSoonCount } = await supabase
-        .from('certifications')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .lte('expiration_date', thirtyDaysFromNow.toISOString().split('T')[0])
-        .gte('expiration_date', new Date().toISOString().split('T')[0])
-
-      // Check if notifications are enabled
-      const { data: notificationSettings } = await supabase
-        .from('notification_settings')
-        .select('email_alerts')
-        .eq('user_id', user.id)
-        .single()
-
-      setSummary({
-        employeesImported: employeeCount || 0,
-        certificationsImported: certCount || 0,
-        expiringSoon: expiringSoonCount || 0,
-        notificationsEnabled: notificationSettings?.email_alerts || false,
-        uploadMethod: profile?.upload_method || ''
-      })
-    } catch (error) {
-      console.error('Error loading onboarding summary:', error)
-      // Set some default values for demo
-      setSummary({
-        employeesImported: 47,
-        certificationsImported: 156,
-        expiringSoon: 12,
-        notificationsEnabled: true,
-        uploadMethod: 'bulk'
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleViewDashboard = async () => {
     try {

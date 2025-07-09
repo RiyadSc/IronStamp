@@ -85,9 +85,9 @@ export function FreshStartStep({ onComplete, onBack, onSkip }: FreshStartStepPro
                 <span className="text-blue-600 text-lg">👀</span>
               </div>
               <div>
-                <CardTitle className="text-xl">Let's see what your dashboard will look like</CardTitle>
+                <CardTitle className="text-xl">Let&apos;s see what your dashboard will look like</CardTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  We've added sample HVAC certifications to give you a preview
+                                      We&apos;ve added sample HVAC certifications to give you a preview
                 </p>
               </div>
             </div>

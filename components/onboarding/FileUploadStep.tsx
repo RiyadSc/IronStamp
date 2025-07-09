@@ -185,7 +185,7 @@ export function FileUploadStep({ onComplete, onBack, onSkip }: FileUploadStepPro
               {/* Tip */}
               <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-blue-600">
                 <span>💡</span>
-                <span>Tip: We'll automatically detect your columns</span>
+                <span>Tip: We&apos;ll automatically detect your columns</span>
               </div>
             </div>
 
