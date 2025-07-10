@@ -2,8 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/Dashboard": "pages/Dashboard.js",
-  "/Team": "pages/Team.js",
-  "/settings": "pages/settings.js",
-  "/Certifications": "pages/Certifications.js"
+  "/auth/callback": "pages/auth/callback.js",
+  "/onboarding": "pages/onboarding.js",
+  "/auth/signin": "pages/auth/signin.js"
 }

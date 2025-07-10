@@ -207,7 +207,7 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-2xl lg:max-w-4xl">
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="pb-4">
             <div className="flex items-center space-x-3">
@@ -215,17 +215,17 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                 <span className="text-blue-600 text-lg">📝</span>
               </div>
               <div>
-                <CardTitle className="text-xl">Add Your First Certification</CardTitle>
-                <p className="text-sm text-gray-600 mt-1">
+                <CardTitle className="text-lg sm:text-xl">Add Your First Certification</CardTitle>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   Enter details manually or upload a PDF for automatic extraction
                 </p>
               </div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-8">
             {/* Progress Bar */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Progress</span>
                 <span className="text-sm text-gray-500">3/4</span>
@@ -240,7 +240,7 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
             </div>
 
             {/* Upload Mode Toggle */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
                 <Button
                   variant={uploadMode === 'manual' ? 'default' : 'ghost'}
@@ -266,11 +266,11 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
               <div className="space-y-6">
                 {/* Employee Information */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <User className="h-5 w-5 mr-2 text-blue-600" />
                     Employee Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="employeeName">Employee Name *</Label>
                       <Input
@@ -305,12 +305,12 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
 
                 {/* Certification Information */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Award className="h-5 w-5 mr-2 text-blue-600" />
                     Certification Details
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-3">
                       <Label htmlFor="certificationName">Certification Name *</Label>
                       <Input
                         id="certificationName"
@@ -375,11 +375,11 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
 
                 {/* Upload Area */}
                 <Card className="border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors">
-                  <CardContent className="p-8">
+                  <CardContent className="p-6 sm:p-8">
                     <div
                       {...getRootProps()}
                       className={cn(
-                        "flex flex-col items-center justify-center space-y-4 cursor-pointer min-h-[200px]",
+                        "flex flex-col items-center justify-center space-y-4 cursor-pointer min-h-[150px] sm:min-h-[200px]",
                         isDragActive && "bg-blue-50",
                         (uploadState.status === 'uploading' || uploadState.status === 'processing') && "cursor-not-allowed opacity-50"
                       )}
@@ -389,16 +389,16 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                       {getStatusIcon()}
                       
                       <div className="text-center">
-                        <p className="text-lg font-medium text-gray-900">
+                        <p className="text-base sm:text-lg font-medium text-gray-900">
                           {getStatusText()}
                         </p>
                         {uploadState.status === 'idle' && (
                           <>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1">
                               Drag and drop your certificate here, or click to browse
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
-                              We&apos;ll extract employee details automatically using AI
+                              We'll automatically extract certification details
                             </p>
                           </>
                         )}
@@ -407,33 +407,24 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                       {/* Progress Bar */}
                       {(uploadState.status === 'uploading' || uploadState.status === 'processing') && (
                         <div className="w-full max-w-xs">
-                          <Progress value={uploadState.progress} className="w-full" />
+                          <Progress value={uploadState.progress} className="h-2" />
                           <p className="text-xs text-gray-500 mt-1 text-center">
                             {uploadState.progress}% complete
                           </p>
                         </div>
                       )}
 
-                      {/* Success Data */}
+                      {/* Success Display */}
                       {uploadState.status === 'success' && uploadState.extractedData && (
-                        <div className="w-full bg-green-50 rounded-lg p-4 space-y-2">
-                          <h4 className="font-semibold text-green-800 flex items-center">
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Information Extracted:
-                          </h4>
-                          <div className="text-sm space-y-1">
+                        <div className="w-full bg-green-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-green-800 mb-2">✅ Information Extracted</h4>
+                          <div className="space-y-1 text-sm text-green-700">
                             <p><strong>Employee:</strong> {uploadState.extractedData.employeeName}</p>
                             <p><strong>Certification:</strong> {uploadState.extractedData.certificationName}</p>
                             <p><strong>Expires:</strong> {uploadState.extractedData.expirationDate}</p>
-                            <p><strong>Confidence:</strong> 
-                              <Badge 
-                                variant={uploadState.extractedData.confidence > 0.8 ? "default" : "secondary"}
-                                className="ml-2"
-                              >
-                                {Math.round(uploadState.extractedData.confidence * 100)}%
-                              </Badge>
-                            </p>
+                            <p><strong>Confidence:</strong> {Math.round(uploadState.extractedData.confidence * 100)}%</p>
                           </div>
+                          
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -485,7 +476,7 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-8">
+            <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <Button
                 type="button"
                 variant="outline"
@@ -501,18 +492,17 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                 onClick={onSkip}
                 className="h-12 px-6 text-gray-500 hover:text-gray-600"
               >
-                Skip for now
+                Skip for Now
               </Button>
 
               <div className="flex-1" />
 
               <Button
-                type="button"
                 onClick={handleSubmit}
-                disabled={!formData.employeeName || !formData.employeeEmail || !formData.certificationName || !formData.expirationDate}
-                className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={uploadMode === 'manual' && (!formData.employeeName || !formData.employeeEmail || !formData.certificationName || !formData.expirationDate)}
+                className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
               >
-                Add Certification →
+                {uploadMode === 'manual' ? 'Add Certification →' : 'Continue Setup →'}
               </Button>
             </div>
           </CardContent>

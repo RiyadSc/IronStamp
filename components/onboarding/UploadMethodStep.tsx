@@ -80,16 +80,16 @@ export function UploadMethodStep({ onComplete, onBack, onSkip, teamSize, initial
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-8">
             {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
                 How do you currently track certifications?
               </h1>
             </div>
 
             {/* Progress Bar */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Progress</span>
                 <span className="text-sm text-gray-500">2/4</span>
@@ -104,13 +104,13 @@ export function UploadMethodStep({ onComplete, onBack, onSkip, teamSize, initial
             </div>
 
             {/* Options */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
               {recommendedOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
                   onClick={() => handleMethodSelect(option.id)}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 relative ${
+                  className={`w-full p-3 sm:p-4 rounded-xl border-2 text-left transition-all duration-200 relative ${
                     selectedMethod === option.id
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -123,22 +123,22 @@ export function UploadMethodStep({ onComplete, onBack, onSkip, teamSize, initial
                     </div>
                   )}
                   
-                  <div className="flex items-start space-x-4">
-                    <div className="text-2xl flex-shrink-0 mt-1">
+                  <div className="flex items-start space-x-3 sm:space-x-4">
+                    <div className="text-xl sm:text-2xl flex-shrink-0 mt-1">
                       {option.icon}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
                           {option.title}
                         </h3>
                         {option.subtitle && (
-                          <span className="text-sm text-blue-600 font-medium">
+                          <span className="text-xs sm:text-sm text-blue-600 font-medium">
                             - {option.subtitle}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                         {option.description}
                       </p>
                     </div>
@@ -157,7 +157,7 @@ export function UploadMethodStep({ onComplete, onBack, onSkip, teamSize, initial
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 type="button"
                 variant="outline"
