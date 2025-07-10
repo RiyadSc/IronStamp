@@ -115,19 +115,24 @@ export const PriorityWidget: React.FC = () => {
   };
 
   const PriorityItemCard: React.FC<{ item: PriorityItem }> = ({ item }) => (
-    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50/50 to-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-200">
-      <div className="flex items-center space-x-3">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50/50 to-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-200 space-y-3 sm:space-y-0">
+      <div className="flex items-center space-x-3 min-w-0 flex-1">
         {getTypeIcon(item.type)}
-        <div>
-          <p className="font-semibold text-gray-900">{item.employee}</p>
-          <p className="text-sm text-gray-600">{item.certification}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900 truncate">{item.employee}</p>
+          <p className="text-sm text-gray-600 truncate">{item.certification}</p>
           <p className="text-xs text-gray-500">{getTypeText(item)}</p>
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
         {getPriorityBadge(item.priority)}
-        <Button variant="outline" size="sm" onClick={() => handleNotifyClick(item)}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => handleNotifyClick(item)}
+          className="text-xs px-3 py-1 h-7"
+        >
           Notify
         </Button>
       </div>
@@ -136,18 +141,18 @@ export const PriorityWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <Card className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0">
-        <CardHeader className="pb-4">
+      <Card className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border-0">
+        <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6 py-3 sm:py-6">
           <div className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            <CardTitle className="text-lg font-bold tracking-tight">
+            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+            <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
               Priority Actions Required
             </CardTitle>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <div className="flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         </CardContent>
       </Card>
@@ -159,51 +164,51 @@ export const PriorityWidget: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
+      <Card className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border-0">
+        <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6 py-3 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              <CardTitle className="text-lg font-bold tracking-tight">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 flex-shrink-0" />
+              <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
                 Priority Actions Required
               </CardTitle>
             </div>
-            <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+            <Badge className="bg-red-100 text-red-800 hover:bg-red-100 text-xs self-start sm:self-center">
               {priorityItems.length} items
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           {priorityItems.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {displayedItems.map((item) => (
                 <PriorityItemCard key={item.id} item={item} />
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <AlertTriangle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">No priority actions required</p>
-              <p className="text-sm text-gray-400 mt-1">All certifications are up to date!</p>
+              <AlertTriangle className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium text-sm sm:text-base">No priority actions required</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">All certifications are up to date!</p>
             </div>
           )}
           
           {priorityItems.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
               <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
                 <DialogTrigger asChild>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full text-xs sm:text-sm" variant="outline">
                     View All Priority Items {hasMoreItems && `(${priorityItems.length})`}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl max-h-[85vh]">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold tracking-tight flex items-center">
-                      <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
+                    <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight flex items-center">
+                      <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 mr-2" />
                       All Priority Actions Required ({priorityItems.length} items)
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="overflow-y-auto max-h-[65vh] space-y-3 pr-2">
+                  <div className="overflow-y-auto max-h-[65vh] space-y-2 sm:space-y-3 pr-2">
                     {priorityItems.map((item) => (
                       <PriorityItemCard key={item.id} item={item} />
                     ))}

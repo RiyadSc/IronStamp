@@ -13,15 +13,20 @@
   "rootMainFiles": [],
   "rootMainFilesTree": {},
   "pages": {
-    "/": [
+    "/Certifications": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/index.js"
+      "static/chunks/pages/Certifications.js"
     ],
-    "/404": [
+    "/Dashboard": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/404.js"
+      "static/chunks/pages/Dashboard.js"
+    ],
+    "/Team": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/Team.js"
     ],
     "/_app": [
       "static/chunks/webpack.js",

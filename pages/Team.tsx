@@ -1,4 +1,4 @@
-import { Search, Plus, Mail, Phone, Filter, MoreHorizontal, Edit, Eye, Archive, Trash2 } from "@/lib/icons";
+import { Search, Plus, Mail, Phone, Filter, MoreHorizontal, Edit, Eye, Archive, Trash2, LogOut, User, ChevronDown } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +21,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getTeamMembersWithCerts, type TeamMember, getEmployeeCertificationSummary, type CertificationDetails, type EmployeeCertificationSummary, deleteTeamMember, archiveTeamMember, restoreTeamMember } from "@/lib/data-service";
+import { getTeamMembersWithCerts, type TeamMember, getEmployeeCertificationSummary, type CertificationDetails, type EmployeeCertificationSummary, deleteTeamMember, archiveTeamMember, restoreTeamMember, getUserProfile, type UserProfile } from "@/lib/data-service";
 import { useAuth } from "@/hooks/useAuth";
 
 // Use TeamMember interface from data-service.ts
@@ -42,6 +43,17 @@ const getInitials = (name: string) => {
 const Team = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    companyName: null,
+    teamSize: null,
+    businessFocus: null,
+    onboardingCompleted: false,
+    userEmail: null,
+    licenseNumber: null,
+    businessAddress: null,
+    phoneNumber: null,
+    businessEmail: null
+  });
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,8 +83,12 @@ const Team = () => {
   const fetchTeamMembers = async () => {
     try {
       setLoading(true);
-      const data = await getTeamMembersWithCerts();
-      setTeamMembers(data);
+      const [teamData, profileData] = await Promise.all([
+        getTeamMembersWithCerts(),
+        getUserProfile()
+      ]);
+      setTeamMembers(teamData);
+      setUserProfile(profileData);
       hasLoadedRef.current = true; // Mark as successfully loaded
     } catch (error: any) {
       console.error('Error fetching team members:', error);
@@ -116,6 +132,50 @@ const Team = () => {
     hasLoadedRef.current = false;
     await fetchTeamMembers();
   };
+
+  // Handle logout
+  const handleLogout = () => {
+    window.location.href = '/';
+  };
+
+  // Generate display name and subtitle based on profile data
+  const getDisplayInfo = () => {
+    let displayName = 'Team Management';
+    let subtitle = 'User';
+
+    if (userProfile.companyName) {
+      displayName = userProfile.companyName;
+      
+      // Create subtitle based on business focus and team size
+      if (userProfile.businessFocus && userProfile.teamSize) {
+        const focus = userProfile.businessFocus === 'both' ? 'Residential & Commercial' 
+                     : userProfile.businessFocus === 'residential' ? 'Residential HVAC'
+                     : userProfile.businessFocus === 'commercial' ? 'Commercial HVAC'
+                     : 'HVAC Services';
+        subtitle = `${focus} • ${userProfile.teamSize} employees`;
+      } else if (userProfile.businessFocus) {
+        const focus = userProfile.businessFocus === 'both' ? 'Residential & Commercial HVAC' 
+                     : userProfile.businessFocus === 'residential' ? 'Residential HVAC'
+                     : userProfile.businessFocus === 'commercial' ? 'Commercial HVAC'
+                     : 'HVAC Services';
+        subtitle = focus;
+      } else {
+        subtitle = 'HVAC Manager';
+      }
+    } else if (userProfile.userEmail) {
+      // Fallback to email if no company name
+      displayName = 'Team Management';
+      subtitle = userProfile.userEmail;
+    } else if (user?.email) {
+      // Ultimate fallback to auth user email
+      displayName = 'Team Management';
+      subtitle = user.email;
+    }
+
+    return { displayName, subtitle };
+  };
+
+  const { displayName, subtitle } = getDisplayInfo();
 
   // Fetch certs when modal opens
   useEffect(() => {
@@ -280,35 +340,75 @@ const Team = () => {
       <Sidebar />
       
       <main className="flex-1 overflow-auto">
-        {/* Header */}
+        {/* Header with User Profile Dropdown */}
         <div className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-4 sm:px-6 py-6 sticky top-0 z-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Team Members</h1>
-              <p className="text-gray-600 mt-1 text-base sm:text-lg">Manage your HVAC team and their certifications</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Team Members</h1>
+                <p className="text-gray-600 mt-1 text-base sm:text-lg">Manage your HVAC team and their certifications</p>
+              </div>
+              
+              {/* User Profile Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="flex-shrink-0 bg-gradient-to-br from-white to-gray-50 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 h-auto self-start"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className="text-left">
+                        <p className="text-xs text-gray-600 font-medium truncate max-w-40">
+                          {loading ? 'Loading...' : displayName}
+                        </p>
+                        <p className="text-xs text-gray-500 font-medium truncate max-w-40">
+                          {loading ? '...' : subtitle}
+                        </p>
+                      </div>
+                      <ChevronDown className="h-3 w-3 text-gray-500 ml-1" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem disabled className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{userProfile.companyName || 'User'}</span>
+                      <span className="text-xs text-gray-500">{user?.email}</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50">
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowArchived(!showArchived)}
-                className="ios-button border-gray-200 hover:bg-gray-50 min-h-[44px]"
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                {showArchived ? 'Show Active' : 'Show Archived'}
-              </Button>
-              <Button variant="outline" className="ios-button border-gray-200 hover:bg-gray-50 min-h-[44px] hidden sm:flex">
-                <Mail className="w-4 h-4 mr-2" />
-                Send Reminder
-              </Button>
-              <Button 
-                onClick={handleAddTeamMember}
-                className="ios-button bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md min-h-[44px]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Add Team Member</span>
-                <span className="sm:hidden">Add</span>
-              </Button>
-            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-3 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowArchived(!showArchived)}
+              className="ios-button border-gray-200 hover:bg-gray-50 min-h-[44px]"
+            >
+              <Archive className="w-4 h-4 mr-2" />
+              {showArchived ? 'Show Active' : 'Show Archived'}
+            </Button>
+            <Button variant="outline" className="ios-button border-gray-200 hover:bg-gray-50 min-h-[44px] hidden sm:flex">
+              <Mail className="w-4 h-4 mr-2" />
+              Send Reminder
+            </Button>
+            <Button 
+              onClick={handleAddTeamMember}
+              className="ios-button bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md min-h-[44px]"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Add Team Member</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
           </div>
         </div>
 
@@ -318,41 +418,31 @@ const Team = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <Card className="ios-card hover:shadow-md transition-all duration-200">
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-semibold text-gray-600 mb-2">
-                      {showArchived ? 'Archived' : 'Active'} Members
-                    </p>
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                      {teamMembers.filter(member => showArchived ? member.status === 'Archived' : member.status !== 'Archived').length}
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm sm:text-lg">
-                      {teamMembers.filter(member => showArchived ? member.status === 'Archived' : member.status !== 'Archived').length}
-                    </span>
-                  </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-600 mb-2">
+                    {showArchived ? 'Archived' : 'Active'} Members
+                  </p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                    {teamMembers.filter(member => showArchived ? member.status === 'Archived' : member.status !== 'Archived').length}
+                  </p>
                 </div>
               </CardContent>
             </Card>
             
             <Card>
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">Total Certs</p>
-                    <p className="text-xl sm:text-2xl font-bold text-green-600">
-                      {teamMembers.filter(member => showArchived ? member.status === 'Archived' : member.status !== 'Archived').reduce((sum, member) => sum + member.certificationsCount, 0)}
-                    </p>
-                  </div>
-                  <div className="h-2 w-2 bg-green-500 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Certs</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
+                    {teamMembers.filter(member => showArchived ? member.status === 'Archived' : member.status !== 'Archived').reduce((sum, member) => sum + member.certificationsCount, 0)}
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs sm:text-sm font-medium text-gray-600">Newest Member</p>
                     <p className="text-xl sm:text-2xl font-bold text-blue-600 truncate">
@@ -362,14 +452,14 @@ const Team = () => {
                       })()}
                     </p>
                   </div>
-                  <div className="text-xs text-gray-500">recently added</div>
+                  <div className="text-xs text-gray-500 mt-0.5">recently added</div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs sm:text-sm font-medium text-gray-600">This Month</p>
                     <p className="text-xl sm:text-2xl font-bold text-orange-600">
@@ -382,7 +472,7 @@ const Team = () => {
                       }).length}
                     </p>
                   </div>
-                  <div className="text-xs text-gray-500">new additions</div>
+                  <div className="text-xs text-gray-500 mt-0.5">new additions</div>
                 </div>
               </CardContent>
             </Card>

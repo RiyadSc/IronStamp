@@ -109,52 +109,55 @@ export const ExpirationTable: React.FC = () => {
   const hasMoreCertifications = allExpirationData.length > 6;
 
   const CertificationItem = ({ item }: { item: ExpirationItem }) => (
-            <div
-              key={item.id}
-              className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-50/50 to-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-200"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">{item.employee}</p>
-                  <p className="text-sm text-gray-600">{item.certification}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {formatDateToAmerican(item.expirationDate)}
-                  </div>
-                  <p className="text-xs text-gray-500">{getDaysLeftText(item.daysLeft)}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {getStatusBadge(item.status, item.daysLeft)}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleNotifyClick(item)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  >
-                    <Bell className="w-3 h-3 mr-1" />
-                    Notify
-                  </Button>
-                </div>
-              </div>
-            </div>
+    <div
+      key={item.id}
+      className="group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50/50 to-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-200 space-y-3 sm:space-y-0"
+    >
+      <div className="flex items-center space-x-3 min-w-0 flex-1">
+        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900 truncate">{item.employee}</p>
+          <p className="text-sm text-gray-600 truncate">{item.certification}</p>
+        </div>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="flex items-center justify-between sm:justify-end sm:text-right">
+          <div className="flex items-center text-sm text-gray-600">
+            <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+            <span className="text-xs sm:text-sm">{formatDateToAmerican(item.expirationDate)}</span>
+          </div>
+          <p className="text-xs text-gray-500 sm:hidden">{getDaysLeftText(item.daysLeft)}</p>
+        </div>
+        <div className="hidden sm:block text-right">
+          <p className="text-xs text-gray-500">{getDaysLeftText(item.daysLeft)}</p>
+        </div>
+        <div className="flex items-center justify-between sm:justify-end space-x-2">
+          {getStatusBadge(item.status, item.daysLeft)}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleNotifyClick(item)}
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 text-xs px-2 py-1 h-7"
+          >
+            <Bell className="w-3 h-3 mr-1" />
+            Notify
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 
   return (
     <>
-      <Card className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
+      <Card className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border-0">
+        <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6 py-3 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              <CardTitle className="text-lg font-bold tracking-tight">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
+              <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
                 Expiring Certifications
                 {allExpirationData.length > 0 && (
                   <span className="text-sm font-normal text-gray-600 ml-2">
@@ -168,48 +171,49 @@ export const ExpirationTable: React.FC = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowAllModal(true)}
+                className="text-xs sm:text-sm"
               >
                 View All ({allExpirationData.length})
               </Button>
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="ml-2 text-gray-600">Loading certifications...</span>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="ml-2 text-gray-600 text-sm">Loading certifications...</span>
             </div>
           ) : allExpirationData.length === 0 ? (
             <div className="text-center py-8">
-              <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600 font-medium">No expiring certifications found</p>
-              <p className="text-sm text-gray-500">All certifications are up to date!</p>
+              <AlertTriangle className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-600 font-medium text-sm sm:text-base">No expiring certifications found</p>
+              <p className="text-xs sm:text-sm text-gray-500">All certifications are up to date!</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {displayedCertifications.map((item) => (
                 <CertificationItem key={item.id} item={item} />
-          ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* All Expiring Certifications Modal */}
       <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="text-xl font-bold flex items-center">
-              <AlertTriangle className="h-6 w-6 mr-2 text-orange-500" />
+            <DialogTitle className="text-lg sm:text-xl font-bold flex items-center">
+              <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-orange-500" />
               All Expiring Certifications ({allExpirationData.length})
             </DialogTitle>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Sorted by closest to expire first, then expired certifications
             </p>
           </DialogHeader>
           <div className="flex-1 overflow-auto pr-2">
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {allExpirationData.map((item) => (
                 <CertificationItem key={`modal-${item.id}`} item={item} />
               ))}

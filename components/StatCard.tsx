@@ -43,17 +43,19 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, status, subtit
   const IconComponent = config.icon;
 
   return (
-    <Card className={`${config.bg} rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-0`}>
-      <CardContent className="p-4">
+    <Card className={`${config.bg} rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-0`}>
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-gray-600 mb-1">{title}</p>
-            <p className={`text-2xl font-bold tracking-tight ${config.text}`}>{value}</p>
+          <div className="min-w-0 flex-1 pr-2">
+            <p className="text-xs font-semibold text-gray-600 mb-1 truncate">{title}</p>
+            <p className={`text-xl sm:text-2xl font-bold tracking-tight ${config.text}`}>{value}</p>
             {subtitle && (
-              <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+              <p className="text-xs text-gray-500 mt-1 leading-tight">{subtitle}</p>
             )}
           </div>
-          <IconComponent className={`h-10 w-10 ${config.text.replace('text-', 'text-').replace('-600', '-500')}`} />
+          <div className="flex-shrink-0">
+            <IconComponent className={`h-8 w-8 sm:h-10 sm:w-10 ${config.text.replace('text-', 'text-').replace('-600', '-500')}`} />
+          </div>
         </div>
       </CardContent>
     </Card>
