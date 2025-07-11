@@ -461,11 +461,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const chromium = (await import('@sparticuz/chromium')).default;
         console.log('✅ Chromium imported successfully');
         
+        // Configure chromium for serverless environment
+        await chromium.font('https://raw.githack.com/googlei18n/noto-emoji/master/fonts/NotoColorEmoji.ttf');
+        
         const executablePath = await chromium.executablePath();
         console.log('📍 Chromium executable path:', executablePath);
         
         browser = await puppeteerCore.launch({
-          args: [...chromium.args, '--disable-gpu', '--no-first-run', '--no-zygote', '--single-process'],
+          args: [
+            ...chromium.args,
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-setuid-sandbox',
+            '--no-first-run',
+            '--no-sandbox',
+            '--no-zygote',
+            '--single-process',
+            '--disable-extensions'
+          ],
+          defaultViewport: { width: 1920, height: 1080 },
           executablePath,
           headless: true,
         });
