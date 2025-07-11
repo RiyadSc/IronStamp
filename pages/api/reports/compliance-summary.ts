@@ -575,8 +575,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const htmlContent = generateSimpleCompliancePDFHTML(companyName, stats, priorityActions, employeeSummaries);
 
     // Environment-specific Puppeteer configuration
+    console.log('🔍 Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      platform: process.platform
+    });
+
     if (process.env.NODE_ENV === 'development') {
       // Local development: use regular puppeteer
+      console.log('📝 Using local puppeteer for development');
       const puppeteer = (await import('puppeteer')).default;
       browser = await puppeteer.launch({
         headless: true,
@@ -584,13 +591,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       // Production: use serverless-optimized chromium
-      const puppeteerCore = (await import('puppeteer-core')).default;
-      const chromium = (await import('@sparticuz/chromium')).default;
-      browser = await puppeteerCore.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath(),
-        headless: true,
-      });
+      console.log('🚀 Using serverless chromium for production');
+      try {
+        const puppeteerCore = (await import('puppeteer-core')).default;
+        console.log('✅ Puppeteer-core imported successfully');
+        
+        const chromium = (await import('@sparticuz/chromium')).default;
+        console.log('✅ Chromium imported successfully');
+        
+        const executablePath = await chromium.executablePath();
+        console.log('📍 Chromium executable path:', executablePath);
+        
+        browser = await puppeteerCore.launch({
+          args: [...chromium.args, '--disable-gpu', '--no-first-run', '--no-zygote', '--single-process'],
+          executablePath,
+          headless: true,
+        });
+        console.log('✅ Browser launched successfully');
+      } catch (importError: any) {
+        console.error('❌ Import or launch error:', importError);
+        throw new Error(`Browser setup failed: ${importError?.message || 'Unknown error'}`);
+      }
     }
     
     const page = await browser.newPage();
