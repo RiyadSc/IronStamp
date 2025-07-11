@@ -4,6 +4,8 @@ const nextConfig = {
   images: {
     domains: ['images.unsplash.com'],
   },
+  // Required for serverless chromium support in Vercel
+  serverExternalPackages: ['puppeteer-core', '@sparticuz/chromium'],
 }
 
 module.exports = nextConfig 

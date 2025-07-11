@@ -590,7 +590,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
     } else {
-      // Production: use serverless-optimized chromium
+      // Production: use serverless-optimized chromium with remote executable
       console.log('🚀 Using serverless chromium for production');
       try {
         const puppeteerCore = (await import('puppeteer-core')).default;
@@ -599,10 +599,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const chromium = (await import('@sparticuz/chromium')).default;
         console.log('✅ Chromium imported successfully');
         
-        // Configure chromium for serverless environment
-        await chromium.font('https://raw.githack.com/googlei18n/noto-emoji/master/fonts/NotoColorEmoji.ttf');
+        // Use remote chromium executable for Vercel serverless
+        const remoteChromiumUrl = 'https://github.com/Sparticuz/chromium/releases/download/v121.0.0/chromium-v121.0.0-pack.tar';
+        console.log('🔗 Using remote chromium executable');
         
-        const executablePath = await chromium.executablePath();
+        const executablePath = await chromium.executablePath(remoteChromiumUrl);
         console.log('📍 Chromium executable path:', executablePath);
         
         browser = await puppeteerCore.launch({
