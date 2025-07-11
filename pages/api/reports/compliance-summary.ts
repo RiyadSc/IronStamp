@@ -575,15 +575,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const htmlContent = generateSimpleCompliancePDFHTML(companyName, stats, priorityActions, employeeSummaries);
 
     // Environment-specific Puppeteer configuration
-    console.log('🔍 Environment check:', {
-      NODE_ENV: process.env.NODE_ENV,
-      VERCEL: process.env.VERCEL,
-      platform: process.platform
-    });
-
     if (process.env.NODE_ENV === 'development') {
       // Local development: use regular puppeteer
-      console.log('📝 Using local puppeteer for development');
       const puppeteer = (await import('puppeteer')).default;
       browser = await puppeteer.launch({
         headless: true,
@@ -591,42 +584,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       // Production: use serverless-optimized chromium with remote executable
-      console.log('🚀 Using serverless chromium for production');
-      try {
-        const puppeteerCore = (await import('puppeteer-core')).default;
-        console.log('✅ Puppeteer-core imported successfully');
-        
-        const chromium = (await import('@sparticuz/chromium')).default;
-        console.log('✅ Chromium imported successfully');
-        
-        // Use remote chromium executable for Vercel serverless
-        const remoteChromiumUrl = 'https://github.com/Sparticuz/chromium/releases/download/v121.0.0/chromium-v121.0.0-pack.tar';
-        console.log('🔗 Using remote chromium executable');
-        
-        const executablePath = await chromium.executablePath(remoteChromiumUrl);
-        console.log('📍 Chromium executable path:', executablePath);
-        
-        browser = await puppeteerCore.launch({
-          args: [
-            ...chromium.args,
-            '--disable-gpu',
-            '--disable-dev-shm-usage',
-            '--disable-setuid-sandbox',
-            '--no-first-run',
-            '--no-sandbox',
-            '--no-zygote',
-            '--single-process',
-            '--disable-extensions'
-          ],
-          defaultViewport: { width: 1920, height: 1080 },
-          executablePath,
-          headless: true,
-        });
-        console.log('✅ Browser launched successfully');
-      } catch (importError: any) {
-        console.error('❌ Import or launch error:', importError);
-        throw new Error(`Browser setup failed: ${importError?.message || 'Unknown error'}`);
-      }
+      const puppeteerCore = (await import('puppeteer-core')).default;
+      const chromium = (await import('@sparticuz/chromium')).default;
+      
+      // Use remote chromium executable for Vercel serverless
+      const remoteChromiumUrl = 'https://github.com/Sparticuz/chromium/releases/download/v121.0.0/chromium-v121.0.0-pack.tar';
+      const executablePath = await chromium.executablePath(remoteChromiumUrl);
+      
+      browser = await puppeteerCore.launch({
+        args: [
+          ...chromium.args,
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-setuid-sandbox',
+          '--no-first-run',
+          '--no-sandbox',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions'
+        ],
+        defaultViewport: { width: 1920, height: 1080 },
+        executablePath,
+        headless: true,
+      });
     }
     
     const page = await browser.newPage();
