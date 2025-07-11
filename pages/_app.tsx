@@ -4,13 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { initToolbar } from '@stagewise/toolbar'
+import reactPlugin from '@stagewise-plugins/react'
 import { AuthChecker } from '@/components/AuthChecker'
 import { useRouter } from 'next/router'
 import '../styles.css'
 
 const queryClient = new QueryClient()
 
-const stagewiseConfig = { plugins: [] }
+const stagewiseConfig = { plugins: [reactPlugin] }
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   initToolbar(stagewiseConfig)
 }

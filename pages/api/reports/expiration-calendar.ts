@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import puppeteer from 'puppeteer';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -568,20 +567,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Generate HTML content
     const htmlContent = generateCalendarPDFHTML(companyName, relevantCertifications);
 
-    // Generate PDF using Puppeteer with landscape orientation
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--max-old-space-size=1024' // Limit memory usage
-      ]
-    });
+    // Environment-specific Puppeteer configuration
+    if (process.env.NODE_ENV === 'development') {
+      // Local development: use regular puppeteer
+      const puppeteer = (await import('puppeteer')).default;
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+    } else {
+      // Production: use serverless-optimized chromium
+      const puppeteerCore = (await import('puppeteer-core')).default;
+      const chromium = (await import('@sparticuz/chromium')).default;
+      browser = await puppeteerCore.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      });
+    }
     
     const page = await browser.newPage();
     
@@ -642,7 +645,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
     res.status(200);
     res.write(buffer);
-    return res.end();
+    res.end();
+    return;
 
   } catch (error) {
     console.error('Calendar generation error:', error);

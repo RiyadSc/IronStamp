@@ -247,12 +247,6 @@ export const QuickActionsWidget: React.FC = () => {
             );
           })}
         </div>
-        
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <Button variant="ghost" className="w-full text-sm text-blue-600 hover:text-blue-700">
-            View All Actions
-          </Button>
-        </div>
       </CardContent>
 
       {/* Add Certification Modal */}
