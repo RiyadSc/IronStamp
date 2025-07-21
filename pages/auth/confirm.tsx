@@ -25,11 +25,11 @@ export default function ConfirmEmail() {
         if (session?.user) {
           // User is authenticated and email is confirmed
           setStatus('success')
-          setMessage(`Welcome ${session.user.email}! Your email has been confirmed successfully.`)
+          setMessage(`Welcome ${session.user.email}! Your email has been confirmed successfully. Please login to continue.`)
           
-          // Redirect to onboarding after 3 seconds
+          // Redirect to signin after 3 seconds
           setTimeout(() => {
-            router.push('/onboarding')
+            router.push('/auth/signin')
           }, 3000)
         } else {
           // No session found

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { supabasePersistent, supabaseSession } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff } from '@/lib/icons'
 
 const testimonials = [
@@ -34,7 +34,6 @@ export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false)
   const [loading, setLoading] = useState(false)
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [progress, setProgress] = useState(0)
@@ -58,12 +57,9 @@ export default function SignIn() {
     e.preventDefault()
     setLoading(true)
     setErrorMessage('')
-
-    // Store the user's choice
-    localStorage.setItem('keepMeLoggedIn', keepLoggedIn ? 'true' : 'false')
-    const supabaseClient = keepLoggedIn ? supabasePersistent : supabaseSession
+    
     try {
-      const { error } = await supabaseClient.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -92,7 +88,7 @@ export default function SignIn() {
 
   const handleSocialSignIn = async (provider: 'google') => {
     try {
-      const { error } = await supabasePersistent.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`
@@ -221,16 +217,6 @@ export default function SignIn() {
             </div>
 
             <div className="flex items-center justify-between py-1">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="keep-logged-in"
-                  checked={keepLoggedIn}
-                  onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
-                />
-                <Label htmlFor="keep-logged-in" className="text-xs text-gray-600">
-                  Keep me logged in
-                </Label>
-              </div>
               <Link href="/auth/forgot-password" className="text-xs text-gray-600 hover:text-gray-900">
                 Forgot password?
               </Link>
