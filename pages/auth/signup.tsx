@@ -7,6 +7,16 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff } from '@/lib/icons'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 
 const testimonials = [
   {
@@ -40,6 +50,8 @@ export default function SignUp() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [progress, setProgress] = useState(0)
   const [showEmailVerification, setShowEmailVerification] = useState(false)
+  const [showTermsError, setShowTermsError] = useState(false)
+  const [profileUpdateError, setProfileUpdateError] = useState<string | null>(null)
 
   // Password strength calculation
   const getPasswordStrength = (password: string) => {
@@ -68,6 +80,7 @@ export default function SignUp() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    setProfileUpdateError(null)
     
     if (password !== confirmPassword) {
       alert('Passwords do not match')
@@ -75,14 +88,14 @@ export default function SignUp() {
     }
     
     if (!agreeToTerms) {
-      alert('Please agree to the terms and conditions')
+      setShowTermsError(true)
       return
     }
     
     setLoading(true)
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -92,6 +105,16 @@ export default function SignUp() {
       
       if (error) throw error
       
+      // Update profile to set accepted_terms: true
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ accepted_terms: true })
+          .eq('id', data.user.id)
+        if (profileError) {
+          setProfileUpdateError('Account created, but failed to record terms acceptance. Please contact support.')
+        }
+      }
       // Show email verification card instead of redirecting
       setShowEmailVerification(true)
     } catch (error) {
@@ -257,17 +280,19 @@ export default function SignUp() {
                 onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
               />
               <Label htmlFor="agree-terms" className="text-xs text-gray-600">
-                I agree to the{' '}
-                <Link href="/terms" className="text-gray-900 hover:underline">
+                I accept the{' '}
+                <Link href="/terms-of-service" className="text-gray-900 hover:underline" target="_blank" rel="noopener noreferrer">
                   Terms of Service
                 </Link>
                 {' '}and{' '}
-                <Link href="/privacy" className="text-gray-900 hover:underline">
+                <Link href="/privacy-policy" className="text-gray-900 hover:underline" target="_blank" rel="noopener noreferrer">
                   Privacy Policy
                 </Link>
               </Label>
             </div>
-
+            {profileUpdateError && (
+              <div className="text-xs text-red-600 mb-2">{profileUpdateError}</div>
+            )}
             <Button
               type="submit"
               className="w-full h-10 bg-gray-900 hover:bg-gray-800 text-white text-sm mt-3"
@@ -358,6 +383,23 @@ export default function SignUp() {
           </div>
         </div>
       )}
+
+      {/* Error Modal for Terms Acceptance */}
+      <AlertDialog open={showTermsError} onOpenChange={setShowTermsError}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Terms Acceptance Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You must accept the Terms of Service and Privacy Policy to create an account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowTermsError(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   )

@@ -27,6 +27,7 @@ import {
   AccordionTrigger 
 } from "@/components/ui/accordion"
 import { cn } from '@/lib/utils'
+import { supabasePersistent } from '@/lib/supabase'
 
 // Animation variants for hero section
 const transitionVariants = {
@@ -76,12 +77,24 @@ const Logo = ({ className, isScrolled }: { className?: string; isScrolled?: bool
 const HeroHeader = () => {
     const [menuState, setMenuState] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
+    const [showDashboardOnly, setShowDashboardOnly] = React.useState(false)
 
     React.useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50)
         }
         window.addEventListener('scroll', handleScroll)
+        // Check for session and keepMeLoggedIn
+        const checkSession = async () => {
+            const keepMe = localStorage.getItem('keepMeLoggedIn') === 'true'
+            if (keepMe) {
+                const { data: { session } } = await supabasePersistent.auth.getSession()
+                if (session && session.user) {
+                    setShowDashboardOnly(true)
+                }
+            }
+        }
+        checkSession()
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
     return (
@@ -127,49 +140,59 @@ const HeroHeader = () => {
                         </div>
 
                         <div className="bg-background group-data-[state=active]:block lg:group-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
-                            <div className="lg:hidden">
-                                <ul className="space-y-6 text-base">
-                                    {menuItems.map((item, index) => (
-                                        <li key={index}>
-                                            <Link
-                                                href={item.href}
-                                                className="text-muted-foreground hover:text-accent-foreground block duration-150">
-                                                <span>{item.name}</span>
+                            {showDashboardOnly ? (
+                                <Button asChild size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+                                    <Link href="/Dashboard">
+                                        Go to Dashboard
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <>
+                                    <div className="lg:hidden">
+                                        <ul className="space-y-6 text-base">
+                                            {menuItems.map((item, index) => (
+                                                <li key={index}>
+                                                    <Link
+                                                        href={item.href}
+                                                        className="text-muted-foreground hover:text-accent-foreground block duration-150">
+                                                        <span>{item.name}</span>
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className={cn(isScrolled && 'lg:hidden', 'hover:shadow-[0_0_8px_2px_#72e9ff] transition-shadow duration-300 ease-in-out')}
+                                        >
+                                            <Link href="/auth/signin">
+                                                <span>Login</span>
                                             </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                <Button
-                                    asChild
-                                    variant="outline"
-                                    size="sm"
-                                    className={cn(isScrolled && 'lg:hidden', 'hover:shadow-[0_0_8px_2px_#72e9ff] transition-shadow duration-300 ease-in-out')}
-                                >
-                                    <Link href="/auth/signin">
-                                        <span>Login</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    variant="outline"
-                                    className={cn(isScrolled && 'lg:hidden', 'bg-white text-black hover:shadow-[0_0_8px_2px_#72e9ff] transition-shadow duration-300 ease-in-out')}
-                                >
-                                    <Link href="/auth/signup">
-                                        <span>Sign Up</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                    <Link href="/auth/signup">
-                                        <span>Get Started</span>
-                                    </Link>
-                                </Button>
-                            </div>
+                                        </Button>
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            variant="outline"
+                                            className={cn(isScrolled && 'lg:hidden', 'bg-white text-black hover:shadow-[0_0_8px_2px_#72e9ff] transition-shadow duration-300 ease-in-out')}
+                                        >
+                                            <Link href="/auth/signup">
+                                                <span>Sign Up</span>
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
+                                            <Link href="/auth/signup">
+                                                <span>Get Started</span>
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -840,8 +863,8 @@ const Footer = () => {
       { name: "Live Chat", href: "#" }
     ],
     legal: [
-      { name: "Privacy Policy", href: "#" },
-      { name: "Terms of Service", href: "#" },
+      { name: "Privacy Policy", href: "/privacy-policy" },
+      { name: "Terms of Service", href: "/terms-of-service" },
       { name: "GDPR", href: "#" },
       { name: "Compliance", href: "#" }
     ]

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { supabase } from '@/lib/supabase'
+import { supabasePersistent, supabaseSession } from '@/lib/supabase'
 import { Eye, EyeOff } from '@/lib/icons'
 
 const testimonials = [
@@ -58,9 +58,12 @@ export default function SignIn() {
     e.preventDefault()
     setLoading(true)
     setErrorMessage('')
-    
+
+    // Store the user's choice
+    localStorage.setItem('keepMeLoggedIn', keepLoggedIn ? 'true' : 'false')
+    const supabaseClient = keepLoggedIn ? supabasePersistent : supabaseSession
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
       })
@@ -89,7 +92,7 @@ export default function SignIn() {
 
   const handleSocialSignIn = async (provider: 'google') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabasePersistent.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`

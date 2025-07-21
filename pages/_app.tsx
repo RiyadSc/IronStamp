@@ -26,6 +26,8 @@ const publicPages = [
   '/auth/confirm',
   '/auth/callback',
   '/LandingPage',
+  '/privacy-policy',
+  '/terms-of-service',
   '/auth-debug',
   '/404'
 ]

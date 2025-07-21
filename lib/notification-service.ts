@@ -41,7 +41,7 @@ export class NotificationService {
 
       // Send email via Resend
       const response = await resend.emails.send({
-        from: 'notifications@certkeeper.com', // Update this to your domain
+        from: 'notifications@ironstamp.app', // Updated to your domain
         to: data.employeeEmail,
         subject: template.subject,
         html: template.html,

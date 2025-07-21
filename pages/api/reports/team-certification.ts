@@ -440,8 +440,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (process.env.NODE_ENV === 'development') {
       // Local development: use regular puppeteer
       const puppeteer = (await import('puppeteer')).default;
-      browser = await puppeteer.launch({
-        headless: true,
+    browser = await puppeteer.launch({
+      headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
     } else {
@@ -454,14 +454,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const executablePath = await chromium.executablePath(remoteChromiumUrl);
       
       browser = await puppeteerCore.launch({
-        args: [
+      args: [
           ...chromium.args,
           '--disable-gpu',
           '--disable-dev-shm-usage',
-          '--disable-setuid-sandbox',
-          '--no-first-run',
+        '--disable-setuid-sandbox',
+        '--no-first-run',
           '--no-sandbox',
-          '--no-zygote',
+        '--no-zygote',
           '--single-process',
           '--disable-extensions'
         ],

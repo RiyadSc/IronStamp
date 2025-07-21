@@ -4,6 +4,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Checkbox } from '@/components/ui/checkbox'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 
 interface WelcomeStepProps {
   onComplete: (data: {
@@ -43,6 +46,10 @@ const businessFocusOptions = [
 export function WelcomeStep({ onComplete, onSkip, initialData }: WelcomeStepProps) {
   const [formData, setFormData] = useState(initialData)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const { user } = useAuth()
 
   // Update form data when initialData changes (in case of loaded existing data)
   React.useEffect(() => {
@@ -86,12 +93,45 @@ export function WelcomeStep({ onComplete, onSkip, initialData }: WelcomeStepProp
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setSaveError(null)
     if (validateForm()) {
+      if (!user) {
+        setSaveError('User not found. Please sign in again.')
+        return
+      }
+      setSaving(true)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ accepted_terms: true })
+        .eq('id', user.id)
+      setSaving(false)
+      if (error) {
+        setSaveError('Failed to save acceptance. Please try again.')
+        return
+      }
       onComplete(formData)
     }
+  }
+
+  const handleSkip = async () => {
+    setSaveError(null)
+    if (!user) {
+      setSaveError('User not found. Please sign in again.')
+      return
+    }
+    setSaving(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ accepted_terms: true })
+      .eq('id', user.id)
+    setSaving(false)
+    if (error) {
+      setSaveError('Failed to save acceptance. Please try again.')
+      return
+    }
+    onSkip()
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -281,21 +321,44 @@ export function WelcomeStep({ onComplete, onSkip, initialData }: WelcomeStepProp
                 )}
               </div>
 
+              {/* Terms Acceptance Checkbox */}
+              <div className="flex items-center space-x-2 py-1">
+                <Checkbox
+                  id="accept-terms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                  disabled={saving}
+                />
+                <Label htmlFor="accept-terms" className="text-xs text-gray-600">
+                  I accept the{' '}
+                  <a href="/terms-of-service" className="text-gray-900 hover:underline" target="_blank" rel="noopener noreferrer">
+                    Terms of Service
+                  </a>
+                  {' '}and{' '}
+                  <a href="/privacy-policy" className="text-gray-900 hover:underline" target="_blank" rel="noopener noreferrer">
+                    Privacy Policy
+                  </a>
+                </Label>
+              </div>
+              {saveError && <p className="text-xs text-red-600 mb-2">{saveError}</p>}
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={onSkip}
+                  onClick={handleSkip}
                   className="flex-1 h-12 text-gray-600 hover:text-gray-700"
+                  disabled={!acceptedTerms || saving}
                 >
                   Skip Tour
                 </Button>
                 <Button
                   type="submit"
                   className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                  disabled={!acceptedTerms || saving}
                 >
-                  Continue Setup →
+                  {saving ? 'Saving...' : 'Continue Setup →'}
                 </Button>
               </div>
             </form>
