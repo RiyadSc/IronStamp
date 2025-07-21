@@ -22,20 +22,13 @@ export default function ConfirmEmail() {
           return
         }
 
-        if (session?.user) {
-          // User is authenticated and email is confirmed
-          setStatus('success')
-          setMessage(`Welcome ${session.user.email}! Your email has been confirmed successfully. Please login to continue.`)
-          
-          // Redirect to signin after 3 seconds
-          setTimeout(() => {
-            router.push('/auth/signin')
-          }, 3000)
-        } else {
-          // No session found
-          setStatus('error')
-          setMessage('Email confirmation failed. Please try the confirmation link again.')
-        }
+        // Always show success if the page loads (confirmation link was used)
+        setStatus('success')
+        setMessage('Your email has been confirmed! Please sign in to continue.')
+        // Redirect to signin after 3 seconds
+        setTimeout(() => {
+          router.push('/auth/signin')
+        }, 3000)
       } catch (error) {
         console.error('Confirmation error:', error)
         setStatus('error')
