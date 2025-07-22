@@ -11,7 +11,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
 
   const templates = {
     '60_days': {
-      subject: `Reminder: ${certificationName} expires in 60 days`,
+      subject: `Reminder: ${certificationName} expires in ${daysUntilExpiry} days`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
           <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -22,7 +22,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">Dear ${employeeName},</p>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">
-              This is a friendly reminder that your <strong>${certificationName}</strong> certification will expire in <strong>60 days</strong> on <strong>${expirationDate}</strong>.
+              This is a friendly reminder that your <strong>${certificationName}</strong> certification will expire in <strong>${daysUntilExpiry} days</strong> on <strong>${expirationDate}</strong>.
             </p>
             
             <div style="background-color: #dbeafe; padding: 20px; border-radius: 6px; margin: 20px 0;">
@@ -44,7 +44,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
     },
 
     '30_days': {
-      subject: `Important: ${certificationName} expires in 30 days`,
+      subject: `Important: ${certificationName} expires in ${daysUntilExpiry} days`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fef3c7;">
           <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -55,7 +55,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">Dear ${employeeName},</p>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">
-              Your <strong>${certificationName}</strong> certification will expire in <strong>30 days</strong> on <strong>${expirationDate}</strong>.
+              Your <strong>${certificationName}</strong> certification will expire in <strong>${daysUntilExpiry} days</strong> on <strong>${expirationDate}</strong>.
             </p>
             
             <div style="background-color: #fef3c7; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #d97706;">
@@ -77,7 +77,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
     },
 
     '14_days': {
-      subject: `URGENT: ${certificationName} expires in 14 days`,
+      subject: `URGENT: ${certificationName} expires in ${daysUntilExpiry} days`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fee2e2;">
           <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -88,7 +88,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">Dear ${employeeName},</p>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">
-              <strong>URGENT:</strong> Your <strong>${certificationName}</strong> certification will expire in only <strong>14 days</strong> on <strong>${expirationDate}</strong>.
+              <strong>URGENT:</strong> Your <strong>${certificationName}</strong> certification will expire in only <strong>${daysUntilExpiry} days</strong> on <strong>${expirationDate}</strong>.
             </p>
             
             <div style="background-color: #fee2e2; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #dc2626;">
@@ -97,7 +97,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
             </div>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.5;">
-              <strong>IMMEDIATE ACTION REQUIRED:</strong> You must complete your certification renewal process within the next 14 days to maintain compliance with Massachusetts HVAC regulations and continue working legally.
+              <strong>IMMEDIATE ACTION REQUIRED:</strong> You must complete your certification renewal process within the next ${daysUntilExpiry} days to maintain compliance with Massachusetts HVAC regulations and continue working legally.
             </p>
             
             <p style="color: #374151; font-size: 14px; line-height: 1.5; margin-top: 30px;">
@@ -110,18 +110,18 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
     },
 
     '7_days': {
-      subject: `CRITICAL: ${certificationName} expires in 7 days - IMMEDIATE ACTION REQUIRED`,
+      subject: `CRITICAL: ${certificationName} expires in ${daysUntilExpiry} days - IMMEDIATE ACTION REQUIRED`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fee2e2;">
           <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #dc2626; margin: 0; font-size: 26px;">🚨 CRITICAL: CERTIFICATION EXPIRES IN 7 DAYS</h1>
+              <h1 style="color: #dc2626; margin: 0; font-size: 26px;">🚨 CRITICAL: CERTIFICATION EXPIRES IN ${daysUntilExpiry} DAYS</h1>
             </div>
             
             <p style="color: #374151; font-size: 18px; line-height: 1.5; font-weight: bold;">Dear ${employeeName},</p>
             
             <p style="color: #374151; font-size: 18px; line-height: 1.5;">
-              <strong style="color: #dc2626;">CRITICAL ALERT:</strong> Your <strong>${certificationName}</strong> certification expires in <strong style="color: #dc2626;">ONLY 7 DAYS</strong> on <strong>${expirationDate}</strong>.
+              <strong style="color: #dc2626;">CRITICAL ALERT:</strong> Your <strong>${certificationName}</strong> certification expires in <strong style="color: #dc2626;">ONLY ${daysUntilExpiry} DAYS</strong> on <strong>${expirationDate}</strong>.
             </p>
             
             <div style="background-color: #fee2e2; padding: 25px; border-radius: 6px; margin: 25px 0; border: 2px solid #dc2626;">
@@ -130,7 +130,7 @@ export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_da
             </div>
             
             <p style="color: #374151; font-size: 18px; line-height: 1.5;">
-              <strong style="color: #dc2626;">IMMEDIATE ACTION REQUIRED:</strong> You must renew your certification within the next 7 days to continue working legally in Massachusetts. Failure to maintain valid certification may result in work stoppage and potential fines.
+              <strong style="color: #dc2626;">IMMEDIATE ACTION REQUIRED:</strong> You must renew your certification within the next ${daysUntilExpiry} days to continue working legally in Massachusetts. Failure to maintain valid certification may result in work stoppage and potential fines.
             </p>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.5; margin-top: 30px;">
