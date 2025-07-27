@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { trackReportGeneration } from '@/lib/posthog';
 
 export const QuickActionsWidget: React.FC = () => {
   const { toast } = useToast();
@@ -96,6 +97,13 @@ export const QuickActionsWidget: React.FC = () => {
         title: "Export Complete",
         description: `${reportType} has been downloaded successfully.`,
         duration: 3000
+      });
+
+      // Track successful report generation
+      trackReportGeneration(reportType, {
+        report_type: reportType,
+        file_size: blob.size,
+        file_type: blob.type
       });
 
     } catch (error) {

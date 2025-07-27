@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, Mail, AlertTriangle, Clock, User, Send } from "@/lib/icons";
 import { PriorityItem } from "@/lib/data-service";
 import { supabase } from "@/lib/supabase";
+import { trackNotificationAction } from "@/lib/posthog";
 
 interface NotifyPriorityActionModalProps {
   isOpen: boolean;
@@ -100,6 +101,15 @@ Don't wait until the last minute - start your renewal today!`;
       }
 
       console.log('Priority notification sent successfully');
+      
+      // Track notification sent
+      trackNotificationAction('sent', priorityItem.type === "expired" ? "expired" : "renewal", {
+        employee_name: priorityItem.employee,
+        certification_type: priorityItem.certification,
+        priority: priorityItem.priority,
+        days_left: priorityItem.daysLeft || 0
+      });
+      
       onSuccess();
       onClose();
     } catch (error) {

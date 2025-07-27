@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { trackEvent, identifyUser, setUserProperties, POSTHOG_EVENTS } from '@/lib/posthog'
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)
@@ -151,10 +152,25 @@ export const useAuth = () => {
         // Handle different auth events
         switch (event) {
           case 'SIGNED_IN':
+            if (session?.user) {
+              // Track sign in event
+              trackEvent(POSTHOG_EVENTS.USER_SIGNED_IN, {
+                user_id: session.user.id,
+                email: session.user.email,
+                signup_method: session.user.app_metadata?.provider || 'email'
+              })
+              
+              // Identify user for PostHog
+              identifyUser(session.user.id, {
+                email: session.user.email,
+                signup_method: session.user.app_metadata?.provider || 'email'
+              })
+            }
             setLoading(false)
             break
 
           case 'SIGNED_OUT':
+            trackEvent(POSTHOG_EVENTS.USER_SIGNED_OUT)
             setUser(null)
             setSession(null)
             setError(null)

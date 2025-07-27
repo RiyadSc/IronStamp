@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Upload, FileText, AlertCircle, CheckCircle, X, Loader2, Circle, Trash2 } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { uploadCertification } from '../lib/certification-service';
+import { trackCertificationAction } from '@/lib/posthog';
 
 interface AddCertificationModalProps {
   isOpen: boolean;
@@ -248,6 +249,14 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
 
     // Show results
     if (successCount > 0) {
+      // Track successful certification uploads
+      trackCertificationAction('upload', {
+        files_count: stagedFiles.length,
+        success_count: successCount,
+        error_count: errorCount,
+        file_types: stagedFiles.map(f => f.type)
+      });
+      
       onSuccess?.();
       
       setTimeout(() => {

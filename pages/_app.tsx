@@ -42,11 +42,26 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-      api_host: '/ingest',
+      api_host: 'https://us.posthog.com',
       ui_host: 'https://us.posthog.com',
       defaults: '2025-05-24',
       capture_exceptions: true, // This enables capturing exceptions using Error Tracking
       debug: process.env.NODE_ENV === 'development',
+      loaded: (posthog) => {
+        if (process.env.NODE_ENV === 'development') posthog.debug()
+        // Set custom properties for the production app
+        posthog.people.set({
+          app_url: 'https://www.ironstamp.app/',
+          app_name: 'IronStamp',
+          app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0'
+        })
+      },
+      // Track page views automatically
+      capture_pageview: true,
+      // Enable session recording
+      capture_pageleave: true,
+      // Track clicks and form submissions
+      autocapture: true,
     })
   }, [])
 

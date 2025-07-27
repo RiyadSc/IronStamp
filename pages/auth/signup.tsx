@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff } from '@/lib/icons'
+import { trackEvent, POSTHOG_EVENTS } from '@/lib/posthog'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -105,8 +106,15 @@ export default function SignUp() {
       
       if (error) throw error
       
-      // Update profile to set accepted_terms: true
+      // Track user signup
       if (data.user) {
+        trackEvent(POSTHOG_EVENTS.USER_SIGNED_UP, {
+          user_id: data.user.id,
+          email: data.user.email,
+          signup_method: 'email'
+        });
+        
+        // Update profile to set accepted_terms: true
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ accepted_terms: true })
@@ -126,6 +134,11 @@ export default function SignUp() {
 
   const handleSocialSignUp = async (provider: 'google') => {
     try {
+      // Track social signup attempt
+      trackEvent(POSTHOG_EVENTS.USER_SIGNED_UP, {
+        signup_method: provider
+      });
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

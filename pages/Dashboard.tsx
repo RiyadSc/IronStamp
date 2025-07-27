@@ -9,6 +9,7 @@ import { ComplianceTrendChart } from "@/components/ComplianceTrendChart";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { getDashboardStats, getUserProfile, type DashboardStats, type UserProfile } from "@/lib/data-service";
 import { useAuth } from "@/hooks/useAuth";
+import { trackEvent, POSTHOG_EVENTS } from "@/lib/posthog";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +78,15 @@ const Index = () => {
       setStats(dashboardStats);
       setUserProfile(profileData);
       hasLoadedRef.current = true; // Mark as successfully loaded
+      
+      // Track dashboard view
+      trackEvent(POSTHOG_EVENTS.DASHBOARD_VIEWED, {
+        user_id: user?.id,
+        total_employees: dashboardStats.totalEmployees,
+        active_certifications: dashboardStats.activeCertifications,
+        expired_certifications: dashboardStats.expiredCertifications,
+        expiring_soon: dashboardStats.expiringSoon
+      });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       // Keep default values on error, but don't mark as loaded so it can retry

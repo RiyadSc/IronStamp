@@ -12,6 +12,7 @@ import { FreshStartStep } from '@/components/onboarding/FreshStartStep'
 import { NotificationSetupStep } from '@/components/onboarding/NotificationSetupStep'
 import { SuccessStep } from '@/components/onboarding/SuccessStep'
 import { supabase } from '@/lib/supabase'
+import { trackEvent, trackOnboardingStep, POSTHOG_EVENTS } from '@/lib/posthog'
 
 export default function Onboarding() {
   const router = useRouter()
@@ -54,6 +55,12 @@ export default function Onboarding() {
     if (user && !loading && !loadedOnce.current) {
       loadedOnce.current = true
       loadExistingData()
+      
+      // Track onboarding start
+      trackEvent(POSTHOG_EVENTS.ONBOARDING_STARTED, {
+        user_id: user.id,
+        email: user.email
+      })
     }
   }, [user, loading, router])
 
@@ -368,6 +375,14 @@ export default function Onboarding() {
   // Step 5: Final completion handler
   const handleFinalComplete = async () => {
     try {
+      // Track onboarding completion
+      trackEvent(POSTHOG_EVENTS.ONBOARDING_COMPLETED, {
+        user_id: user?.id,
+        upload_method: onboardingData.upload_method,
+        team_size: onboardingData.team_size,
+        business_focus: onboardingData.business_focus
+      })
+      
       // Show success toast
       toast({
         title: "🎉 Onboarding Complete!",
