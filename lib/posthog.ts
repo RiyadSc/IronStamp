@@ -1,8 +1,17 @@
-import { PostHog } from "posthog-node"
 import posthog from 'posthog-js'
+
+// Server-side PostHog import (only used in API routes)
+let PostHog: any = null
+if (typeof window === 'undefined') {
+  // Only import on server-side
+  PostHog = require("posthog-node").PostHog
+}
 
 // NOTE: This is a Node.js client, so you can use it for sending events from the server side to PostHog.
 export default function PostHogClient() {
+  if (!PostHog) {
+    throw new Error('PostHog server library not available in client-side context')
+  }
   const posthogClient = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
     host: 'https://us.posthog.com',
     flushAt: 1,
@@ -183,18 +192,27 @@ export const trackError = (errorType: string, errorMessage: string, errorLocatio
 
 // Server-side tracking function for API events
 export const trackServerEvent = (eventName: string, userId?: string, properties?: Record<string, any>) => {
-  const posthogClient = PostHogClient()
-  const enhancedProperties = {
-    app_url: 'https://www.ironstamp.app/',
-    app_name: 'IronStamp',
-    app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
-    event_source: 'server',
-    ...properties
+  if (typeof window !== 'undefined') {
+    // Don't run server-side tracking in client context
+    return
   }
-  posthogClient.capture({
-    event: eventName,
-    distinctId: userId || 'anonymous',
-    properties: enhancedProperties
-  })
-  posthogClient.shutdown()
+  
+  try {
+    const posthogClient = PostHogClient()
+    const enhancedProperties = {
+      app_url: 'https://www.ironstamp.app/',
+      app_name: 'IronStamp',
+      app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+      event_source: 'server',
+      ...properties
+    }
+    posthogClient.capture({
+      event: eventName,
+      distinctId: userId || 'anonymous',
+      properties: enhancedProperties
+    })
+    posthogClient.shutdown()
+  } catch (error) {
+    console.error('Failed to track server event:', error)
+  }
 }
