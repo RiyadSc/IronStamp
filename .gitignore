@@ -31,3 +31,6 @@ tmp/
 # Next.js build output
 .next/
 tsconfig.tsbuildinfo
+
+# Cursor configuration (may contain sensitive tokens)
+.cursor/
