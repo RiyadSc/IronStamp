@@ -7,6 +7,7 @@ import { initToolbar } from '@stagewise/toolbar'
 import reactPlugin from '@stagewise-plugins/react'
 import { AuthChecker } from '@/components/AuthChecker'
 import { useRouter } from 'next/router'
+import { Analytics } from '@vercel/analytics/react'
 import '../styles.css'
 
 const queryClient = new QueryClient()
@@ -42,6 +43,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Toaster />
         <Sonner />
         <Component {...pageProps} />
+        <Analytics />
       </TooltipProvider>
     </QueryClientProvider>
   )
