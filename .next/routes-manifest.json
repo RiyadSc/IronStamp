@@ -106,16 +106,34 @@
       "namedRegex": "^/auth\\-debug(?:/)?$"
     },
     {
+      "page": "/calendar-demo",
+      "regex": "^/calendar\\-demo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/calendar\\-demo(?:/)?$"
+    },
+    {
       "page": "/onboarding",
       "regex": "^/onboarding(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/onboarding(?:/)?$"
     },
     {
+      "page": "/privacy-policy",
+      "regex": "^/privacy\\-policy(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/privacy\\-policy(?:/)?$"
+    },
+    {
       "page": "/settings",
       "regex": "^/settings(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/settings(?:/)?$"
+    },
+    {
+      "page": "/terms-of-service",
+      "regex": "^/terms\\-of\\-service(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/terms\\-of\\-service(?:/)?$"
     }
   ],
   "dataRoutes": [],
