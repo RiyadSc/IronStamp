@@ -27,3 +27,7 @@ dist-ssr
 
 # Temporary files and uploads
 tmp/
+
+# Next.js build output
+.next/
+tsconfig.tsbuildinfo
