@@ -214,7 +214,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Send to managers if requested
-    if (includeManager && selectedManagers.length > 0) {
+    if (includeManager && selectedManagers && selectedManagers.length > 0) {
       for (const managerEmail of selectedManagers) {
         try {
           await NotificationService.sendEmailNotification(
@@ -247,7 +247,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         notification_type: requestedNotificationType,
         status: 'sent',
         message: customMessage,
-        manager_notified: includeManager && selectedManagers.length > 0,
+        manager_notified: includeManager && selectedManagers && selectedManagers.length > 0,
         created_at: new Date().toISOString()
       });
 
@@ -263,7 +263,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           certification_type: certificationType,
           notification_type: requestedNotificationType,
           timing,
-          managers_notified: selectedManagers.length
+          managers_notified: selectedManagers ? selectedManagers.length : 0
         },
         created_at: new Date().toISOString()
       });
@@ -271,7 +271,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ 
       success: true, 
       message: `Notification sent successfully to ${employeeName}${
-        includeManager && selectedManagers.length > 0 
+        includeManager && selectedManagers && selectedManagers.length > 0 
           ? ` and ${selectedManagers.length} manager(s)` 
           : ''
       }`,

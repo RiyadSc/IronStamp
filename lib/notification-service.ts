@@ -25,12 +25,20 @@ export class NotificationService {
     type: NotificationType,
     data: NotificationData
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    console.log('=== NOTIFICATION SERVICE CALLED ===');
+    console.log('Type:', type);
+    console.log('Data:', data);
+    
     try {
+      console.log('Checking RESEND_API_KEY...');
       if (!process.env.RESEND_API_KEY) {
+        console.error('RESEND_API_KEY is not configured');
         throw new Error('RESEND_API_KEY is not configured');
       }
+      console.log('RESEND_API_KEY is configured');
 
       // Get email template
+      console.log('Getting email template...');
       const template = getEmailTemplate(type, {
         employeeName: data.employeeName,
         certificationName: data.certificationName,
@@ -38,19 +46,32 @@ export class NotificationService {
         daysUntilExpiry: data.daysUntilExpiry,
         companyName: data.companyName,
       });
+      console.log('Email template created:', { subject: template.subject, htmlLength: template.html.length });
 
       // Send email via Resend
+      console.log('Sending email via Resend...');
+      console.log('Email details:', {
+        from: 'notifications@ironstamp.app',
+        to: data.employeeEmail,
+        subject: template.subject
+      });
+      
       const response = await resend.emails.send({
         from: 'notifications@ironstamp.app', // Updated to your domain
         to: data.employeeEmail,
         subject: template.subject,
         html: template.html,
       });
+      console.log('Resend response:', response);
 
       if (response.error) {
         console.error('Resend error:', response.error);
+        console.error('Resend error details:', {
+          message: response.error.message
+        });
         return { success: false, error: response.error.message };
       }
+      console.log('Email sent successfully, message ID:', response.data?.id);
 
       // Log successful notification to database
       await this.logNotification({

@@ -26,6 +26,8 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion"
+import { VideoPlayer } from '@/components/ui/video-thumbnail-player'
+import PricingBase from '@/components/ui/pricing-base'
 import { cn } from '@/lib/utils'
 
 // Animation variants for hero section
@@ -508,15 +510,13 @@ const ProductDemo = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="relative">
             <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-              <div className="aspect-video bg-slate-100 rounded-xl flex items-center justify-center mb-6">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center hover:bg-blue-700 transition-colors cursor-pointer">
-                    <Play className="h-10 w-10 text-white ml-1" />
-                  </div>
-                  <p className="text-slate-700 font-medium">Interactive Demo</p>
-                  <p className="text-sm text-slate-500">No signup required</p>
-                </div>
-              </div>
+              <VideoPlayer
+                thumbnailUrl="https://images.unsplash.com/photo-1593642532454-e138e28a63f4?q=80&w=2069&auto=format&fit=crop"
+                videoUrl="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                title="IronStamp Demo"
+                description="See how easy it is to manage certifications"
+                className="rounded-xl"
+              />
             </div>
           </div>
 
@@ -571,121 +571,9 @@ const ProductDemo = () => {
 
 // Pricing Component
 const Pricing = () => {
-  const plans = [
-    {
-      name: "Individual",
-      price: "Free",
-      description: "Perfect for solo professionals",
-      icon: Users,
-      features: [
-        "Up to 10 certifications",
-        "Email reminders",
-        "Mobile app access",
-        "Basic document storage",
-        "Export your data"
-      ],
-      cta: "Get Started Free",
-      popular: false
-    },
-    {
-      name: "Team",
-      price: "$12",
-      period: "/user/month",
-      description: "Designed for small and mid-sized HVAC teams managing 3+ technicians",
-      icon: Building,
-      features: [
-        "Unlimited certifications",
-        "Team dashboard",
-        "Role-based access",
-        "SMS & email alerts",
-        "Compliance reports",
-        "Priority support",
-        "Advanced exports"
-      ],
-      cta: "Start 14-Day Trial",
-      popular: true
-    }
-  ];
-
   return (
-    <section id="pricing" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-            Start free as an individual. Scale up when your team grows.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
-          {plans.map((plan, index) => {
-            const IconComponent = plan.icon;
-            return (
-              <div 
-                key={index} 
-                className={`relative p-6 sm:p-8 rounded-xl sm:rounded-2xl border-2 ${
-                  plan.popular 
-                    ? 'border-blue-500 shadow-xl' 
-                    : 'border-slate-200 hover:border-slate-300'
-                } transition-all duration-200`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-center mb-6 sm:mb-8">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" />
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">{plan.name}</h3>
-                  <p className="text-slate-600 mb-3 sm:mb-4 text-sm sm:text-base">{plan.description}</p>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-3xl sm:text-4xl font-bold text-slate-900">{plan.price}</span>
-                    {plan.period && (
-                      <span className="text-slate-600 ml-1 text-sm sm:text-base">{plan.period}</span>
-                    )}
-                  </div>
-                </div>
-
-                <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center space-x-3">
-                      <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
-                      <span className="text-slate-600 text-sm sm:text-base">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button 
-                  asChild
-                  className={`w-full py-3 sm:py-4 rounded-xl transition-all duration-300 ease-in-out text-sm sm:text-base ${
-                    plan.popular 
-                      ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-[0_0_12px_4px_rgba(59,130,246,0.4)] text-white' 
-                      : 'bg-slate-100 hover:bg-slate-200 hover:shadow-[0_0_8px_2px_rgba(114,233,255,0.3)] text-slate-900'
-                  }`}
-                >
-                  <Link href="/auth/signup">
-                    {plan.cta}
-                  </Link>
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="text-center mt-12">
-          <p className="text-slate-600 mb-4">Need a custom plan for larger organizations?</p>
-          <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
-            Contact Sales
-          </Button>
-        </div>
-      </div>
+    <section id="pricing" className="bg-white">
+      <PricingBase />
     </section>
   );
 };
