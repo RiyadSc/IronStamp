@@ -3,8 +3,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { initToolbar } from '@stagewise/toolbar'
-import reactPlugin from '@stagewise-plugins/react'
+
 import { AuthChecker } from '@/components/AuthChecker'
 import { useRouter } from 'next/router'
 import { Analytics } from '@vercel/analytics/react'
@@ -15,10 +14,7 @@ import { PostHogProvider } from 'posthog-js/react'
 
 const queryClient = new QueryClient()
 
-const stagewiseConfig = { plugins: [reactPlugin] }
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  initToolbar(stagewiseConfig)
-}
+
 
 // Pages that don't require authentication
 const publicPages = [

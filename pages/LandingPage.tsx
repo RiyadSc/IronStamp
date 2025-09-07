@@ -331,8 +331,8 @@ const SocialProof = () => {
           <div className="grid grid-cols-3 md:grid-cols-3 gap-4 sm:gap-8 items-center justify-center">
             {logos.map((logo, index) => (
               <div key={index} className="flex flex-col items-center p-2 sm:p-4">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-34 md:h-34 flex items-center justify-center mb-2 sm:mb-3">
-                  <img src={logo.src} alt={logo.alt} className="max-h-16 sm:max-h-20 md:max-h-28 object-contain" />
+                <div className="w-30 h-30 sm:w-42 sm:h-42 md:w-51 md:h-51 flex items-center justify-center mb-2 sm:mb-3">
+                  <img src={logo.src} alt={logo.alt} className="max-h-24 sm:max-h-30 md:max-h-42 object-contain" />
                 </div>
               </div>
             ))}

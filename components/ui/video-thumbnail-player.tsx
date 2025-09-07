@@ -107,16 +107,26 @@ const VideoPlayer = React.forwardRef<HTMLDivElement, VideoPlayerProps>(
               <X className="h-6 w-6" />
             </button>
 
-            {/* Video Iframe */}
-            <div className="w-full max-w-4xl aspect-video p-4">
-               <iframe
-                    src={videoUrl}
-                    title={title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full rounded-lg"
-                ></iframe>
+            {/* Video Container with Disclaimer */}
+            <div className="w-full max-w-4xl p-4">
+              {/* Disclaimer */}
+              <div className="mb-4 text-center">
+                <p className="text-red-400 text-sm font-medium">
+                  Demo video coming soon, placeholder for now
+                </p>
+              </div>
+              
+              {/* Video Iframe */}
+              <div className="aspect-video">
+                <iframe
+                      src={videoUrl}
+                      title={title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="h-full w-full rounded-lg"
+                  ></iframe>
+              </div>
             </div>
           </div>
         )}
