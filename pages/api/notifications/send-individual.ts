@@ -1,56 +1,59 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { NotificationService, NotificationType } from '@/lib/notification-service';
+import { csrfMiddleware } from '@/lib/csrf';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const {
-      certificationId,
-      employeeName,
-      certificationType,
-      timing,
-      scheduledDateTime,
-      customMessage,
-      includeManager,
-      selectedManagers,
-      notificationType: requestedNotificationType,
-      includeCompliance,
-      certificationStatus,
-      daysLeft,
-      expirationDate
-    } = req.body;
+  // Apply CSRF protection
+  csrfMiddleware(req, res, async () => {
+    try {
+      const {
+        certificationId,
+        employeeName,
+        certificationType,
+        timing,
+        scheduledDateTime,
+        customMessage,
+        includeManager,
+        selectedManagers,
+        notificationType: requestedNotificationType,
+        includeCompliance,
+        certificationStatus,
+        daysLeft,
+        expirationDate
+      } = req.body;
 
-    // Get user session from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or invalid authorization header' });
-    }
+      // Get user session from Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid authorization header' });
+      }
 
-    const token = authHeader.split(' ')[1];
+      const token = authHeader.split(' ')[1];
 
-    // Create server-side Supabase client with user token
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`
+      // Create server-side Supabase client with user token
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
         }
-      }
-    );
+      );
 
-    // Verify the user is authenticated
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error('Authentication error:', userError);
-      return res.status(401).json({ error: 'Invalid authentication token' });
-    }
+      // Verify the user is authenticated
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Authentication error:', userError);
+        return res.status(401).json({ error: 'Invalid authentication token' });
+      }
 
     // Validate required fields - certificationId is now optional
     if (!employeeName || !certificationType || !customMessage) {
@@ -278,8 +281,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sent: true
     });
 
-  } catch (error) {
-    console.error('Send individual notification error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+    } catch (error) {
+      console.error('Send individual notification error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 } 

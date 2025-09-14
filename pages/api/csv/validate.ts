@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { createClient } from '@supabase/supabase-js'
+import { csrfMiddleware } from '@/lib/csrf'
 
 interface ValidationError {
   row: number
@@ -116,76 +118,107 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  try {
-    const { uploadId, mappings } = req.body
-
-    if (!uploadId || !mappings) {
-      return res.status(400).json({ error: 'Missing uploadId or mappings' })
-    }
-
-    // Load the uploaded data
-    const tempDir = './tmp/uploads'
-    const dataFilePath = path.join(tempDir, `${uploadId}.json`)
-    
-    let uploadData
+  // Apply CSRF protection
+  csrfMiddleware(req, res, async () => {
     try {
-      const fileContent = await fs.readFile(dataFilePath, 'utf-8')
-      uploadData = JSON.parse(fileContent)
-    } catch (error) {
-      return res.status(404).json({ error: 'Upload data not found' })
-    }
-
-    const { rows } = uploadData
-    const validationResults: ValidationResult = {
-      validRows: 0,
-      invalidRows: 0,
-      totalEmployees: 0,
-      totalCertifications: 0,
-      errors: [],
-      preview: []
-    }
-
-    const uniqueEmployees = new Set<string>()
-    const processedRows: any[] = []
-
-    // Validate each row
-    rows.forEach((row: any, index: number) => {
-      const { isValid, errors } = validateRow(row, mappings, index)
-      const transformedRow = transformRow(row, mappings)
-      
-      // Add status to row
-      transformedRow.status = isValid ? 'valid' : 'error'
-      transformedRow.row_index = index + 1
-
-      if (isValid) {
-        validationResults.validRows++
-        
-        // Count unique employees
-        if (transformedRow.employee_email) {
-          uniqueEmployees.add(transformedRow.employee_email.toLowerCase())
-        }
-        
-        // Count certifications
-        if (transformedRow.certification_name) {
-          validationResults.totalCertifications++
-        }
-      } else {
-        validationResults.invalidRows++
-        validationResults.errors.push(...errors)
+      // Get user session from Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid authorization header' });
       }
 
-      processedRows.push(transformedRow)
-    })
+      const token = authHeader.split(' ')[1];
 
-    validationResults.totalEmployees = uniqueEmployees.size
-    validationResults.preview = processedRows.slice(0, 5) // First 5 rows for preview
+      // Create server-side Supabase client with user token
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        }
+      );
 
-    res.status(200).json(validationResults)
+      // Verify the user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('Authentication error:', authError);
+        return res.status(401).json({ error: 'Invalid authentication token' });
+      }
 
-  } catch (error) {
-    console.error('Validation error:', error)
-    res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Validation failed' 
-    })
-  }
+      const { uploadId, mappings } = req.body
+
+      if (!uploadId || !mappings) {
+        return res.status(400).json({ error: 'Missing uploadId or mappings' })
+      }
+
+      // Load the uploaded data
+      const tempDir = './tmp/uploads'
+      const dataFilePath = path.join(tempDir, `${uploadId}.json`)
+      
+      let uploadData
+      try {
+        const fileContent = await fs.readFile(dataFilePath, 'utf-8')
+        uploadData = JSON.parse(fileContent)
+      } catch (error) {
+        return res.status(404).json({ error: 'Upload data not found' })
+      }
+
+      const { rows } = uploadData
+      const validationResults: ValidationResult = {
+        validRows: 0,
+        invalidRows: 0,
+        totalEmployees: 0,
+        totalCertifications: 0,
+        errors: [],
+        preview: []
+      }
+
+      const uniqueEmployees = new Set<string>()
+      const processedRows: any[] = []
+
+      // Validate each row
+      rows.forEach((row: any, index: number) => {
+        const { isValid, errors } = validateRow(row, mappings, index)
+        const transformedRow = transformRow(row, mappings)
+        
+        // Add status to row
+        transformedRow.status = isValid ? 'valid' : 'error'
+        transformedRow.row_index = index + 1
+
+        if (isValid) {
+          validationResults.validRows++
+          
+          // Count unique employees
+          if (transformedRow.employee_email) {
+            uniqueEmployees.add(transformedRow.employee_email.toLowerCase())
+          }
+          
+          // Count certifications
+          if (transformedRow.certification_name) {
+            validationResults.totalCertifications++
+          }
+        } else {
+          validationResults.invalidRows++
+          validationResults.errors.push(...errors)
+        }
+
+        processedRows.push(transformedRow)
+      })
+
+      validationResults.totalEmployees = uniqueEmployees.size
+      validationResults.preview = processedRows.slice(0, 5) // First 5 rows for preview
+
+      res.status(200).json(validationResults)
+
+    } catch (error) {
+      console.error('Validation error:', error)
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Validation failed' 
+      })
+    }
+  });
 } 

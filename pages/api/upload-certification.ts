@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import formidable from 'formidable';
 import fs from 'fs';
+import { csrfMiddleware } from '@/lib/csrf';
 
 // Initialize OpenAI (server-side only)
 const openai = new OpenAI({
@@ -276,79 +277,105 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    // Parse the form data
-    const form = formidable({
-      maxFileSize: parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '20971520'),
-      filter: (part) => {
-        const { mimetype } = part;
-        const allowedTypes = [
-          'application/pdf',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'image/jpeg',
-          'image/png'
-        ];
-        return allowedTypes.includes(mimetype || '');
-      }
-    });
-
-    const [fields, files] = await form.parse(req);
-    
-    const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    const userId = Array.isArray(fields.userId) ? fields.userId[0] : fields.userId;
-
-    if (!file) {
-      return res.status(400).json({ error: 'No file provided' });
-    }
-
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    // Step 1: Extract data using AI
-    const extractedData = await extractDataWithAI(file);
-
-    // Step 2: Upload file to storage
-    const fileUrl = await uploadFileToStorage(file);
-
+  // Apply CSRF protection
+  csrfMiddleware(req, res, async () => {
     try {
-      // Step 3: Save to database
-      const certificationId = await saveCertificationToDatabase(
-        extractedData,
-        fileUrl,
-        file.originalFilename || 'certification',
-        file.size,
-        userId
+      // Get user session from Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid authorization header' });
+      }
+
+      const token = authHeader.split(' ')[1];
+
+      // Create server-side Supabase client with user token
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        }
       );
 
-      // Clean up temporary file
-      fs.unlinkSync(file.filepath);
+      // Verify the user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('Authentication error:', authError);
+        return res.status(401).json({ error: 'Invalid authentication token' });
+      }
 
-      return res.status(200).json({
-        id: certificationId,
-        fileUrl,
-        ...extractedData
+      // Parse the form data
+      const form = formidable({
+        maxFileSize: parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '20971520'),
+        filter: (part) => {
+          const { mimetype } = part;
+          const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/png'
+          ];
+          return allowedTypes.includes(mimetype || '');
+        }
       });
 
-    } catch (dbError) {
-      // If database save fails, clean up uploaded file
-      try {
-        const filePath = fileUrl.split('/').slice(-2).join('/');
-        await supabaseAdmin.storage.from('certifications').remove([filePath]);
-      } catch (cleanupError) {
-        console.error('Cleanup failed:', cleanupError);
-      }
+      const [fields, files] = await form.parse(req);
       
-      // Clean up temporary file
-      fs.unlinkSync(file.filepath);
-      throw dbError;
-    }
+      const file = Array.isArray(files.file) ? files.file[0] : files.file;
 
-  } catch (error) {
-    console.error('Upload certification error:', error);
-    return res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Upload failed. Please try again.' 
-    });
-  }
+      if (!file) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
+
+      // Step 1: Extract data using AI
+      const extractedData = await extractDataWithAI(file);
+
+      // Step 2: Upload file to storage
+      const fileUrl = await uploadFileToStorage(file);
+
+      try {
+        // Step 3: Save to database using authenticated user's ID
+        const certificationId = await saveCertificationToDatabase(
+          extractedData,
+          fileUrl,
+          file.originalFilename || 'certification',
+          file.size,
+          user.id
+        );
+
+        // Clean up temporary file
+        fs.unlinkSync(file.filepath);
+
+        return res.status(200).json({
+          id: certificationId,
+          fileUrl,
+          ...extractedData
+        });
+
+      } catch (dbError) {
+        // If database save fails, clean up uploaded file
+        try {
+          const filePath = fileUrl.split('/').slice(-2).join('/');
+          await supabaseAdmin.storage.from('certifications').remove([filePath]);
+        } catch (cleanupError) {
+          console.error('Cleanup failed:', cleanupError);
+        }
+        
+        // Clean up temporary file
+        fs.unlinkSync(file.filepath);
+        throw dbError;
+      }
+
+    } catch (error) {
+      console.error('Upload certification error:', error);
+      return res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Upload failed. Please try again.' 
+      });
+    }
+  });
 } 
