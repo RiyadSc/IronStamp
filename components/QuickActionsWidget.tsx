@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import { trackReportGeneration } from '@/lib/posthog';
+import { trackReportGeneration, trackNotificationAction } from '@/lib/posthog';
 
 export const QuickActionsWidget: React.FC = () => {
   const { toast } = useToast();
@@ -127,8 +127,108 @@ export const QuickActionsWidget: React.FC = () => {
     // The Team.tsx page will handle refreshing its own data
   };
 
+  const [sendingReminders, setSendingReminders] = useState(false);
+
   const handleSendReminders = () => {
     setIsRemindersModalOpen(true);
+  };
+
+  const handleSendExpirationReminders = async () => {
+    try {
+      console.log('=== Starting expiration reminders send ===');
+      setSendingReminders(true);
+      
+      toast({
+        title: "Sending Reminders",
+        description: "Please wait while we send expiration reminders to your team...",
+      });
+
+      // Get current session for authentication
+      console.log('Getting session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication required. Please sign in again.');
+      }
+
+      console.log('Session acquired, user:', session.user?.email);
+      console.log('Calling API...');
+
+      const response = await fetch('/api/notifications/send-expiration-reminders', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('API response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error response:', errorData);
+        throw new Error(errorData.error || 'Failed to send reminders');
+      }
+
+      const result = await response.json();
+      console.log('API success response:', result);
+      
+      // Close modal first
+      setIsRemindersModalOpen(false);
+      
+      // Show success message with details
+      const { successful, failed, processed } = result;
+      
+      if (processed === 0) {
+        // Show debug info if available
+        const debugInfo = result.debug ? ` (Debug: ${JSON.stringify(result.debug)})` : '';
+        toast({
+          title: "No Reminders to Send",
+          description: `No team members have certifications expiring in the next 30 days.${debugInfo}`,
+          duration: 8000
+        });
+        console.log('No reminders response:', result);
+      } else if (failed === 0) {
+        toast({
+          title: "Reminders Sent Successfully",
+          description: `Sent ${successful} reminder${successful !== 1 ? 's' : ''} to team members with expiring certifications.`,
+          duration: 5000
+        });
+        
+        // Track successful reminder sending
+        trackNotificationAction('sent', 'expiration_reminders', {
+          successful_count: successful,
+          failed_count: failed,
+          total_processed: processed
+        });
+      } else {
+        toast({
+          title: "Reminders Partially Sent",
+          description: `Sent ${successful} reminder${successful !== 1 ? 's' : ''} successfully. ${failed} failed.`,
+          variant: "destructive",
+          duration: 5000
+        });
+        
+        // Track partial success
+        trackNotificationAction('sent', 'expiration_reminders', {
+          successful_count: successful,
+          failed_count: failed,
+          total_processed: processed,
+          partial_failure: true
+        });
+      }
+
+    } catch (error) {
+      console.error('Error sending reminders:', error);
+      toast({
+        title: "Failed to Send Reminders",
+        description: error instanceof Error ? error.message : 'An error occurred while sending reminders',
+        variant: "destructive",
+        duration: 5000
+      });
+    } finally {
+      setSendingReminders(false);
+    }
   };
 
   const handleExportReport = () => {
@@ -196,15 +296,15 @@ export const QuickActionsWidget: React.FC = () => {
   // Show loading overlay when generating reports
   if (exportLoading) {
     return (
-      <Card className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0">
+      <Card className="h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0 flex flex-col">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-bold tracking-tight flex items-center">
             <AlertTriangle className="h-5 w-5 mr-2 text-blue-600" />
             Quick Actions
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+        <CardContent className="flex-1 flex items-center">
+          <div className="flex flex-col items-center justify-center w-full py-8 space-y-4">
             <div className="relative">
               <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
               <div className="absolute inset-0 rounded-full border-2 border-blue-200 border-t-transparent animate-ping opacity-75"></div>
@@ -224,14 +324,14 @@ export const QuickActionsWidget: React.FC = () => {
   }
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0">
+    <Card className="h-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-0 flex flex-col">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-bold tracking-tight flex items-center">
           <AlertTriangle className="h-5 w-5 mr-2 text-blue-600" />
           Quick Actions
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <div className="space-y-3">
           {actions.map((action, index) => {
             const IconComponent = action.icon;
@@ -313,17 +413,19 @@ export const QuickActionsWidget: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start h-auto p-4"
-                onClick={() => {
-                  toast({
-                    title: "Reminders Sent",
-                    description: "Expiration reminders sent to all team members with certifications expiring in 30 days.",
-                  });
-                  setIsRemindersModalOpen(false);
-                }}
+                onClick={handleSendExpirationReminders}
+                disabled={sendingReminders}
               >
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Expiration Reminders</p>
-                  <p className="text-xs text-gray-500">Send to all team members with expiring certifications</p>
+                <div className="flex items-center w-full">
+                  {sendingReminders && (
+                    <Loader2 className="h-4 w-4 mr-3 animate-spin text-blue-600" />
+                  )}
+                  <div className="text-left flex-1">
+                    <p className="font-semibold text-sm">
+                      {sendingReminders ? 'Sending Reminders...' : 'Expiration Reminders'}
+                    </p>
+                    <p className="text-xs text-gray-500">Send to all team members with expiring certifications</p>
+                  </div>
                 </div>
               </Button>
               
@@ -337,6 +439,7 @@ export const QuickActionsWidget: React.FC = () => {
                   });
                   setIsRemindersModalOpen(false);
                 }}
+                disabled={sendingReminders}
               >
                 <div className="text-left">
                   <p className="font-semibold text-sm">Weekly Summary</p>
@@ -354,6 +457,7 @@ export const QuickActionsWidget: React.FC = () => {
                   });
                   setIsRemindersModalOpen(false);
                 }}
+                disabled={sendingReminders}
               >
                 <div className="text-left">
                   <p className="font-semibold text-sm">Custom Message</p>
@@ -363,7 +467,11 @@ export const QuickActionsWidget: React.FC = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRemindersModalOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsRemindersModalOpen(false)}
+              disabled={sendingReminders}
+            >
               Cancel
             </Button>
           </DialogFooter>

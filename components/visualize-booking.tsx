@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { getUserCertifications } from '@/lib/certification-service';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export type CertificationType = {
   id: string;
@@ -221,6 +224,9 @@ const InteractiveCalendar = React.forwardRef<
   const [currentDate, setCurrentDate] = useState(new Date());
   const [certifications, setCertifications] = useState<CertificationType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMonthSelectorOpen, setIsMonthSelectorOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     const fetchCertifications = async () => {
@@ -239,6 +245,12 @@ const InteractiveCalendar = React.forwardRef<
     fetchCertifications();
   }, []);
 
+  // Sync selected month/year with current date when navigating
+  useEffect(() => {
+    setSelectedMonth(currentDate.getMonth());
+    setSelectedYear(currentDate.getFullYear());
+  }, [currentDate]);
+
   const handleDayHover = (day: string | null) => {
     setHoveredDay(day);
   };
@@ -255,12 +267,28 @@ const InteractiveCalendar = React.forwardRef<
     });
   };
 
+  const handleMonthYearSelect = () => {
+    const newDate = new Date(selectedYear, selectedMonth, 1);
+    setCurrentDate(newDate);
+    setIsMonthSelectorOpen(false);
+  };
+
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
       month: 'long', 
       year: 'numeric' 
     });
   };
+
+  // Generate array of months
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Generate array of years (current year ± 5 years)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
   const sortedCertifications = React.useMemo(() => {
     if (!hoveredDay) return [];
@@ -320,9 +348,63 @@ const InteractiveCalendar = React.forwardRef<
                   <ChevronRight className="w-5 h-5" />
                 </motion.button>
               </div>
-              <div className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-gray-700">
-                <Calendar className="w-5 h-5" />
-              </div>
+              <Popover open={isMonthSelectorOpen} onOpenChange={setIsMonthSelectorOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                    <Calendar className="w-5 h-5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Select Month
+                      </label>
+                      <Select 
+                        value={selectedMonth.toString()} 
+                        onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {months.map((month, index) => (
+                            <SelectItem key={index} value={index.toString()}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Select Year
+                      </label>
+                      <Select 
+                        value={selectedYear.toString()} 
+                        onValueChange={(value) => setSelectedYear(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      onClick={handleMonthYearSelect} 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Go to {months[selectedMonth]} {selectedYear}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="grid grid-cols-7 gap-2">
