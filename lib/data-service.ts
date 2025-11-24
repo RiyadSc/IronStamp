@@ -125,10 +125,6 @@ export interface EmployeeCertificationSummary {
 
 export interface UserProfile {
   companyName: string | null
-  licenseNumber: string | null
-  businessAddress: string | null
-  phoneNumber: string | null
-  businessEmail: string | null
   teamSize: string | null
   businessFocus: string | null
   onboardingCompleted: boolean
@@ -901,10 +897,6 @@ export async function getUserProfile(): Promise<UserProfile> {
     if (!user) {
       return {
         companyName: null,
-        licenseNumber: null,
-        businessAddress: null,
-        phoneNumber: null,
-        businessEmail: null,
         teamSize: null,
         businessFocus: null,
         onboardingCompleted: false,
@@ -915,7 +907,7 @@ export async function getUserProfile(): Promise<UserProfile> {
     // Get user profile from profiles table
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('company_name, team_size, business_focus, onboarding_completed, license_number, business_address, phone_number, business_email')
+      .select('company_name, team_size, business_focus, onboarding_completed')
       .eq('id', user.id)
       .single()
 
@@ -924,10 +916,6 @@ export async function getUserProfile(): Promise<UserProfile> {
       // Return basic info with user email as fallback
       return {
         companyName: null,
-        licenseNumber: null,
-        businessAddress: null,
-        phoneNumber: null,
-        businessEmail: null,
         teamSize: null,
         businessFocus: null,
         onboardingCompleted: false,
@@ -937,10 +925,6 @@ export async function getUserProfile(): Promise<UserProfile> {
 
     return {
       companyName: profile?.company_name || null,
-      licenseNumber: profile?.license_number || null,
-      businessAddress: profile?.business_address || null,
-      phoneNumber: profile?.phone_number || null,
-      businessEmail: profile?.business_email || null,
       teamSize: profile?.team_size || null,
       businessFocus: profile?.business_focus || null,
       onboardingCompleted: profile?.onboarding_completed || false,
@@ -951,10 +935,6 @@ export async function getUserProfile(): Promise<UserProfile> {
     console.error('Error getting user profile:', error)
     return {
       companyName: null,
-      licenseNumber: null,
-      businessAddress: null,
-      phoneNumber: null,
-      businessEmail: null,
       teamSize: null,
       businessFocus: null,
       onboardingCompleted: false,

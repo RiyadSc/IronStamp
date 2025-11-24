@@ -1,6 +1,6 @@
 {
     "mcpServers": {
-      "supabase": {
+      "supabase IronStamp": {
         "command": "npx",
         "args": [
           "-y",
@@ -9,7 +9,7 @@
           "--project-ref=ugpdxevfjegpviskdzix"
         ],
         "env": {
-          "SUPABASE_ACCESS_TOKEN": "${sbp_4d741aed35b5009bdd6092b608f382d22fef171e}"
+          "SUPABASE_ACCESS_TOKEN": "sbp_c1302ad079857c380d001978a964a15b8d00fa61"
         }
       },
       "posthog": {

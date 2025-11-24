@@ -25,10 +25,6 @@ export default function Onboarding() {
   
   const [onboardingData, setOnboardingData] = useState({
     company_name: '',
-    license_number: '',
-    business_address: '',
-    phone_number: '',
-    business_email: '',
     team_size: '',
     business_focus: '',
     upload_method: ''
@@ -68,7 +64,7 @@ export default function Onboarding() {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('company_name, license_number, business_address, phone_number, business_email, team_size, business_focus, upload_method, onboarding_step, onboarding_completed')
+        .select('company_name, team_size, business_focus, upload_method, onboarding_step, onboarding_completed')
         .eq('id', user?.id)
         .single()
 
@@ -82,10 +78,6 @@ export default function Onboarding() {
         // Load existing data
         setOnboardingData({
           company_name: profile.company_name || '',
-          license_number: profile.license_number || '',
-          business_address: profile.business_address || '',
-          phone_number: profile.phone_number || '',
-          business_email: profile.business_email || '',
           team_size: profile.team_size || '',
           business_focus: profile.business_focus || '',
           upload_method: profile.upload_method || ''
@@ -159,10 +151,6 @@ export default function Onboarding() {
           .from('profiles')
           .update({
             company_name: updatedData.company_name,
-            license_number: updatedData.license_number,
-            business_address: updatedData.business_address,
-            phone_number: updatedData.phone_number,
-            business_email: updatedData.business_email,
             team_size: updatedData.team_size,
             business_focus: updatedData.business_focus,
             onboarding_step: 1 // Mark step 1 as COMPLETED

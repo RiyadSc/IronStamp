@@ -33,11 +33,7 @@ const Index = () => {
     teamSize: null,
     businessFocus: null,
     onboardingCompleted: false,
-    userEmail: null,
-    licenseNumber: null,
-    businessAddress: null,
-    phoneNumber: null,
-    businessEmail: null
+    userEmail: null
   });
   const [loading, setLoading] = useState(true);
   

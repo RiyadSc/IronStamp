@@ -728,8 +728,8 @@ const Footer = () => {
       { name: "Live Chat", href: "#" }
     ],
     legal: [
-      { name: "Privacy Policy", href: "/privacy-policy" },
-      { name: "Terms of Service", href: "/terms-of-service" },
+      { name: "Privacy Policy", href: "#" },
+      { name: "Terms of Service", href: "#" },
       { name: "GDPR", href: "#" },
       { name: "Compliance", href: "#" }
     ]

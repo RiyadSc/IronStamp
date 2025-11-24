@@ -91,44 +91,6 @@ const Settings = () => {
                         className="ios-input" 
                       />
                     </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="license-number" className="text-sm font-semibold text-gray-700">License Number</Label>
-                      <Input 
-                        id="license-number" 
-                        defaultValue={loading ? "Loading..." : profile?.licenseNumber || ""} 
-                        disabled={loading}
-                        className="ios-input" 
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Label htmlFor="address" className="text-sm font-semibold text-gray-700">Business Address</Label>
-                    <Input 
-                      id="address" 
-                      defaultValue={loading ? "Loading..." : profile?.businessAddress || ""} 
-                      disabled={loading}
-                      className="ios-input" 
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone Number</Label>
-                      <Input 
-                        id="phone" 
-                        defaultValue={loading ? "Loading..." : profile?.phoneNumber || ""} 
-                        disabled={loading}
-                        className="ios-input" 
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Business Email</Label>
-                      <Input 
-                        id="email" 
-                        defaultValue={loading ? "Loading..." : profile?.businessEmail || ""} 
-                        disabled={loading}
-                        className="ios-input" 
-                      />
-                    </div>
                   </div>
                 </CardContent>
               </Card>
