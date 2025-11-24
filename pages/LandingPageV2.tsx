@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import PricingBase from '@/components/ui/pricing-base';
-import { ArrowDown, ShieldAlert, Radar, FileCheck, Printer, CheckCircle, Plus, Minus } from 'lucide-react';
+import { ArrowDown, ShieldAlert, Radar, FileCheck, Printer, CheckCircle, Plus, Minus, Menu, X } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -11,6 +11,7 @@ import {
 
 export default function LandingPageV2() {
   const revealRefs = useRef<(HTMLElement | null)[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -93,38 +94,108 @@ export default function LandingPageV2() {
       `}</style>
 
       {/* NAV */}
-      <nav className="fixed w-full z-40 top-0 left-0 px-6 py-4 md:px-10 md:py-6 flex justify-between items-center backdrop-blur-md bg-[#F0F4F8]/80 border-b border-[#0038FF]/10">
-        <div className="flex items-center gap-2">
-          <img src="/IronStampLogov3.png" alt="IronStamp" className="h-8 w-auto" />
-          <span className="font-display font-bold text-2xl tracking-tighter text-[#050505]">IRONSTAMP</span>
-        </div>
-        
-        <div className="hidden lg:flex items-center gap-8">
-          <a href="#how-it-works" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
-            How It Works
-          </a>
-          <a href="#solution" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
-            Features
-          </a>
-          <a href="#demo" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
-            Dashboard
-          </a>
-          <a href="#pricing" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
-            Pricing
-          </a>
-          <a href="#faq" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
-            FAQ
-          </a>
+      <nav className="fixed w-full z-40 top-0 left-0 px-6 py-4 md:px-10 md:py-6 backdrop-blur-md bg-[#F0F4F8]/80 border-b border-[#0038FF]/10">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img src="/IronStampLogov3.png" alt="IronStamp" className="h-8 w-auto" />
+            <span className="font-display font-bold text-xl md:text-2xl tracking-tighter text-[#050505]">IRONSTAMP</span>
+          </div>
+          
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center gap-8">
+            <a href="#how-it-works" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
+              How It Works
+            </a>
+            <a href="#solution" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
+              Features
+            </a>
+            <a href="#demo" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
+              Dashboard
+            </a>
+            <a href="#pricing" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
+              Pricing
+            </a>
+            <a href="#faq" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
+              FAQ
+            </a>
+          </div>
+
+          {/* Desktop CTAs */}
+          <div className="hidden lg:flex items-center gap-4">
+            <Link href="/auth/signin" className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
+              Login
+            </Link>
+            <Link href="/auth/signup" className="border border-[#0038FF] text-[#0038FF] px-6 py-2 hover:bg-[#0038FF] hover:text-white transition-colors uppercase text-sm tracking-wider font-bold">
+              Start Free Trial
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 text-[#050505] hover:text-[#0038FF] transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link href="/auth/signin" className="hidden md:inline-block font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors">
-            Login
-          </Link>
-          <Link href="/auth/signup" className="border border-[#0038FF] text-[#0038FF] px-6 py-2 hover:bg-[#0038FF] hover:text-white transition-colors uppercase text-sm tracking-wider font-bold">
-            Start Free Trial
-          </Link>
-        </div>
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden mt-4 pb-4 space-y-4 border-t border-[#0038FF]/10 pt-4">
+            <a 
+              href="#how-it-works" 
+              className="block font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              How It Works
+            </a>
+            <a 
+              href="#solution" 
+              className="block font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Features
+            </a>
+            <a 
+              href="#demo" 
+              className="block font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Dashboard
+            </a>
+            <a 
+              href="#pricing" 
+              className="block font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
+            </a>
+            <a 
+              href="#faq" 
+              className="block font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              FAQ
+            </a>
+            <div className="flex flex-col gap-3 pt-2">
+              <Link 
+                href="/auth/signin" 
+                className="font-mono text-sm text-[#050505] hover:text-[#0038FF] transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+              <Link 
+                href="/auth/signup" 
+                className="border border-[#0038FF] text-[#0038FF] px-6 py-3 hover:bg-[#0038FF] hover:text-white transition-colors uppercase text-sm tracking-wider font-bold text-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Start Free Trial
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* HERO SECTION */}
@@ -198,7 +269,7 @@ export default function LandingPageV2() {
               <img 
                 src="/Nightmare.png" 
                 alt="Compliance nightmare scenario" 
-                className="w-[150%] max-w-none h-auto rounded-lg shadow-lg"
+                className="w-full md:w-[150%] md:max-w-none h-auto rounded-lg shadow-lg"
               />
             </div>
           </div>
