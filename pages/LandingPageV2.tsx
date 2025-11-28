@@ -340,7 +340,7 @@ export default function LandingPageV2() {
         {/* Dashboard Image */}
         <div className="relative z-10 max-w-6xl mx-auto reveal" ref={addToRefs}>
           <img 
-            src="/Dashboard1.png" 
+            src="/Dashboardv2.png" 
             alt="IronStamp Dashboard - Compliance Management Interface" 
             className="w-full h-auto rounded-lg shadow-[20px_20px_0px_#0038FF] border-2 border-[#050505]"
           />
