@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import PricingBase from '@/components/ui/pricing-base';
 import { ArrowDown, ShieldAlert, Radar, FileCheck, Printer, CheckCircle, Plus, Minus, Menu, X } from 'lucide-react';
 import {
@@ -339,11 +340,16 @@ export default function LandingPageV2() {
 
         {/* Dashboard Image */}
         <div className="relative z-10 max-w-6xl mx-auto reveal" ref={addToRefs}>
-          <img 
-            src="/Dashboardv2.png" 
-            alt="IronStamp Dashboard - Compliance Management Interface" 
-            className="w-full h-auto rounded-lg shadow-[20px_20px_0px_#0038FF] border-2 border-[#050505]"
-          />
+          <div className="relative w-full rounded-lg shadow-[20px_20px_0px_#0038FF] border-2 border-[#050505] overflow-hidden">
+            <Image 
+              src="/Dashboardv2.png" 
+              alt="IronStamp Dashboard - Compliance Management Interface" 
+              width={1920}
+              height={1080}
+              className="w-full h-auto"
+              priority
+            />
+          </div>
         </div>
       </section>
 
