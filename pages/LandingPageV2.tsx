@@ -37,7 +37,7 @@ export default function LandingPageV2() {
 
   return (
     <div className="font-mono bg-[#F0F4F8] text-[#050505] selection:bg-[#0038FF] selection:text-white overflow-x-hidden min-h-screen">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Oswald:wght@400;500;700&display=swap');
 
         :root {
@@ -91,12 +91,12 @@ export default function LandingPageV2() {
             opacity: 1;
             transform: translateY(0);
         }
-      `}</style>
+      `}} />
 
       {/* NAV */}
       <nav className="fixed w-full z-40 top-0 left-0 px-6 py-4 md:px-10 md:py-6 backdrop-blur-md bg-[#F0F4F8]/80 border-b border-[#0038FF]/10">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
             <img src="/IronStampLogov3.png" alt="IronStamp" className="h-8 w-auto" />
             <span className="font-display font-bold text-xl md:text-2xl tracking-tighter text-[#050505]">IRONSTAMP</span>
           </div>
@@ -333,69 +333,17 @@ export default function LandingPageV2() {
         <div className="absolute left-0 top-0 w-full h-full bg-tech-grid opacity-50 pointer-events-none"></div>
 
         <div className="max-w-6xl mx-auto text-center mb-16 relative z-10 reveal" ref={addToRefs}>
-          <h2 className="font-display text-4xl md:text-6xl uppercase mb-4">Visual Silence.</h2>
-          <p className="font-mono text-gray-600">What a compliant business looks like.</p>
+          <h2 className="font-display text-4xl md:text-6xl uppercase mb-4">The Compliance Radar</h2>
+          <p className="font-mono text-gray-600">Real-time visibility into your team's certification status.</p>
         </div>
 
-        {/* Dashboard Mockup */}
-        <div className="relative z-10 bg-white border-2 border-[#050505] shadow-[20px_20px_0px_#0038FF] max-w-5xl mx-auto p-2 md:p-4 reveal" ref={addToRefs}>
-          {/* Mockup Header */}
-          <div className="flex justify-between items-center border-b-2 border-gray-100 pb-4 mb-6 px-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="font-bold font-display uppercase">IronStamp Dashboard</span>
-            </div>
-            <div className="font-mono text-xs text-gray-400">LAST SYNC: JUST NOW</div>
-          </div>
-
-          {/* Mockup Content Grid */}
-          <div className="grid md:grid-cols-4 gap-6 px-4 pb-8">
-            {/* Left Stat */}
-            <div className="md:col-span-1 bg-[#0038FF]/5 p-6 border border-[#0038FF]/10 text-center">
-              <div className="font-mono text-xs text-[#0038FF] uppercase mb-2">Active Techs</div>
-              <div className="font-display text-5xl font-bold text-[#0038FF]">12</div>
-            </div>
-
-            {/* Middle Stats */}
-            <div className="md:col-span-1 bg-green-50 p-6 border border-green-100 text-center">
-              <div className="font-mono text-xs text-green-600 uppercase mb-2">Compliance Score</div>
-              <div className="font-display text-5xl font-bold text-green-600">100%</div>
-            </div>
-
-            {/* List */}
-            <div className="md:col-span-2 space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">RD</div>
-                  <span className="font-bold text-sm">Roger D.</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono bg-green-100 text-green-700 px-2 py-1 rounded">EPA 608: VALID</span>
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">MS</div>
-                  <span className="font-bold text-sm">Mike S.</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono bg-green-100 text-green-700 px-2 py-1 rounded">OSHA 30: VALID</span>
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 opacity-60">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">AL</div>
-                  <span className="font-bold text-sm">Alex L.</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono bg-green-100 text-green-700 px-2 py-1 rounded">HOT WORK: VALID</span>
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Dashboard Image */}
+        <div className="relative z-10 max-w-6xl mx-auto reveal" ref={addToRefs}>
+          <img 
+            src="/Dashboard1.png" 
+            alt="IronStamp Dashboard - Compliance Management Interface" 
+            className="w-full h-auto rounded-lg shadow-[20px_20px_0px_#0038FF] border-2 border-[#050505]"
+          />
         </div>
       </section>
 
