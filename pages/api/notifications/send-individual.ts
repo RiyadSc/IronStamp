@@ -141,52 +141,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       template: notificationTemplate
     };
 
-    // If scheduled, save to database for later processing
-    if (timing === 'scheduled' && scheduledDateTime) {
-      const { error: scheduleError } = await supabase
-        .from('scheduled_notifications')
-        .insert({
-          user_id: user.id,
-          certification_id: certificationId || null, // Allow null for priority actions
-          employee_name: employeeName,
-          employee_email: employeeEmail,
-          certification_type: certificationType,
-          scheduled_for: scheduledDateTime,
-          message: customMessage,
-          notification_type: requestedNotificationType,
-          include_compliance: includeCompliance,
-          include_manager: includeManager,
-          manager_emails: selectedManagers,
-          status: 'scheduled',
-          created_at: new Date().toISOString()
-        });
-
-      if (scheduleError) {
-        console.error('Failed to schedule notification:', scheduleError);
-        return res.status(500).json({ error: 'Failed to schedule notification' });
-      }
-
-      // Log the scheduled notification
-      await supabase
-        .from('notification_logs')
-        .insert({
-          user_id: user.id,
-          employee_name: employeeName,
-          certification_type: certificationType,
-          notification_type: 'scheduled',
-          status: 'scheduled',
-          scheduled_for: scheduledDateTime,
-          message: customMessage,
-          created_at: new Date().toISOString()
-        });
-
-      return res.status(200).json({ 
-        success: true, 
-        message: `Notification scheduled for ${new Date(scheduledDateTime).toLocaleString()}`,
-        scheduled: true
-      });
-    }
-
     // Determine notification type
     let notificationType: NotificationType = 'expired';
     if (daysLeft > 0) {
@@ -203,12 +157,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         employeeId: certificationId || `${employeeName}-${certificationType}`, // Use combination as fallback
         employeeName,
         employeeEmail,
-        certificationId: certificationId || null,
+        certificationId: certificationId || '', // Pass string
         certificationName: certificationType,
         expirationDate,
         daysUntilExpiry: daysLeft,
         companyName: 'Your Company', // This should come from user data
-        userId: user.id
+        userId: user.id,
+        customMessage
       }
     );
 
@@ -226,12 +181,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               employeeId: certificationId || `${employeeName}-${certificationType}`,
               employeeName: `Manager (${employeeName})`,
               employeeEmail: managerEmail,
-              certificationId: certificationId || null,
+              certificationId: certificationId || '', // Pass string
               certificationName: certificationType,
               expirationDate,
               daysUntilExpiry: daysLeft,
               companyName: 'Your Company',
-              userId: user.id
+              userId: user.id,
+              customMessage: `[MANAGER COPY]\n\n${customMessage}`
             }
           );
         } catch (managerError) {
