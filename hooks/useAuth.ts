@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { trackEvent, identifyUser, setUserProperties, POSTHOG_EVENTS } from '@/lib/posthog'
+import { trackEvent, identifyUser, POSTHOG_EVENTS } from '@/lib/posthog'
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)

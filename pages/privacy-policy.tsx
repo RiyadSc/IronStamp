@@ -1,258 +1,334 @@
+/* eslint-disable react/no-unescaped-entities */
 import React from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from '@/lib/icons'
-import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
 
 const PrivacyPolicy = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div className="min-h-screen bg-[#F0F4F8] font-mono">
       {/* Header */}
-      <div className="bg-white/70 backdrop-blur-xl border-b border-gray-200/50 px-4 sm:px-6 py-4 sm:py-5 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <Link href="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
+      <header className="bg-[#050505] text-white px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <Link 
+            href="/" 
+            className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors font-mono uppercase tracking-wider"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Return to Home
               </Link>
-            </Button>
-          </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-3">
             <img 
               src="/IronStampLogov3.png" 
               alt="IronStamp" 
-              className="w-8 h-8" 
+              className="h-8 w-auto brightness-0 invert" 
             />
-            <span className="text-lg font-bold text-gray-900">IronStamp</span>
+            <span className="font-display font-bold text-xl tracking-tighter hidden sm:inline">IRONSTAMP</span>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sm:p-8 lg:p-12">
-          {/* Title */}
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+      <main className="bg-tech-grid min-h-[calc(100vh-64px)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {/* Title Card */}
+          <div className="bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-6 sm:p-8 mb-8">
+            <p className="text-[#0038FF] font-mono text-xs mb-2 uppercase tracking-wider">{`/// LEGAL DOCUMENTATION ///`}</p>
+            <h1 className="font-display text-4xl sm:text-5xl font-bold uppercase text-[#050505] mb-4">
               Privacy Policy
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base">
+            <p className="text-gray-600 font-mono text-sm">
               Last updated: July 17, 2025
             </p>
           </div>
 
           {/* Policy Content */}
-          <div className="prose prose-gray max-w-none">
-            <p className="text-gray-700 mb-8">
-              IronStamp ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our SaaS platform, IronStamp, and related services. IronStamp is registered in Massachusetts and complies with applicable state and federal privacy laws.
+          <div className="bg-white border-2 border-[#050505] p-6 sm:p-8 lg:p-10">
+            <p className="text-gray-700 font-mono text-sm leading-relaxed mb-8">
+              {`IronStamp ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our SaaS platform, IronStamp, and related services. IronStamp is registered in Massachusetts and complies with applicable state and federal privacy laws.`}
             </p>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Information We Collect</h2>
-              <p className="text-gray-700 mb-4">We collect the following types of information:</p>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">01</span> Information We Collect
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">We collect the following types of information:</p>
               
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">A. Account and Profile Information</h3>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+              <div className="space-y-4">
+                <div className="bg-[#F8FAFC] border-l-4 border-[#0038FF] p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">A. Account and Profile Information</h3>
+                  <ul className="list-disc list-inside text-gray-700 font-mono text-xs space-y-1">
                 <li>Name, email address, and password (for account creation and authentication)</li>
                 <li>Company name, license number, business address, phone number, business email, team size, business focus</li>
                 <li>Notification preferences and designated notification email addresses</li>
               </ul>
+                </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">B. Team and Employee Information</h3>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+                <div className="bg-[#F8FAFC] border-l-4 border-[#0038FF] p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">B. Team and Employee Information</h3>
+                  <ul className="list-disc list-inside text-gray-700 font-mono text-xs space-y-1">
                 <li>Team member names, email addresses, and roles</li>
                 <li>Employee names and email addresses (for certification tracking)</li>
               </ul>
+                </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">C. Certification and Document Data</h3>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+                <div className="bg-[#F8FAFC] border-l-4 border-[#0038FF] p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">C. Certification and Document Data</h3>
+                  <ul className="list-disc list-inside text-gray-700 font-mono text-xs space-y-1">
                 <li>Certification names, numbers, issue and expiration dates</li>
                 <li>Uploaded files (PDFs, images, documents) and associated metadata (file name, size, type)</li>
               </ul>
+                </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">D. Technical and Usage Data</h3>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+                <div className="bg-[#F8FAFC] border-l-4 border-[#0038FF] p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">D. Technical and Usage Data</h3>
+                  <ul className="list-disc list-inside text-gray-700 font-mono text-xs space-y-1">
                 <li>IP address (for security and rate limiting)</li>
                 <li>Device/browser information (for troubleshooting and security)</li>
                 <li>Session data (cookies or localStorage used for authentication)</li>
               </ul>
+                </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">E. Communications</h3>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+                <div className="bg-[#F8FAFC] border-l-4 border-[#0038FF] p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">E. Communications</h3>
+                  <ul className="list-disc list-inside text-gray-700 font-mono text-xs space-y-1">
                 <li>Emails, reminders, and notifications sent to you or your team</li>
               </ul>
+                </div>
+              </div>
 
-              <p className="text-gray-700 font-medium">We do <strong>not</strong> knowingly collect information from children under 13.</p>
+              <p className="text-gray-700 font-mono text-sm mt-4 font-bold">We do NOT knowingly collect information from children under 13.</p>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">2. How We Use Your Information</h2>
-              <p className="text-gray-700 mb-4">We use your information to:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Create and manage your account</li>
-                <li>Authenticate users and teams</li>
-                <li>Onboard users and organizations</li>
-                <li>Track certifications, compliance, and team data</li>
-                <li>Generate and store documents (e.g., PDFs)</li>
-                <li>Send notifications and reminders (email, SMS)</li>
-                <li>Provide customer support</li>
-                <li>Improve and secure our services</li>
-                <li>Comply with legal obligations</li>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">02</span> How We Use Your Information
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">We use your information to:</p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  'Create and manage your account',
+                  'Authenticate users and teams',
+                  'Onboard users and organizations',
+                  'Track certifications and compliance',
+                  'Generate and store documents',
+                  'Send notifications and reminders',
+                  'Provide customer support',
+                  'Improve and secure our services',
+                  'Comply with legal obligations'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                    <span className="w-1.5 h-1.5 bg-[#0038FF]" />
+                    {item}
+                  </li>
+                ))}
               </ul>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">2A. Legal Basis for Processing (for EEA Users)</h2>
-              <p className="text-gray-700 mb-4">If you are located in the European Economic Area (EEA), we process your personal information on the following legal bases:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li><strong>Consent</strong> (e.g., for marketing communications)</li>
-                <li><strong>Contractual necessity</strong> (e.g., to deliver IronStamp services)</li>
-                <li><strong>Legitimate interests</strong> (e.g., product improvement, fraud prevention)</li>
-                <li><strong>Legal obligation</strong> (e.g., tax and regulatory compliance)</li>
-              </ul>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">02A</span> Legal Basis (EEA Users)
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">If you are located in the European Economic Area (EEA), we process your personal information on the following legal bases:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { title: 'Consent', desc: 'For marketing communications' },
+                  { title: 'Contract', desc: 'To deliver IronStamp services' },
+                  { title: 'Legitimate Interest', desc: 'Product improvement, fraud prevention' },
+                  { title: 'Legal Obligation', desc: 'Tax and regulatory compliance' }
+                ].map((item, i) => (
+                  <div key={i} className="border border-gray-200 p-3">
+                    <span className="font-mono text-xs font-bold text-[#0038FF] uppercase">{item.title}</span>
+                    <p className="font-mono text-xs text-gray-600 mt-1">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">3. How We Share Your Information</h2>
-              <p className="text-gray-700 mb-4">We do <strong>not</strong> sell your personal information.</p>
-              <p className="text-gray-700 mb-4">We may share it with:</p>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">03</span> How We Share Your Information
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4 font-bold">We do NOT sell your personal information.</p>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">We may share it with:</p>
               
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Service Providers:</h3>
-              <p className="text-gray-700 mb-4">Including but not limited to Supabase (database, auth, storage), Resend (email delivery), Stripe (billing), and other subprocessors strictly required to operate IronStamp. All subprocessors are contractually obligated to protect your data and process it only on our instructions.</p>
-
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Legal Authorities:</h3>
-              <p className="text-gray-700 mb-4">When required to comply with legal obligations, court orders, or government requests.</p>
-
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Business Transfers:</h3>
-              <p className="text-gray-700 mb-4">In the event of a merger, acquisition, restructuring, or sale of all or part of our assets.</p>
+              <div className="space-y-4">
+                <div className="border-l-4 border-yellow-500 bg-yellow-50 p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">Service Providers</h3>
+                  <p className="text-gray-700 font-mono text-xs">Including Supabase (database, auth, storage), Resend (email delivery), Stripe (billing), and other subprocessors strictly required to operate IronStamp.</p>
+                </div>
+                <div className="border-l-4 border-red-500 bg-red-50 p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">Legal Authorities</h3>
+                  <p className="text-gray-700 font-mono text-xs">When required to comply with legal obligations, court orders, or government requests.</p>
+                </div>
+                <div className="border-l-4 border-gray-500 bg-gray-50 p-4">
+                  <h3 className="font-mono text-xs font-bold text-[#050505] uppercase mb-2">Business Transfers</h3>
+                  <p className="text-gray-700 font-mono text-xs">In the event of a merger, acquisition, restructuring, or sale of all or part of our assets.</p>
+                </div>
+              </div>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Cookies and Tracking Technologies</h2>
-              <p className="text-gray-700 mb-4">We use cookies and localStorage to:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Maintain your authentication session</li>
-                <li>Store user preferences</li>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">04</span> Cookies & Tracking
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">We use cookies and localStorage to:</p>
+              <ul className="space-y-2 mb-4">
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Maintain your authentication session
+                </li>
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Store user preferences
+                </li>
               </ul>
-              <p className="text-gray-700 font-medium">We do <strong>not</strong> use third-party advertising or analytics cookies.</p>
+              <p className="text-gray-700 font-mono text-sm font-bold">We do NOT use third-party advertising or analytics cookies.</p>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Data Security</h2>
-              <p className="text-gray-700 mb-4">We implement technical and organizational safeguards to protect your information, including:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Data encryption in transit and at rest (AES-256)</li>
-                <li>Role-based access controls and authentication</li>
-                <li>Regular monitoring and backups</li>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">05</span> Data Security
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">We implement technical and organizational safeguards:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { icon: '🔐', text: 'AES-256 encryption in transit and at rest' },
+                  { icon: '👤', text: 'Role-based access controls' },
+                  { icon: '📊', text: 'Regular monitoring and backups' }
+                ].map((item, i) => (
+                  <div key={i} className="bg-[#050505] text-white p-4 text-center">
+                    <div className="text-2xl mb-2">{item.icon}</div>
+                    <p className="font-mono text-xs">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-700 font-mono text-xs mt-4">As required by Massachusetts law (201 CMR 17.00), we maintain a Written Information Security Program (WISP) to safeguard personal information of Massachusetts residents.</p>
+            </section>
+
+            <div className="h-px bg-gray-200 my-8" />
+
+            <section className="mb-8">
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">06</span> Data Retention
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">We retain your information as long as your account is active or as needed to deliver our services. You may:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Close your account at any time
+                </li>
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Request deletion of your personal data
+                </li>
               </ul>
-              <p className="text-gray-700">As required by Massachusetts law (201 CMR 17.00), we maintain a Written Information Security Program (WISP) to safeguard personal information of Massachusetts residents.</p>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Data Retention</h2>
-              <p className="text-gray-700 mb-4">We retain your information as long as your account is active or as needed to deliver our services.</p>
-              <p className="text-gray-700 mb-4">You may:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Close your account at any time</li>
-                <li>Request deletion of your personal data by contacting us below</li>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">07</span> Your Rights
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">You have the right to:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {['Access', 'Correct', 'Delete', 'Export', 'Opt-out'].map((right, i) => (
+                  <div key={i} className="border-2 border-[#050505] p-3 text-center hover:bg-[#0038FF] hover:text-white hover:border-[#0038FF] transition-colors">
+                    <span className="font-mono text-xs font-bold uppercase">{right}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-600 font-mono text-xs mt-4">To exercise your rights, contact us at the address below.</p>
+            </section>
+
+            <div className="h-px bg-gray-200 my-8" />
+
+            <section className="mb-8">
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">08</span> Children's Privacy
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed">IronStamp is not intended for children under 13. We do not knowingly collect data from individuals under 13 years of age. If we become aware that such data has been collected, we will delete it promptly.</p>
+            </section>
+
+            <div className="h-px bg-gray-200 my-8" />
+
+            <section className="mb-8">
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">09</span> Policy Changes
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed">We may update this Privacy Policy from time to time. Material changes will be posted on our website, and the "Last updated" date above will be revised. We encourage you to review this policy regularly.</p>
+            </section>
+
+            <div className="h-px bg-gray-200 my-8" />
+
+            <section className="mb-8">
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">10</span> International Transfers
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed">If you use IronStamp from outside the United States, your information may be transferred to and processed in the U.S. We take steps to ensure appropriate safeguards are in place for such transfers in accordance with applicable law.</p>
+            </section>
+
+            <div className="h-px bg-gray-200 my-8" />
+
+            <section className="mb-8">
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">11</span> California Residents (CCPA)
+              </h2>
+              <p className="text-gray-700 font-mono text-sm leading-relaxed mb-4">If you are a California resident, you may have additional rights under the California Consumer Privacy Act (CCPA):</p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Right to know what data we collect
+                </li>
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Right to request deletion
+                </li>
+                <li className="flex items-center gap-2 text-gray-700 font-mono text-xs">
+                  <span className="w-1.5 h-1.5 bg-[#0038FF]" /> Right to opt out of data sale (we do not sell data)
+                </li>
               </ul>
             </section>
 
-            <hr className="my-8 border-gray-200" />
+            <div className="h-px bg-gray-200 my-8" />
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Your Rights and Choices</h2>
-              <p className="text-gray-700 mb-4">You have the right to:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Access and review your data</li>
-                <li>Correct inaccuracies</li>
-                <li>Delete your personal information</li>
-                <li>Export your data (PDF, CSV, ZIP)</li>
-                <li>Opt out of non-essential emails</li>
-              </ul>
-              <p className="text-gray-700">To exercise your rights, contact us at the address below.</p>
-            </section>
-
-            <hr className="my-8 border-gray-200" />
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Children's Privacy</h2>
-              <p className="text-gray-700">IronStamp is not intended for children under 13. We do not knowingly collect data from individuals under 13 years of age. If we become aware that such data has been collected, we will delete it promptly.</p>
-            </section>
-
-            <hr className="my-8 border-gray-200" />
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Changes to This Policy</h2>
-              <p className="text-gray-700">We may update this Privacy Policy from time to time. Material changes will be posted on our website, and the "Last updated" date above will be revised. We encourage you to review this policy regularly.</p>
-            </section>
-
-            <hr className="my-8 border-gray-200" />
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">10. International Data Transfers</h2>
-              <p className="text-gray-700">If you use IronStamp from outside the United States, your information may be transferred to and processed in the U.S. We take steps to ensure appropriate safeguards are in place for such transfers in accordance with applicable law.</p>
-            </section>
-
-            <hr className="my-8 border-gray-200" />
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">11. Notice for California Residents (CCPA)</h2>
-              <p className="text-gray-700 mb-4">If you are a California resident, you may have additional rights under the California Consumer Privacy Act (CCPA), including:</p>
-              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-                <li>Right to know what data we collect</li>
-                <li>Right to request deletion</li>
-                <li>Right to opt out of the sale of personal data (we do not sell data)</li>
-              </ul>
-              <p className="text-gray-700">You can exercise these rights by contacting us below.</p>
-            </section>
-
-            <hr className="my-8 border-gray-200" />
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">12. Contact Us</h2>
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">IronStamp Privacy Team</h3>
-                <p className="text-gray-700 mb-2">IronStamp®</p>
-                <p className="text-gray-700">📧 <a href="mailto:ironstamp.team@gmail.com" className="text-blue-600 hover:text-blue-700 underline">ironstamp.team@gmail.com</a></p>
+            <section>
+              <h2 className="font-display text-2xl font-bold text-[#050505] uppercase mb-4 flex items-center gap-2">
+                <span className="text-[#0038FF]">12</span> Contact Us
+              </h2>
+              <div className="bg-[#0038FF] text-white p-6">
+                <h3 className="font-display text-lg font-bold uppercase mb-3">IronStamp Privacy Team</h3>
+                <p className="font-mono text-sm mb-2">IronStamp®</p>
+                <p className="font-mono text-sm">📧 <a href="mailto:ironstamp.team@gmail.com" className="underline hover:no-underline">ironstamp.team@gmail.com</a></p>
               </div>
             </section>
           </div>
 
           {/* Back to Home Button */}
-          <div className="text-center mt-12">
-            <Button
-              asChild
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 ease-in-out hover:shadow-lg"
+          <div className="text-center mt-8">
+            <Link
+              href="/"
+              className="inline-block bg-[#050505] text-white px-8 py-4 font-bold font-mono text-sm uppercase tracking-wider hover:bg-[#0038FF] transition-colors shadow-[4px_4px_0px_#0038FF] hover:shadow-[4px_4px_0px_#050505]"
             >
-              <Link href="/">
                 Back to IronStamp
               </Link>
-            </Button>
           </div>
         </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-[#050505] text-white py-6 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="font-mono text-xs text-gray-500">© 2025 IRONSTAMP SYSTEMS. BOSTON, MA.</p>
       </div>
+      </footer>
     </div>
   )
 }

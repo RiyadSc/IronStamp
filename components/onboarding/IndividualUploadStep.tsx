@@ -6,17 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { 
   Upload, 
-  FileText, 
   AlertCircle, 
   CheckCircle, 
   Loader2, 
   User, 
-  Mail,
-  Calendar,
   Award,
   Sparkles
 } from '@/lib/icons'
@@ -398,7 +394,7 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                               Drag and drop your certificate here, or click to browse
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
-                              We'll automatically extract certification details
+                              We&apos;ll automatically extract certification details
                             </p>
                           </>
                         )}
@@ -461,7 +457,7 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
                   <Alert className="bg-blue-50 border-blue-200">
                     <AlertCircle className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
-                      Great! Now switch to <strong>Manual Entry</strong> to review the extracted information and add the employee's email address.
+                      Great! Now switch to <strong>Manual Entry</strong> to review the extracted information and add the employee&apos;s email address.
                     </AlertDescription>
                   </Alert>
                 )}

@@ -1,4 +1,4 @@
-import { Search, Plus, Filter, Download, Calendar, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronRight, User, Bell } from "@/lib/icons";
+import { Plus, Filter, Download, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronRight, User, Bell } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,7 @@ const getCountBadge = (count: number, type: 'active' | 'expiring' | 'expired') =
   }
 };
 
-const getPriorityBadge = (priority: 'low' | 'medium' | 'high') => {
+const _getPriorityBadge = (priority: 'low' | 'medium' | 'high') => {
   const baseClasses = "rounded-full px-2 py-0.5 font-medium text-xs";
   switch (priority) {
     case 'high':
@@ -311,7 +311,7 @@ const Certifications = () => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US');
-    } catch (error) {
+    } catch {
       return dateString; // Return original if parsing fails
     }
   };

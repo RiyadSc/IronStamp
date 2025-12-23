@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useDropzone } from 'react-dropzone';
 import {
   Radar,
@@ -16,11 +17,15 @@ import {
   UploadCloud,
   Plus,
   Check,
-  Download,
   Loader2,
+  Send,
+  UserPlus,
+  Pencil,
+  Trash2,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { getDashboardStats, getExpiringCertifications, getUserProfile, type DashboardStats, type ExpirationItem, type UserProfile, type CertificationDetails } from '@/lib/data-service';
+import { getDashboardStats, getExpiringCertifications, getUserProfile, getRecentActivity, logActivity, type DashboardStats, type ExpirationItem, type UserProfile, type CertificationDetails, type ActivityLog } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { trackReportGeneration, trackCertificationAction } from '@/lib/posthog';
@@ -80,30 +85,22 @@ export default function DashboardV2() {
   // Notification Modal State
   const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
   const [selectedCertification, setSelectedCertification] = useState<CertificationDetails | null>(null);
+  
+  // Activity Log State
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
 
-  useEffect(() => {
-    // Only load initial data if user is authenticated and we haven't loaded yet
-    // This prevents reloading when tab focus changes unless necessary
-    if (user && !authLoading) {
-      // Check if we already have data to avoid flash
-      if (stats.totalEmployees === 0 && expiringCerts.length === 0) {
-        loadDashboardData();
-      }
-    } else if (!authLoading && !user) {
-      setLoading(false);
-    }
-  }, [user, authLoading]);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const [dashboardStats, expiringData, profileData] = await Promise.all([
+      const [dashboardStats, expiringData, profileData, activityData] = await Promise.all([
         getDashboardStats(),
         getExpiringCertifications(100), // Fetch more items for the modal view
-        getUserProfile()
+        getUserProfile(),
+        getRecentActivity(5)
       ]);
       setStats(dashboardStats);
       setUserProfile(profileData);
+      setRecentActivity(activityData);
       
       // Sort certifications: Expired first, then by days left (ascending), then Valid
       const sortedCerts = expiringData.sort((a, b) => {
@@ -130,7 +127,20 @@ export default function DashboardV2() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Only load initial data if user is authenticated and we haven't loaded yet
+    // This prevents reloading when tab focus changes unless necessary
+    if (user && !authLoading) {
+      // Check if we already have data to avoid flash
+      if (stats.totalEmployees === 0 && expiringCerts.length === 0) {
+        loadDashboardData();
+      }
+    } else if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [user, authLoading, stats.totalEmployees, expiringCerts.length, loadDashboardData]);
 
   // Handle opening notification modal
   const handleNotify = (cert: ExpirationItem) => {
@@ -155,6 +165,8 @@ export default function DashboardV2() {
       description: "The employee has been notified successfully.",
     });
     setIsNotifyModalOpen(false);
+    // Refresh activity log to show the new notification
+    loadDashboardData();
   };
 
   const toggleSidebar = () => {
@@ -234,12 +246,22 @@ export default function DashboardV2() {
         duration: 3000
       });
 
+      // Log activity
+      await logActivity('generate_report', {
+        employee_name: profileName || 'Admin',
+        certification_type: reportType,
+        file_name: filename
+      });
+
       // Track successful report generation
       trackReportGeneration(reportType, {
         report_type: reportType,
         file_size: blob.size,
         file_type: blob.type
       });
+      
+      // Refresh activity log
+      loadDashboardData();
 
     } catch (error) {
       console.error(`Error exporting ${reportType}:`, error);
@@ -286,9 +308,14 @@ export default function DashboardV2() {
     }
 
     // Format name: "First Last" or "First L." or just use as is
-    const nameParts = displayName.split(' ');
-    if (nameParts.length > 1) {
+    // Safely handle leading/trailing/extra spaces by trimming and filtering empty parts
+    const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
+    if (nameParts.length > 1 && nameParts[nameParts.length - 1].length > 0) {
       displayName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`;
+    } else if (nameParts.length === 1) {
+      displayName = nameParts[0];
+    } else {
+      displayName = 'User';
     }
 
     return { displayName, email };
@@ -296,13 +323,35 @@ export default function DashboardV2() {
 
   const { displayName: profileName, email: profileEmail } = getProfileDisplayInfo();
 
-  // Get initials for avatar
+  // Get initials for avatar (safely handles empty/whitespace-only names)
   const getInitials = (name: string) => {
-    const parts = name.split(' ');
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    if (parts.length === 1 && parts[0].length > 0) {
+      return parts[0].substring(0, 2).toUpperCase();
+    }
+    return '??'; // Fallback for empty/invalid names
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      // Set flag to indicate intentional logout (prevents "Session Expired" screen)
+      sessionStorage.setItem('intentional_logout', 'true');
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (error) {
+      // Clear the flag if logout fails
+      sessionStorage.removeItem('intentional_logout');
+      console.error('Error logging out:', error);
+      toast({
+        title: "Logout Failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // File Upload Logic
@@ -349,7 +398,16 @@ export default function DashboardV2() {
         title: "Upload Complete",
         description: `Successfully processed ${successCount} file(s).`,
       });
-      loadDashboardData(); // Refresh data
+      
+      // Log activity for each uploaded file
+      for (const file of acceptedFiles) {
+        await logActivity('upload_certification', {
+          file_name: file.name,
+          employee_name: profileName || 'Admin'
+        });
+      }
+      
+      loadDashboardData(); // Refresh data including activity log
       
       trackCertificationAction('upload', {
         files_count: acceptedFiles.length,
@@ -366,7 +424,7 @@ export default function DashboardV2() {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, profileName, loadDashboardData]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -377,81 +435,6 @@ export default function DashboardV2() {
 
   return (
     <div className="font-mono bg-[#F8FAFC] text-[#050505] min-h-screen flex flex-col md:flex-row">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@400;500;700&display=swap');
-
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .font-display { font-family: 'Oswald', sans-serif; }
-
-        /* Technical Grid Background */
-        .bg-tech-grid {
-          background-size: 40px 40px;
-          background-image: 
-            linear-gradient(to right, rgba(0, 56, 255, 0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 56, 255, 0.05) 1px, transparent 1px);
-        }
-
-        /* "Technical" Borders */
-        .border-tech {
-          border: 1px solid #E2E8F0;
-          position: relative;
-        }
-        .border-tech::after {
-          content: '';
-          position: absolute;
-          top: -1px;
-          left: -1px;
-          width: 10px;
-          height: 10px;
-          border-top: 2px solid #0038FF;
-          border-left: 2px solid #0038FF;
-        }
-
-        /* Status Indicators */
-        .status-badge {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 0.75rem;
-          padding: 0.25rem 0.5rem;
-          text-transform: uppercase;
-          font-weight: 700;
-        }
-        .status-ok { background: #DCFCE7; color: #166534; }
-        .status-warn { background: #FEF9C3; color: #854D0E; }
-        .status-crit { background: #FEE2E2; color: #991B1B; }
-
-        /* The "Shut Up" Button Effect */
-        .btn-print {
-          box-shadow: 4px 4px 0px #0038FF;
-          transition: all 0.1s;
-        }
-        .btn-print:active {
-          transform: translate(2px, 2px);
-          box-shadow: 2px 2px 0px #0038FF;
-        }
-
-        /* Sidebar Collapse */
-        .sidebar {
-          transition: width 0.3s ease;
-        }
-        .sidebar.collapsed {
-          width: 6rem;
-        }
-        .sidebar.collapsed .sidebar-text {
-          opacity: 0;
-          width: 0;
-          overflow: hidden;
-          white-space: nowrap;
-        }
-        .sidebar.collapsed .nav-item {
-          justify-content: center;
-          padding-left: 0;
-          padding-right: 0;
-        }
-        .sidebar.collapsed .nav-item svg {
-          margin: 0;
-        }
-      `}} />
-
       {/* SIDEBAR NAV */}
       <aside
         id="sidebar"
@@ -484,34 +467,41 @@ export default function DashboardV2() {
         </div>
 
         <nav className="flex-1 py-4 space-y-2">
-          <a
-            href="#"
+          <Link
+            href="/DashboardV2"
             className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold"
           >
             <Radar className="w-4 h-4" />
             <span className="sidebar-text">THE RADAR</span>
-          </a>
-          <a
-            href="/crew"
+          </Link>
+          <Link
+            href="/Crew"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
           >
             <Users className="w-4 h-4" />
             <span className="sidebar-text">THE CREW</span>
-          </a>
-          <a
+          </Link>
+          <Link
+            href="/calendar-demo"
+            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            <span className="sidebar-text">CALENDAR</span>
+          </Link>
+          <Link
             href="/vault"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
           >
             <FileCheck className="w-4 h-4" />
             <span className="sidebar-text">THE VAULT</span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/config"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
           >
             <Settings className="w-4 h-4" />
             <span className="sidebar-text">CONFIG</span>
-          </a>
+          </Link>
         </nav>
 
         {/* User Profile Section */}
@@ -535,7 +525,10 @@ export default function DashboardV2() {
 
         {/* Bottom Action */}
         <div className="p-4 border-t border-white/10">
-          <button className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs">
+          <button 
+            onClick={handleLogout}
+            className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs"
+          >
             <LogOut className="w-3 h-3" />
             <span className="sidebar-text">LOGOUT</span>
           </button>
@@ -547,7 +540,7 @@ export default function DashboardV2() {
         {/* HEADER: "The Radar" */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
-            <p className="font-mono text-[#0038FF] text-xs mb-1">/// SYSTEM OVERVIEW ///</p>
+            <p className="font-mono text-[#0038FF] text-xs mb-1">{`/// SYSTEM OVERVIEW ///`}</p>
             <h1 className="font-display text-4xl md:text-5xl font-bold uppercase">Compliance Radar</h1>
             <p className="font-mono text-gray-500 text-sm mt-2">
               Tracking {loading ? '...' : stats.totalEmployees} Technicians • {loading ? '...' : stats.activeCertifications + stats.expiredCertifications} Certifications
@@ -640,7 +633,7 @@ export default function DashboardV2() {
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white p-0 gap-0 rounded-none border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF]">
                   <DialogHeader className="p-6 border-b border-gray-100 bg-gray-50 sticky top-0 z-10 flex flex-row items-center justify-between">
                     <DialogTitle className="font-display text-2xl font-bold uppercase flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-[#0038FF]" /> Live Wire // All Systems
+                      <Zap className="w-5 h-5 text-[#0038FF]" /> Live Wire | All Systems
                     </DialogTitle>
                     <DialogClose className="text-gray-400 hover:text-[#050505] transition-colors">
                       <Plus className="w-6 h-6 rotate-45" />
@@ -814,24 +807,88 @@ export default function DashboardV2() {
               SUPPORTED: PDF, DOCX, JPG, PNG • MAX 4 FILES (20MB)
             </div>
 
-            {/* Recent Syncs */}
+            {/* Recent Activity Log */}
             <div className="mt-8">
-              <p className="font-mono text-xs text-gray-400 uppercase mb-4">/// RECENT SYNC LOG ///</p>
+              <p className="font-mono text-xs text-gray-400 uppercase mb-4">{`/// RECENT ACTIVITY ///`}</p>
               <div className="space-y-3">
-                <div className="flex items-start gap-3 text-sm">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5" />
-                  <div>
-                    <span className="font-bold">Roger D.</span> synced <span className="text-gray-500">EPA 608</span>
-                    <div className="text-xs text-gray-400 font-mono">10:42 AM</div>
+                {recentActivity.length === 0 ? (
+                  <div className="text-sm text-gray-400 font-mono">
+                    No recent activity.
                   </div>
-                </div>
-                <div className="flex items-start gap-3 text-sm">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5" />
-                  <div>
-                    <span className="font-bold">Admin</span> updated <span className="text-gray-500">Company Insurance</span>
-                    <div className="text-xs text-gray-400 font-mono">09:15 AM</div>
-                  </div>
-                </div>
+                ) : (
+                  recentActivity.map((activity) => {
+                    // Determine icon and color based on action type
+                    let icon = <Check className="w-4 h-4 text-green-500 mt-0.5" />;
+                    let actionText = 'performed action';
+                    
+                    switch (activity.action) {
+                      case 'send_notification':
+                        icon = <Send className="w-4 h-4 text-blue-500 mt-0.5" />;
+                        actionText = 'notified';
+                        break;
+                      case 'upload_certification':
+                        icon = <UploadCloud className="w-4 h-4 text-green-500 mt-0.5" />;
+                        actionText = 'uploaded';
+                        break;
+                      case 'update_certification':
+                        icon = <Pencil className="w-4 h-4 text-yellow-500 mt-0.5" />;
+                        actionText = 'updated';
+                        break;
+                      case 'create_employee':
+                        icon = <UserPlus className="w-4 h-4 text-green-500 mt-0.5" />;
+                        actionText = 'added';
+                        break;
+                      case 'delete_employee':
+                      case 'delete_certification':
+                        icon = <Trash2 className="w-4 h-4 text-red-500 mt-0.5" />;
+                        actionText = 'removed';
+                        break;
+                      case 'generate_report':
+                        icon = <Printer className="w-4 h-4 text-purple-500 mt-0.5" />;
+                        actionText = 'generated';
+                        break;
+                      default:
+                        icon = <Check className="w-4 h-4 text-green-500 mt-0.5" />;
+                    }
+
+                    // Format the message
+                    const employeeName = activity.details?.employee_name || 'Unknown';
+                    const certType = activity.details?.certification_type || activity.details?.file_name || '';
+                    
+                    // Format time
+                    const activityDate = new Date(activity.createdAt);
+                    const now = new Date();
+                    const diffMs = now.getTime() - activityDate.getTime();
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+                    
+                    let timeText = '';
+                    if (diffMins < 1) {
+                      timeText = 'Just now';
+                    } else if (diffMins < 60) {
+                      timeText = `${diffMins} min ago`;
+                    } else if (diffHours < 24) {
+                      timeText = `${diffHours} hr ago`;
+                    } else if (diffDays === 1) {
+                      timeText = 'Yesterday';
+                    } else {
+                      timeText = activityDate.toLocaleDateString();
+                    }
+
+                    return (
+                      <div key={activity.id} className="flex items-start gap-3 text-sm">
+                        {icon}
+                        <div>
+                          <span className="font-bold">{employeeName}</span>{' '}
+                          <span className="text-gray-600">{actionText}</span>{' '}
+                          {certType && <span className="text-gray-500">{certType}</span>}
+                          <div className="text-xs text-gray-400 font-mono">{timeText}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>

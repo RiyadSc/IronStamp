@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard } from "@/components/StatCard";
 import { ExpirationTable } from "@/components/ExpirationTable";
@@ -62,9 +62,9 @@ const Index = () => {
       hasLoadedRef.current = false;
       loadedUserRef.current = null;
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, loadDashboardData]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [dashboardStats, profileData] = await Promise.all([
@@ -89,10 +89,10 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Force refresh function (for manual refresh if needed)
-  const refreshDashboard = async () => {
+  const _refreshDashboard = async () => {
     hasLoadedRef.current = false;
     await loadDashboardData();
   };
@@ -163,7 +163,7 @@ const Index = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text truncate">
                 Dashboard
               </h1>
-              <p className="text-gray-600 mt-1 text-xs sm:text-sm font-medium">Overview of your team's certification status</p>
+              <p className="text-gray-600 mt-1 text-xs sm:text-sm font-medium">Overview of your team&apos;s certification status</p>
             </div>
             
             {/* User Profile Dropdown */}

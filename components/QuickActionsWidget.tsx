@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Users, Mail, AlertTriangle, Download, Loader2 } from '@/lib/icons';
+import { Plus, Users, Mail, AlertTriangle, Download, Loader2 } from '@/lib/icons';
 import { AddCertificationModal } from './AddCertificationModal';
 import { AddTeamMemberModal } from './AddTeamMemberModal';
 import { 
@@ -487,7 +487,7 @@ export const QuickActionsWidget: React.FC = () => {
               Export Reports
             </DialogTitle>
             <DialogDescription>
-              Download reports and data for your team's certifications.
+              Download reports and data for your team&apos;s certifications.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

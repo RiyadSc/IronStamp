@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Bell, Clock, Mail, AlertTriangle, CheckCircle, Users, X, ShieldAlert, Send, Calendar } from "lucide-react";
+import { Bell, Clock, AlertTriangle, Users, ShieldAlert, Send } from "lucide-react";
 import { CertificationDetails } from "@/lib/data-service";
 import { apiRequest } from "@/lib/csrf-client";
-import { formatDateToAmerican, formatDateTimeToAmerican } from "@/lib/utils";
+import { formatDateToAmerican } from "@/lib/utils";
 
 interface NotifyCertificationModalProps {
   isOpen: boolean;
@@ -74,8 +71,6 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
     const daysText = Math.abs(cert.daysLeft) === 1 ? "day" : "days";
     const isExpired = cert.daysLeft < 0;
     
-    const header = `Subject: IMMEDIATE ACTION REQUIRED: ${cert.type} Certification Status\n\n`;
-    
     let body = "";
     
     if (action === "stop_work") {
@@ -113,7 +108,7 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
     }));
   };
 
-  const handleManagerToggle = (managerEmail: string) => {
+  const _handleManagerToggle = (managerEmail: string) => {
     setFormData(prev => ({
       ...prev,
       selectedManagers: prev.selectedManagers.includes(managerEmail)
@@ -180,10 +175,10 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
           <div>
             <DialogTitle className="font-display text-2xl font-bold uppercase flex items-center gap-2 text-[#050505]">
               <Bell className="h-6 w-6 text-[#0038FF]" />
-              Dispatcher // Notify Tech
+              Dispatcher {/* Notify Tech */}
             </DialogTitle>
             <DialogDescription className="font-mono text-xs text-gray-500 mt-1">
-              SYS.MSG.ID: {Math.floor(Math.random() * 10000).toString().padStart(4, '0')} // COMPLIANCE ENFORCEMENT
+              SYS.MSG.ID: {Math.floor(Math.random() * 10000).toString().padStart(4, '0')} {/* COMPLIANCE ENFORCEMENT */}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -212,7 +207,7 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
 
               {/* Tech Details */}
               <div>
-                <p className="font-mono text-[10px] uppercase text-gray-500 mb-2">/// TECHNICIAN DETAILS</p>
+                <p className="font-mono text-[10px] uppercase text-gray-500 mb-2">{`/// TECHNICIAN DETAILS`}</p>
                 <div className="bg-white p-3 border border-gray-200 shadow-sm">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-8 bg-[#050505] text-white flex items-center justify-center font-mono text-xs font-bold">
@@ -250,7 +245,7 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
               <div className="space-y-6">
                 {/* Quick Actions */}
                 <div>
-                  <Label className="font-mono text-xs uppercase text-gray-500 mb-3 block">/// SELECT ACTION PROTOCOL</Label>
+                  <Label className="font-mono text-xs uppercase text-gray-500 mb-3 block">{`/// SELECT ACTION PROTOCOL`}</Label>
                   <div className="grid grid-cols-3 gap-3">
                     <button
                       onClick={() => handleInputChange('actionRequired', 'renew')}
@@ -279,8 +274,8 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
                 {/* Message Editor */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Label htmlFor="customMessage" className="font-mono text-xs uppercase text-gray-500">/// TRANSMISSION CONTENT</Label>
-                    <span className="text-[10px] text-gray-400 font-mono">ENCRYPTED // LOGGED</span>
+                    <Label htmlFor="customMessage" className="font-mono text-xs uppercase text-gray-500">{`/// TRANSMISSION CONTENT`}</Label>
+                    <span className="text-[10px] text-gray-400 font-mono">ENCRYPTED | LOGGED</span>
                   </div>
                   <Textarea
                     id="customMessage"
@@ -291,29 +286,16 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
                 </div>
 
                 {/* Delivery Settings */}
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-                  <div>
-                    <Label className="font-mono text-xs uppercase text-gray-500 mb-2 block">TIMING</Label>
-                    <Select value={formData.timing} onValueChange={(value: "now" | "scheduled") => handleInputChange('timing', value)}>
-                      <SelectTrigger className="font-mono text-xs h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="now">IMMEDIATE</SelectItem>
-                        <SelectItem value="scheduled">SCHEDULED</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="font-mono text-xs uppercase text-gray-500 mb-2 block">CC: MANAGEMENT</Label>
-                    <div className="flex items-center h-9 px-3 border border-gray-200 bg-gray-50">
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-xs uppercase text-gray-500">CC: MANAGEMENT</Label>
+                    <div className="flex items-center gap-2">
                       <Switch
                         id="includeManager"
                         checked={formData.includeManager}
                         onCheckedChange={(checked) => handleInputChange('includeManager', checked)}
-                        className="scale-75 mr-2"
                       />
-                      <span className="font-mono text-xs text-gray-600">{formData.includeManager ? 'ENABLED' : 'DISABLED'}</span>
+                      <span className="font-mono text-xs text-gray-600 font-bold">{formData.includeManager ? 'ENABLED' : 'DISABLED'}</span>
                     </div>
                   </div>
                 </div>
@@ -337,7 +319,7 @@ export const NotifyCertificationModal: React.FC<NotifyCertificationModalProps> =
             >
               {loading ? (
                 <>
-                  <span className="animate-pulse mr-2">///</span> TRANSMITTING...
+                  <span className="animate-pulse mr-2">{'//'}</span> TRANSMITTING...
                 </>
               ) : (
                 <>

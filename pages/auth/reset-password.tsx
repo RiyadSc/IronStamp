@@ -80,7 +80,7 @@ export default function ResetPassword() {
           
           <div className="space-y-1">
             <h1 className="text-xl font-semibold text-gray-900">Password Updated!</h1>
-            <p className="text-sm text-gray-600">Your password has been successfully updated. You'll be redirected to the sign in page shortly.</p>
+            <p className="text-sm text-gray-600">Your password has been successfully updated. You&apos;ll be redirected to the sign in page shortly.</p>
           </div>
           
           <Link href="/auth/signin">

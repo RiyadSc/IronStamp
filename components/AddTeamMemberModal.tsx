@@ -65,7 +65,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
       }
 
       // Insert team member into the correct employees table
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('employees')
         .insert([
           {

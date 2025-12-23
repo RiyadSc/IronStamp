@@ -14,9 +14,10 @@ interface NotificationData {
   daysUntilExpiry: number;
   companyName: string;
   userId: string;
+  customMessage?: string;
 }
 
-export type NotificationType = '60_days' | '30_days' | '14_days' | '7_days' | 'expired';
+export type NotificationType = '60_days' | '30_days' | '14_days' | '7_days' | 'expired' | 'renewal' | 'custom';
 
 export class NotificationService {
   
@@ -39,12 +40,17 @@ export class NotificationService {
 
       // Get email template
       console.log('Getting email template...');
-      const template = getEmailTemplate(type, {
+      // Cast type to match getEmailTemplate signature if needed, or update getEmailTemplate to accept all NotificationTypes
+      // For now, we'll map 'renewal' to a default or handle it in getEmailTemplate
+      const templateType = (type === 'renewal' ? '30_days' : type) as any;
+      
+      const template = getEmailTemplate(templateType, {
         employeeName: data.employeeName,
         certificationName: data.certificationName,
         expirationDate: data.expirationDate,
         daysUntilExpiry: data.daysUntilExpiry,
         companyName: data.companyName,
+        customMessage: data.customMessage
       });
       console.log('Email template created:', { subject: template.subject, htmlLength: template.html.length });
 
@@ -127,7 +133,18 @@ export class NotificationService {
     try {
       const { error } = await supabase
         .from('notification_logs')
-        .insert([log]);
+        .insert([{
+          user_id: log.userId,
+          employee_id: log.employeeId,
+          certification_id: log.certificationId,
+          notification_type: log.notificationType,
+          channel: log.channel,
+          recipient: log.recipient,
+          message_id: log.messageId,
+          status: log.status,
+          error_message: log.errorMessage,
+          sent_at: log.sentAt
+        }]);
 
       if (error) {
         console.error('Failed to log notification:', error);

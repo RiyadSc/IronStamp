@@ -1,7 +1,7 @@
 // component.tsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
 import { getUserCertifications } from '@/lib/certification-service';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ interface DayProps {
 const Day: React.FC<DayProps> = ({ classNames, day, onHover }) => {
   const [isHovered, setIsHovered] = useState(false);
   
-  const getPriorityColor = (priority: string) => {
+  const _getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-500';
       case 'medium': return 'bg-yellow-500';
@@ -62,8 +62,8 @@ const Day: React.FC<DayProps> = ({ classNames, day, onHover }) => {
     }).length;
   };
 
-  const expiringSoonCount = getExpiringSoonCount();
-  const expiredCount = getExpiredCount();
+  const _expiringSoonCount = getExpiringSoonCount();
+  const _expiredCount = getExpiredCount();
   const totalCount = day.certifications?.length || 0;
 
   return (
@@ -219,7 +219,7 @@ const CalendarGrid: React.FC<{
 const InteractiveCalendar = React.forwardRef<
   HTMLDivElement,
   HTMLMotionProps<'div'>
->(({ className, ...props }, ref) => {
+>(({ className: _className, ...props }, ref) => {
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [certifications, setCertifications] = useState<CertificationType[]>([]);
@@ -423,6 +423,25 @@ const InteractiveCalendar = React.forwardRef<
               currentDate={currentDate}
               certifications={certifications}
             />
+            
+            {/* Legend */}
+            <div className="mt-6 bg-white border border-gray-200 p-4 rounded-lg">
+              <p className="font-mono text-xs text-gray-500 uppercase mb-3">{`/// Legend ///`}</p>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500" />
+                  <span className="font-mono text-xs text-gray-700">Expired / Critical</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500" />
+                  <span className="font-mono text-xs text-gray-700">Expiring Soon (30 days)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500" />
+                  <span className="font-mono text-xs text-gray-700">Valid / Compliant</span>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
         

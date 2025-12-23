@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, AlertCircle, CheckCircle, Clock, TrendingUp } from '@/lib/icons';
+import { Shield, AlertCircle, CheckCircle, Clock } from '@/lib/icons';
 import { getAllCertifications, getTeamMembersWithCerts, type CertificationDetails, type TeamMember } from '@/lib/data-service';
 
 interface ComplianceCategory {

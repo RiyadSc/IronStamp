@@ -4,10 +4,56 @@ interface TemplateData {
   expirationDate: string;
   daysUntilExpiry: number;
   companyName: string;
+  customMessage?: string;
 }
 
 export const getEmailTemplate = (type: '60_days' | '30_days' | '14_days' | '7_days' | 'expired', data: TemplateData) => {
-  const { employeeName, certificationName, expirationDate, daysUntilExpiry, companyName } = data;
+  const { employeeName, certificationName, expirationDate, daysUntilExpiry, companyName, customMessage } = data;
+
+  // If a custom message is provided, wrap it in the standard template structure
+  if (customMessage) {
+    // Detect subject from custom message if it starts with "Subject:"
+    let subject = `Important Notification: ${certificationName}`;
+    let messageBody = customMessage;
+    
+    if (customMessage.startsWith('Subject:')) {
+      const parts = customMessage.split('\n\n');
+      if (parts.length > 0) {
+        subject = parts[0].replace('Subject:', '').trim();
+        messageBody = parts.slice(1).join('\n\n');
+      }
+    }
+
+    return {
+      subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+          <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #1e40af; margin: 0; font-size: 24px;">Certification Notice</h1>
+            </div>
+            
+            <p style="color: #374151; font-size: 16px; line-height: 1.5;">Dear ${employeeName},</p>
+            
+            <div style="color: #374151; font-size: 16px; line-height: 1.5; white-space: pre-line;">
+              ${messageBody}
+            </div>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 6px; margin: 20px 0;">
+              <p style="color: #4b5563; font-weight: bold; margin: 0;">Certification Details:</p>
+              <p style="color: #4b5563; margin: 5px 0 0 0;">${certificationName}</p>
+              <p style="color: #4b5563; margin: 5px 0 0 0;">Expires: ${expirationDate}</p>
+            </div>
+            
+            <p style="color: #374151; font-size: 14px; line-height: 1.5; margin-top: 30px;">
+              Best regards,<br>
+              ${companyName} Compliance Team
+            </p>
+          </div>
+        </div>
+      `
+    };
+  }
 
   const templates = {
     '60_days': {

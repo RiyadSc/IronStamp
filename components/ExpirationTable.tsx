@@ -85,7 +85,7 @@ export const ExpirationTable: React.FC = () => {
     console.log('Notification sent successfully from ExpirationTable');
   };
 
-  const getStatusBadge = (status: string, daysLeft: number) => {
+  const getStatusBadge = (status: string, _daysLeft: number) => {
     switch (status) {
       case 'critical':
         return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Critical</Badge>;

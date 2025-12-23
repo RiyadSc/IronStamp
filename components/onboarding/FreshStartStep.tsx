@@ -218,7 +218,7 @@ export function FreshStartStep({ onComplete, onBack, onSkip }: FreshStartStepPro
                 <div>
                   <h4 className="font-semibold text-blue-900 text-sm sm:text-base">This is just a preview!</h4>
                   <p className="text-xs sm:text-sm text-blue-800 mt-1">
-                    This sample data shows you what your dashboard will look like once you start adding your team's real certifications. 
+                    This sample data shows you what your dashboard will look like once you start adding your team&apos;s real certifications. 
                     You can begin with your first certification or explore the dashboard first.
                   </p>
                 </div>

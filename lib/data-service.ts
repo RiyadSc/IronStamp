@@ -131,6 +131,20 @@ export interface UserProfile {
   userEmail: string | null
 }
 
+export interface ActivityLog {
+  id: string
+  action: string
+  details: {
+    employee_name?: string
+    certification_type?: string
+    certification_id?: string
+    file_name?: string
+    notification_type?: string
+    [key: string]: any
+  }
+  createdAt: string
+}
+
 // Calculate days between dates
 const calculateDaysBetween = (date1: string, date2?: string): number => {
   const targetDate = new Date(date1)
@@ -223,7 +237,7 @@ export async function getDashboardStats(userId?: string): Promise<DashboardStats
 }
 
 // Get expiring certifications for dashboard table
-export async function getExpiringCertifications(limit: number = 10, userId?: string): Promise<ExpirationItem[]> {
+export async function getExpiringCertifications(_limit: number = 10, userId?: string): Promise<ExpirationItem[]> {
   try {
     let user: any = null;
     
@@ -603,7 +617,7 @@ export async function getPriorityActions(userId?: string): Promise<PriorityItem[
       return []
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const _today = new Date().toISOString().split('T')[0]
     const thirtyDaysFromNow = new Date()
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
 
@@ -940,5 +954,72 @@ export async function getUserProfile(): Promise<UserProfile> {
       onboardingCompleted: false,
       userEmail: null
     }
+  }
+}
+
+// Get recent activity logs for dashboard
+export async function getRecentActivity(limit: number = 5): Promise<ActivityLog[]> {
+  try {
+    const user = await getCurrentUser()
+    
+    if (!user) {
+      return []
+    }
+
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .select('id, action, details, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      console.error('Error fetching activity logs:', error)
+      return []
+    }
+
+    return (data || []).map(log => ({
+      id: log.id,
+      action: log.action,
+      details: log.details || {},
+      createdAt: log.created_at
+    }))
+
+  } catch (error) {
+    console.error('Error getting recent activity:', error)
+    return []
+  }
+}
+
+// Log an activity (helper function for client-side logging)
+export async function logActivity(
+  action: string, 
+  details: Record<string, any>
+): Promise<boolean> {
+  try {
+    const user = await getCurrentUser()
+    
+    if (!user) {
+      return false
+    }
+
+    const { error } = await supabase
+      .from('activity_logs')
+      .insert({
+        user_id: user.id,
+        action,
+        details,
+        created_at: new Date().toISOString()
+      })
+
+    if (error) {
+      console.error('Error logging activity:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in logActivity:', error)
+    return false
   }
 } 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertTriangle, Clock, User, X } from '@/lib/icons';
+import { AlertTriangle, Clock, User } from '@/lib/icons';
 import { getPriorityActions, type PriorityItem } from '@/lib/data-service';
 import { useAuth } from '@/hooks/useAuth';
 import { NotifyPriorityActionModal } from './NotifyPriorityActionModal';
@@ -59,7 +59,7 @@ export const PriorityWidget: React.FC = () => {
   };
 
   // Force refresh function (for when certifications change priority levels)
-  const refreshPriorityData = async () => {
+  const _refreshPriorityData = async () => {
     hasLoadedRef.current = false;
     await loadPriorityData();
   };

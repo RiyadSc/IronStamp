@@ -14,7 +14,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout
+    let _timeoutId: NodeJS.Timeout
 
     // Set a timeout to prevent infinite loading
     const callbackTimeout = setTimeout(() => {

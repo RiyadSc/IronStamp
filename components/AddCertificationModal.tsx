@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, FileText, AlertCircle, CheckCircle, X, Loader2, Circle, Trash2 } from '@/lib/icons';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Trash2 } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { uploadCertification } from '../lib/certification-service';
 import { trackCertificationAction } from '@/lib/posthog';
@@ -51,7 +51,9 @@ const ACCEPTED_TYPES = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
   'text/csv': ['.csv'],
   'application/vnd.ms-excel': ['.xls'],
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png']
 };
 
 export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
@@ -145,7 +147,7 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
     validFiles.forEach((file) => {
       simulateFileStaging(file.id);
     });
-  }, [stagedFiles.length, onError]);
+  }, [stagedFiles.length, onError, simulateFileStaging]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -351,7 +353,7 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Supported formats:</strong> PDF, DOC, DOCX, CSV, XLS, XLSX<br />
+              <strong>Supported formats:</strong> PDF, DOC, DOCX, CSV, XLS, XLSX, JPEG, JPG, PNG<br />
               <strong>Maximum:</strong> {MAX_FILES} files, 20MB each
             </AlertDescription>
           </Alert>

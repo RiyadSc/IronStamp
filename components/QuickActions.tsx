@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Users, Mail, Download } from '@/lib/icons';
+import { Plus, Users, Mail, Download } from '@/lib/icons';
 import { AddCertificationModal } from './AddCertificationModal';
 
 export const QuickActions: React.FC = () => {

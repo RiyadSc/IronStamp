@@ -1,4 +1,4 @@
-import { Save, User, Bell, Shield, CreditCard, Building, Mail } from "@/lib/icons";
+import { Save, User, Bell, Shield, CreditCard, Building } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +38,7 @@ const Settings = () => {
     };
 
     loadProfile();
-  }, [user, authLoading]);
+  }, [user, authLoading, toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 flex">

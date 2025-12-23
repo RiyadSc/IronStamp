@@ -74,7 +74,7 @@ export async function uploadCertification(file: File): Promise<UploadResult> {
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorData.message || 'Upload failed';
-      } catch (jsonError) {
+      } catch {
         // If response isn't valid JSON, provide a meaningful error based on status code
         switch (response.status) {
           case 413:

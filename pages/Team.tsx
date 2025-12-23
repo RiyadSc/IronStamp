@@ -1,9 +1,9 @@
 import { Search, Plus, Mail, Phone, Filter, MoreHorizontal, Edit, Eye, Archive, Trash2, LogOut, User, ChevronDown } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sidebar } from "@/components/Sidebar";
 
 import { AddTeamMemberModal } from "@/components/AddTeamMemberModal";
@@ -24,10 +24,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/lib/supabase";
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getTeamMembersWithCerts, type TeamMember, getEmployeeCertificationSummary, type CertificationDetails, type EmployeeCertificationSummary, deleteTeamMember, archiveTeamMember, restoreTeamMember, getUserProfile, type UserProfile } from "@/lib/data-service";
+import { getTeamMembersWithCerts, type TeamMember, getEmployeeCertificationSummary, type CertificationDetails, deleteTeamMember, archiveTeamMember, restoreTeamMember, getUserProfile, type UserProfile } from "@/lib/data-service";
 import { useAuth } from "@/hooks/useAuth";
 
 // Use TeamMember interface from data-service.ts
@@ -76,7 +75,7 @@ const Team = () => {
   const loadedUserRef = useRef<string | null>(null);
   const hasLoadedRef = useRef(false);
 
-  const fetchTeamMembers = async () => {
+  const fetchTeamMembers = useCallback(async () => {
     try {
       setLoading(true);
       const [teamData, profileData] = await Promise.all([
@@ -97,7 +96,7 @@ const Team = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     // Only load data if:
@@ -121,7 +120,7 @@ const Team = () => {
       hasLoadedRef.current = false;
       loadedUserRef.current = null;
     }
-  }, [user]);
+  }, [user, fetchTeamMembers]);
 
   // Force refresh function (for when team members are actually added/updated)
   const refreshTeamMembers = async () => {

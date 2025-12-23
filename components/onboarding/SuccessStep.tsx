@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { ChevronRight, CheckCircle, Users, FileText, Bell, Trophy } from '@/lib/icons'
+import { ChevronRight, CheckCircle, Users, FileText, Bell } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,7 @@ interface OnboardingSummary {
 }
 
 export function SuccessStep({ onComplete }: SuccessStepProps) {
-  const router = useRouter()
+  const _router = useRouter()
   const { user } = useAuth()
   const [summary, setSummary] = useState<OnboardingSummary>({
     employeesImported: 0,
@@ -214,7 +214,7 @@ export function SuccessStep({ onComplete }: SuccessStepProps) {
         {/* Achievement Summary */}
         <Card className="bg-gradient-to-r from-emerald-50 to-blue-50 border-0 shadow-lg">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">What You've Accomplished</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">What You&apos;ve Accomplished</h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />

@@ -11,7 +11,7 @@ interface FileUploadStepProps {
   onSkip: () => void
 }
 
-export function FileUploadStep({ onComplete, onBack, onSkip }: FileUploadStepProps) {
+export function FileUploadStep({ onComplete, onBack, onSkip: _onSkip }: FileUploadStepProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)

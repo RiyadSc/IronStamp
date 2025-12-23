@@ -151,3 +151,170 @@
     opacity: 0;
   }
 }
+
+/* ============================================
+   IRONSTAMP SHARED STYLES
+   Used by: DashboardV2, Crew, calendar-demo, etc.
+   ============================================ */
+
+/* Font families using next/font CSS variables */
+.font-mono {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.font-display {
+  font-family: var(--font-oswald), 'Oswald', sans-serif;
+}
+
+/* Technical grid background pattern */
+.bg-tech-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 56, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 56, 255, 0.05) 1px, transparent 1px);
+}
+
+/* Technical border with corner accent */
+.border-tech {
+  border: 1px solid #E2E8F0;
+  position: relative;
+}
+
+.border-tech::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid #0038FF;
+  border-left: 2px solid #0038FF;
+}
+
+/* Status badge styles */
+.status-badge {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.status-ok {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.status-warn {
+  background: #FEF9C3;
+  color: #854D0E;
+}
+
+.status-crit {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+/* IronStamp button effect */
+.btn-ironstamp {
+  box-shadow: 4px 4px 0px #0038FF;
+  transition: all 0.1s;
+}
+
+.btn-ironstamp:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #0038FF;
+}
+
+/* Collapsible sidebar */
+.sidebar {
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 6rem;
+}
+
+.sidebar.collapsed .sidebar-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar.collapsed .nav-item svg {
+  margin: 0;
+}
+
+/* Slide-in animation for auth pages */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.3s ease-out forwards;
+}
+
+/* ============================================
+   IRONSTAMP LANDING PAGE STYLES
+   ============================================ */
+
+/* Blueprint design system colors (as CSS vars) */
+:root {
+  --blueprint-blue: #0038FF;
+  --blueprint-dark: #001F8C;
+  --paper-white: #F0F4F8;
+  --ink-black: #050505;
+}
+
+/* Typewriter Cursor Effect */
+.cursor::after {
+  content: '_';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Rough Underline */
+.underline-rough {
+  position: relative;
+  display: inline-block;
+}
+
+.underline-rough::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 100%;
+  height: 4px;
+  background-color: #0038FF;
+  transform: skew(-15deg);
+}
+
+/* Scroll Reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease-out;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}

@@ -39,7 +39,7 @@ export async function checkSessionHealth(): Promise<SessionRecoveryStatus> {
     }
 
     // Check if we can access user data
-    const { count, error: dataError } = await supabase
+    const { count: _count, error: dataError } = await supabase
       .from('certifications')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', session.user.id)

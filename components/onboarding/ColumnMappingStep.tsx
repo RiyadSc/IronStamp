@@ -211,7 +211,7 @@ export function ColumnMappingStep({ fileData, onComplete, onBack }: ColumnMappin
                     <div className="font-medium text-gray-900">{mapping.csvColumn}</div>
                     {fileData.preview[0] && (
                       <div className="text-xs text-gray-500 mt-1">
-                        e.g. "{fileData.preview[0][mapping.csvColumn]}"
+                        e.g. &quot;{fileData.preview[0][mapping.csvColumn]}&quot;
                       </div>
                     )}
                   </div>

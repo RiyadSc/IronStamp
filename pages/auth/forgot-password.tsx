@@ -54,12 +54,12 @@ export default function ForgotPassword() {
             {!sent ? (
               <>
                 <h1 className="text-xl font-semibold text-gray-900">Forgot your password?</h1>
-                <p className="text-sm text-gray-600">Enter your email address and we'll send you a link to reset your password.</p>
+                <p className="text-sm text-gray-600">Enter your email address and we&apos;ll send you a link to reset your password.</p>
               </>
             ) : (
               <>
                 <h1 className="text-xl font-semibold text-gray-900">Check your email</h1>
-                <p className="text-sm text-gray-600">We've sent a password reset link to your email address.</p>
+                <p className="text-sm text-gray-600">We&apos;ve sent a password reset link to your email address.</p>
               </>
             )}
           </div>
@@ -93,7 +93,7 @@ export default function ForgotPassword() {
         ) : (
           <div className="space-y-3">
             <div className="text-center text-xs text-gray-600">
-              Didn't receive the email? Check your spam folder or{' '}
+              Didn&apos;t receive the email? Check your spam folder or{' '}
               <button
                 onClick={() => setSent(false)}
                 className="text-gray-900 hover:underline"

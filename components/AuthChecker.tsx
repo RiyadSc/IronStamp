@@ -10,7 +10,7 @@ interface AuthCheckerProps {
 }
 
 export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
-  const { user, session, loading, error, forceRefresh, isSessionValid } = useAuth()
+  const { user: _user, session: _session, loading, error, forceRefresh, isSessionValid } = useAuth()
   const [showAuthError, setShowAuthError] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [timeoutReached, setTimeoutReached] = useState(false)
@@ -29,13 +29,23 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
   }, [loading])
 
   useEffect(() => {
+    // Check if this is an intentional logout - if so, redirect instead of showing error
+    const isIntentionalLogout = sessionStorage.getItem('intentional_logout') === 'true'
+    
+    if (isIntentionalLogout) {
+      // Clear the flag and redirect to landing page
+      sessionStorage.removeItem('intentional_logout')
+      router.push('/')
+      return
+    }
+    
     // Show auth error if we have an error or no valid session after loading
     if (!loading && (!isSessionValid || error)) {
       setShowAuthError(true)
     } else {
       setShowAuthError(false)
     }
-  }, [loading, isSessionValid, error])
+  }, [loading, isSessionValid, error, router])
 
   const handleRefresh = async () => {
     setRefreshing(true)

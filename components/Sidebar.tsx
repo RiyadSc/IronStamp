@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Home, Users, FileText, Settings, CreditCard, Menu, ChevronLeft, Calendar } from '@/lib/icons';
+import { Home, Users, FileText, Settings, Menu, ChevronLeft, Calendar } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

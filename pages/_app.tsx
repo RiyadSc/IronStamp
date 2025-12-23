@@ -12,6 +12,23 @@ import { useEffect } from 'react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 
+// Self-hosted fonts via next/font (eliminates render-blocking @import)
+import { JetBrains_Mono, Oswald } from 'next/font/google'
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+})
+
+const oswald = Oswald({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-oswald',
+  display: 'swap',
+})
+
 const queryClient = new QueryClient()
 
 
@@ -65,10 +82,12 @@ export default function App({ Component, pageProps }: AppProps) {
   const AppContent = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <div className={`${jetbrainsMono.variable} ${oswald.variable}`}>
         <Toaster />
         <Sonner />
         <Component {...pageProps} />
         <Analytics />
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   )

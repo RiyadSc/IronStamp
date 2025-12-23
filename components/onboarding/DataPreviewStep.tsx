@@ -243,7 +243,7 @@ export function DataPreviewStep({ fileData, mappings, onComplete, onBack }: Data
                               {error.field} - {error.error}
                             </span>
                             <span className="text-gray-500 ml-2">
-                              (value: "{error.value}")
+                              (value: &quot;{error.value}&quot;)
                             </span>
                           </div>
                         ))}

@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import PricingBase from '@/components/ui/pricing-base';
-import { ArrowDown, ShieldAlert, Radar, FileCheck, Printer, CheckCircle, Plus, Minus, Menu, X } from 'lucide-react';
+import { ArrowDown, ShieldAlert, Radar, FileCheck, Printer, Menu, X } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -38,62 +37,6 @@ export default function LandingPageV2() {
 
   return (
     <div className="font-mono bg-[#F0F4F8] text-[#050505] selection:bg-[#0038FF] selection:text-white overflow-x-hidden min-h-screen">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Oswald:wght@400;500;700&display=swap');
-
-        :root {
-          --blueprint-blue: #0038FF;
-          --blueprint-dark: #001F8C;
-          --paper-white: #F0F4F8;
-          --ink-black: #050505;
-        }
-
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .font-display { font-family: 'Oswald', sans-serif; }
-
-        /* Technical Grid Background */
-        .bg-tech-grid {
-            background-size: 40px 40px;
-            background-image: 
-                linear-gradient(to right, rgba(0, 56, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 56, 255, 0.05) 1px, transparent 1px);
-        }
-
-        /* Typewriter Cursor Effect */
-        .cursor::after {
-            content: '_';
-            animation: blink 1s infinite;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* Rough Underline */
-        .underline-rough {
-            position: relative;
-            display: inline-block;
-        }
-        .underline-rough::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: -5px;
-            width: 100%;
-            height: 4px;
-            background-color: #0038FF;
-            transform: skew(-15deg);
-        }
-
-        /* Scroll Reveal */
-        .reveal {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.8s ease-out;
-        }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-      `}} />
-
       {/* NAV */}
       <nav className="fixed w-full z-40 top-0 left-0 px-6 py-4 md:px-10 md:py-6 backdrop-blur-md bg-[#F0F4F8]/80 border-b border-[#0038FF]/10">
         <div className="flex justify-between items-center">
@@ -206,7 +149,7 @@ export default function LandingPageV2() {
         <div className="absolute right-1/4 top-0 h-1/3 w-px bg-[#0038FF]/20"></div>
 
         <div className="max-w-5xl z-10">
-          <p className="text-[#0038FF] font-bold mb-4 tracking-widest uppercase">/// CRITICAL SYSTEM ALERT ///</p>
+          <p className="text-[#0038FF] font-bold mb-4 tracking-widest uppercase">{`/// CRITICAL SYSTEM ALERT ///`}</p>
 
           <h1 className="font-display text-6xl md:text-[8rem] leading-[0.9] text-[#050505] font-bold mb-8 uppercase">
             Your Best Tech <br />
@@ -217,12 +160,12 @@ export default function LandingPageV2() {
           <div className="bg-black text-white p-6 md:p-10 max-w-2xl shadow-[10px_10px_0px_#0038FF] transform -rotate-1">
             <p className="text-xl md:text-3xl font-display uppercase leading-tight">
               ...WITH AN EXPIRED LICENSE. <br />
-              <span className="text-[#0038FF]">AND YOU DON'T EVEN KNOW IT.</span>
+              <span className="text-[#0038FF]">AND YOU DON&apos;T EVEN KNOW IT.</span>
             </p>
           </div>
 
           <p className="mt-12 max-w-xl text-lg text-gray-600 leading-relaxed">
-            <span className="font-bold text-black">Real talk:</span> You're running a business, not a filing cabinet. But the state of Massachusetts doesn't care. One surprise inspection, one expired EPA card, and you're looking at fines that wipe out your profit margin for the month.
+            <span className="font-bold text-black">Real talk:</span> You&apos;re running a business, not a filing cabinet. But the state of Massachusetts doesn&apos;t care. One surprise inspection, one expired EPA card, and you&apos;re looking at fines that wipe out your profit margin for the month.
           </p>
 
           <div className="mt-10 mb-16 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
@@ -252,16 +195,16 @@ export default function LandingPageV2() {
           <div className="grid md:grid-cols-2 gap-12 items-start">
             <div className="space-y-6 text-lg text-gray-800 reveal" ref={addToRefs}>
               <p>
-                It's 3:30 PM. You're trying to wrap up payroll. Your phone rings. It's Mike. He's on the big commercial install downtown.
+                It&apos;s 3:30 PM. You&apos;re trying to wrap up payroll. Your phone rings. It&apos;s Mike. He&apos;s on the big commercial install downtown.
               </p>
               <p className="font-bold pl-4 border-l-4 border-red-500">
-                "Boss, the GC is asking for my OSHA 30 card. I think I left it in the other truck... or maybe it expired last month? I don't know."
+                &quot;Boss, the GC is asking for my OSHA 30 card. I think I left it in the other truck... or maybe it expired last month? I don&apos;t know.&quot;
               </p>
               <p>
                 Your stomach drops. If he gets kicked off the site, you lose the schedule. If the inspector writes it up, you lose the money.
               </p>
               <p>
-                You start digging through Google Drive folders named "New Folder (2)" and text message screenshots. <span className="bg-yellow-300 px-1">It's a mess.</span> And you know it.
+                You start digging through Google Drive folders named &quot;New Folder (2)&quot; and text message screenshots. <span className="bg-yellow-300 px-1">It&apos;s a mess.</span> And you know it.
               </p>
             </div>
 
@@ -282,12 +225,12 @@ export default function LandingPageV2() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-white/20 pb-8 reveal" ref={addToRefs}>
             <div>
-              <p className="text-[#0038FF] font-mono mb-2">/// SYSTEM REBOOT ///</p>
+              <p className="text-[#0038FF] font-mono mb-2">{`/// SYSTEM REBOOT ///`}</p>
               <h2 className="font-display text-5xl md:text-7xl uppercase">We Tighten <br /> The Ship.</h2>
             </div>
             <div className="text-right mt-8 md:mt-0">
               <p className="text-xl md:text-2xl max-w-md text-gray-300">
-                IronStamp is the automated compliance officer you can't afford to hire.
+                IronStamp is the automated compliance officer you can&apos;t afford to hire.
               </p>
             </div>
           </div>
@@ -320,7 +263,7 @@ export default function LandingPageV2() {
               <div className="mb-6 p-4 bg-[#0038FF]/20 w-fit rounded group-hover:bg-[#0038FF] group-hover:text-white transition-colors">
                 <Printer className="w-8 h-8" />
               </div>
-              <h3 className="font-display text-2xl font-bold mb-4 uppercase">The "Shut Up" Button</h3>
+              <h3 className="font-display text-2xl font-bold mb-4 uppercase">The &quot;Shut Up&quot; Button</h3>
               <p className="font-mono text-sm opacity-80">
                 Inspector giving you grief? Hit one button. Generate a full PDF compliance report for the entire crew. Hand it over. Watch them leave.
               </p>
@@ -335,21 +278,16 @@ export default function LandingPageV2() {
 
         <div className="max-w-6xl mx-auto text-center mb-16 relative z-10 reveal" ref={addToRefs}>
           <h2 className="font-display text-4xl md:text-6xl uppercase mb-4">The Compliance Radar</h2>
-          <p className="font-mono text-gray-600">Real-time visibility into your team's certification status.</p>
+          <p className="font-mono text-gray-600">Real-time visibility into your team&apos;s certification status.</p>
         </div>
 
         {/* Dashboard Image */}
         <div className="relative z-10 max-w-6xl mx-auto reveal" ref={addToRefs}>
-          <div className="relative w-full rounded-lg shadow-[20px_20px_0px_#0038FF] border-2 border-[#050505] overflow-hidden">
-            <Image 
-              src="/Dashboardv2.png" 
-              alt="IronStamp Dashboard - Compliance Management Interface" 
-              width={1920}
-              height={1080}
-              className="w-full h-auto"
-              priority
-            />
-          </div>
+          <img 
+            src="/Dashboardv2.png" 
+            alt="IronStamp Dashboard - Compliance Management Interface" 
+            className="w-full h-auto rounded-lg shadow-[20px_20px_0px_#0038FF] border-2 border-[#050505]"
+          />
         </div>
       </section>
 
@@ -372,7 +310,7 @@ export default function LandingPageV2() {
 
           <div className="mt-20 max-w-3xl mx-auto border-l-2 border-[#0038FF] pl-8 text-left reveal" ref={addToRefs}>
             <p className="font-display text-2xl md:text-4xl italic leading-tight">
-              "I used to keep certs in a shoebox. Now I keep them in my pocket. IronStamp saved us from a $5k fine last month."
+              &quot;I used to keep certs in a shoebox. Now I keep them in my pocket. IronStamp saved us from a $5k fine last month.&quot;
             </p>
             <p className="mt-6 font-mono text-sm text-[#0038FF]">
               — TOM R., OWNER, MASS MECHANICAL
@@ -390,7 +328,7 @@ export default function LandingPageV2() {
       <section id="faq" className="py-24 px-6 md:px-24 bg-[#F0F4F8] border-t border-[#0038FF]/10">
         <div className="max-w-4xl mx-auto reveal" ref={addToRefs}>
           <div className="mb-16">
-            <p className="text-[#0038FF] font-mono mb-2">/// KNOWLEDGE BASE ///</p>
+            <p className="text-[#0038FF] font-mono mb-2">{`/// KNOWLEDGE BASE ///`}</p>
             <h2 className="font-display text-4xl md:text-6xl uppercase mb-6">Common <br /> Questions</h2>
             <p className="font-mono text-gray-600 max-w-xl">
               Everything you need to know about compliance tracking, data security, and getting your team set up on IronStamp.

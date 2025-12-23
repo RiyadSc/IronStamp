@@ -65,7 +65,7 @@ interface CertificationRow {
 }
 
 // Escape HTML to prevent issues
-function escapeHtml(text: string): string {
+function _escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;

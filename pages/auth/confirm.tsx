@@ -13,7 +13,7 @@ export default function ConfirmEmail() {
     const handleEmailConfirmation = async () => {
       try {
         // Get the current session to see if user is authenticated
-        const { data: { session }, error } = await supabase.auth.getSession()
+        const { data: { session: _session }, error } = await supabase.auth.getSession()
         
         if (error) {
           console.error('Session error:', error)
@@ -71,7 +71,7 @@ export default function ConfirmEmail() {
                 </div>
                 <h1 className="text-xl font-semibold text-green-900">Email Confirmed!</h1>
                 <p className="text-gray-600">{message}</p>
-                <p className="text-sm text-gray-500">You'll be redirected to setup in a few seconds...</p>
+                <p className="text-sm text-gray-500">You&apos;ll be redirected to setup in a few seconds...</p>
                 <Button 
                   onClick={handleContinueToDashboard}
                   className="w-full bg-gray-900 hover:bg-gray-800"

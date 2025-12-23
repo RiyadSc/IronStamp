@@ -1,90 +1,81 @@
-import { NextApiRequest, NextApiResponse } from 'next'
+import { NextApiRequest } from 'next'
 import crypto from 'crypto'
 
 // CSRF token configuration
-const CSRF_TOKEN_LENGTH = 32
-const CSRF_TOKEN_EXPIRY = 24 * 60 * 60 * 1000 // 24 hours
+const CSRF_TOKEN_EXPIRY = 24 * 60 * 60 * 1000 // 24 hours in ms
 
-// In-memory token store (in production, use Redis or database)
-const csrfTokens = new Map<string, { token: string; expires: number }>()
-
-/**
- * Generate a new CSRF token
- */
-export function generateCSRFToken(): string {
-  return crypto.randomBytes(CSRF_TOKEN_LENGTH).toString('hex')
-}
+// Secret key for HMAC signing (use env variable in production)
+const CSRF_SECRET = process.env.CSRF_SECRET || process.env.NEXTAUTH_SECRET || 'ironstamp-csrf-secret-key-change-in-production'
 
 /**
- * Store a CSRF token for a session
+ * Generate a stateless CSRF token using HMAC
+ * Token format: timestamp.signature
  */
-export function storeCSRFToken(sessionId: string, token: string): void {
-  const expires = Date.now() + CSRF_TOKEN_EXPIRY
-  csrfTokens.set(sessionId, { token, expires })
+export function generateCSRFToken(sessionId: string): string {
+  const timestamp = Date.now().toString()
+  const data = `${sessionId}:${timestamp}`
+  const signature = crypto
+    .createHmac('sha256', CSRF_SECRET)
+    .update(data)
+    .digest('hex')
   
-  // Clean up expired tokens
-  cleanupExpiredTokens()
+  return `${timestamp}.${signature}`
 }
 
 /**
- * Validate a CSRF token
+ * Validate a stateless CSRF token
  */
 export function validateCSRFToken(sessionId: string, token: string): boolean {
-  const stored = csrfTokens.get(sessionId)
-  if (!stored) return false
-  
-  if (Date.now() > stored.expires) {
-    csrfTokens.delete(sessionId)
+  if (!token || typeof token !== 'string') {
     return false
   }
-  
-  return stored.token === token
-}
 
-/**
- * Get CSRF token for a session (creates new one if doesn't exist)
- */
-export function getCSRFToken(sessionId: string): string {
-  const stored = csrfTokens.get(sessionId)
-  if (stored && Date.now() <= stored.expires) {
-    return stored.token
+  const parts = token.split('.')
+  if (parts.length !== 2) {
+    return false
   }
+
+  const [timestamp, signature] = parts
   
-  const newToken = generateCSRFToken()
-  storeCSRFToken(sessionId, newToken)
-  return newToken
+  // Check if token has expired
+  const tokenTime = parseInt(timestamp, 10)
+  if (isNaN(tokenTime) || Date.now() - tokenTime > CSRF_TOKEN_EXPIRY) {
+    return false
+  }
+
+  // Verify signature
+  const data = `${sessionId}:${timestamp}`
+  const expectedSignature = crypto
+    .createHmac('sha256', CSRF_SECRET)
+    .update(data)
+    .digest('hex')
+
+  // Use timing-safe comparison to prevent timing attacks
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, 'hex'),
+    Buffer.from(expectedSignature, 'hex')
+  )
 }
 
 /**
- * Clean up expired tokens
+ * Validate CSRF token from request
+ * Returns true if valid, false otherwise
  */
-function cleanupExpiredTokens(): void {
-  const now = Date.now()
-  Array.from(csrfTokens.entries()).forEach(([sessionId, data]) => {
-    if (now > data.expires) {
-      csrfTokens.delete(sessionId)
-    }
-  })
-}
-
-/**
- * CSRF middleware for API routes
- */
-export function csrfMiddleware(req: NextApiRequest, res: NextApiResponse, next: () => void) {
+export function validateCSRFRequest(req: NextApiRequest): { valid: boolean; error?: string } {
   // Only apply CSRF protection to state-changing methods
   const stateChangingMethods = ['POST', 'PUT', 'PATCH', 'DELETE']
   
   if (!stateChangingMethods.includes(req.method || '')) {
-    return next()
+    return { valid: true }
   }
   
   // Skip CSRF for authentication endpoints (they have their own protection)
   const authEndpoints = ['/api/auth/signin', '/api/auth/signup', '/api/auth/callback']
   if (authEndpoints.some(endpoint => req.url?.includes(endpoint))) {
-    return next()
+    return { valid: true }
   }
   
-  // Get session ID from authorization header or user ID
+  // Get session ID from authorization header
   const authHeader = req.headers.authorization
   let sessionId = 'anonymous'
   
@@ -97,25 +88,19 @@ export function csrfMiddleware(req: NextApiRequest, res: NextApiResponse, next: 
   const csrfToken = req.headers['x-csrf-token'] as string
   
   if (!csrfToken) {
-    return res.status(403).json({ 
-      error: 'CSRF token required',
-      message: 'Missing CSRF token in X-CSRF-Token header'
-    })
+    return { valid: false, error: 'CSRF token required' }
   }
   
   if (!validateCSRFToken(sessionId, csrfToken)) {
-    return res.status(403).json({ 
-      error: 'Invalid CSRF token',
-      message: 'CSRF token validation failed'
-    })
+    return { valid: false, error: 'Invalid CSRF token' }
   }
   
-  next()
+  return { valid: true }
 }
 
 /**
  * Generate CSRF token for frontend
  */
 export function generateFrontendCSRFToken(sessionId: string): string {
-  return getCSRFToken(sessionId)
+  return generateCSRFToken(sessionId)
 } 

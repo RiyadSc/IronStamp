@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -12,7 +12,7 @@ import { FreshStartStep } from '@/components/onboarding/FreshStartStep'
 import { NotificationSetupStep } from '@/components/onboarding/NotificationSetupStep'
 import { SuccessStep } from '@/components/onboarding/SuccessStep'
 import { supabase } from '@/lib/supabase'
-import { trackEvent, trackOnboardingStep, POSTHOG_EVENTS } from '@/lib/posthog'
+import { trackEvent, POSTHOG_EVENTS } from '@/lib/posthog'
 
 export default function Onboarding() {
   const router = useRouter()
@@ -58,9 +58,9 @@ export default function Onboarding() {
         email: user.email
       })
     }
-  }, [user, loading, router])
+  }, [user, loading, router, loadExistingData]);
 
-  const loadExistingData = async () => {
+  const loadExistingData = useCallback(async () => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -138,7 +138,7 @@ export default function Onboarding() {
       console.error('Error loading existing onboarding data:', error)
       setDataLoaded(true)
     }
-  }
+  }, [user, router]);
 
   const handleStepComplete = async (stepData: any) => {
     const updatedData = { ...onboardingData, ...stepData }

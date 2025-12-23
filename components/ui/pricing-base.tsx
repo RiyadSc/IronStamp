@@ -123,7 +123,7 @@ export default function Pricing() {
 
                 <div className="mt-8 text-center">
                     <p className="text-sm text-muted-foreground">
-                        Want to scale beyond 300 certifications? We'll grow with you.{' '}
+                        Want to scale beyond 300 certifications? We&apos;ll grow with you.{' '}
                         <a href="mailto:ironstamp.team@gmail.com" className="text-blue-600 hover:text-blue-700 font-medium underline">
                             Contact
                         </a>{' '}
