@@ -41,25 +41,6 @@ export default function Onboarding() {
     uploadComplete: false
   })
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/signin')
-      return
-    }
-
-    // Load existing onboarding data ONCE when user is authenticated
-    if (user && !loading && !loadedOnce.current) {
-      loadedOnce.current = true
-      loadExistingData()
-      
-      // Track onboarding start
-      trackEvent(POSTHOG_EVENTS.ONBOARDING_STARTED, {
-        user_id: user.id,
-        email: user.email
-      })
-    }
-  }, [user, loading, router, loadExistingData]);
-
   const loadExistingData = useCallback(async () => {
     try {
       const { data: profile, error } = await supabase
@@ -139,6 +120,25 @@ export default function Onboarding() {
       setDataLoaded(true)
     }
   }, [user, router]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/signin')
+      return
+    }
+
+    // Load existing onboarding data ONCE when user is authenticated
+    if (user && !loading && !loadedOnce.current) {
+      loadedOnce.current = true
+      loadExistingData()
+      
+      // Track onboarding start
+      trackEvent(POSTHOG_EVENTS.ONBOARDING_STARTED, {
+        user_id: user.id,
+        email: user.email
+      })
+    }
+  }, [user, loading, router, loadExistingData]);
 
   const handleStepComplete = async (stepData: any) => {
     const updatedData = { ...onboardingData, ...stepData }

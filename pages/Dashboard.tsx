@@ -41,29 +41,6 @@ const Index = () => {
   const loadedUserRef = useRef<string | null>(null);
   const hasLoadedRef = useRef(false);
 
-  useEffect(() => {
-    // Only load data if:
-    // 1. We have a user and auth is not loading
-    // 2. We haven't loaded data yet OR the user has changed
-    if (user && !authLoading) {
-      const currentUserId = user.id;
-      const shouldLoad = !hasLoadedRef.current || loadedUserRef.current !== currentUserId;
-      
-      if (shouldLoad) {
-        loadedUserRef.current = currentUserId;
-        loadDashboardData();
-      } else {
-        // User is the same and data is already loaded, just set loading to false
-        setLoading(false);
-      }
-    } else if (!authLoading && !user) {
-      // No user and auth loading is done - let AuthChecker handle this
-      setLoading(false);
-      hasLoadedRef.current = false;
-      loadedUserRef.current = null;
-    }
-  }, [user, authLoading, loadDashboardData]);
-
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
@@ -90,6 +67,29 @@ const Index = () => {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    // Only load data if:
+    // 1. We have a user and auth is not loading
+    // 2. We haven't loaded data yet OR the user has changed
+    if (user && !authLoading) {
+      const currentUserId = user.id;
+      const shouldLoad = !hasLoadedRef.current || loadedUserRef.current !== currentUserId;
+      
+      if (shouldLoad) {
+        loadedUserRef.current = currentUserId;
+        loadDashboardData();
+      } else {
+        // User is the same and data is already loaded, just set loading to false
+        setLoading(false);
+      }
+    } else if (!authLoading && !user) {
+      // No user and auth loading is done - let AuthChecker handle this
+      setLoading(false);
+      hasLoadedRef.current = false;
+      loadedUserRef.current = null;
+    }
+  }, [user, authLoading, loadDashboardData]);
 
   // Force refresh function (for manual refresh if needed)
   const _refreshDashboard = async () => {
