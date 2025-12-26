@@ -46,6 +46,7 @@ const publicPages = [
   '/LandingPageV2',
   '/privacy-policy',
   '/terms-of-service',
+  '/service-titan-audit',
   '/auth-debug',
   '/404'
 ]
