@@ -181,9 +181,9 @@ export default function LandingPageV2() {
       </header>
 
       {/* THE AGITATION (Twisting the Knife) */}
-      <section id="how-it-works" className="py-24 px-6 md:px-24 bg-white border-y border-[#0038FF]/20 relative overflow-hidden">
+      <section id="how-it-works" className="py-24 px-6 md:px-24 bg-white border-y border-[#0038FF]/20 relative overflow-visible">
         {/* Background Noise Text */}
-        <div className="absolute -right-20 top-10 font-display text-[20rem] text-gray-100 font-bold select-none pointer-events-none leading-none opacity-50">
+        <div className="absolute -right-20 top-10 font-display text-[20rem] text-gray-100 font-bold select-none pointer-events-none leading-none opacity-50 overflow-hidden">
           CHAOS
         </div>
 
@@ -209,11 +209,11 @@ export default function LandingPageV2() {
             </div>
 
             {/* Visualizing the Pain */}
-            <div className="reveal md:translate-y-12 md:translate-x-12" ref={addToRefs}>
+            <div className="reveal md:mt-16 md:ml-16" ref={addToRefs}>
               <img 
                 src="/Nightmare.png" 
                 alt="Compliance nightmare scenario" 
-                className="w-full md:w-[150%] md:max-w-none h-auto rounded-lg shadow-lg"
+                className="w-full md:w-[220%] md:max-w-none h-auto rounded-lg shadow-lg"
               />
             </div>
           </div>
