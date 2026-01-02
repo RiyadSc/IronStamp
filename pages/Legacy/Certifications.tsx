@@ -68,20 +68,15 @@ const _getPriorityBadge = (priority: 'low' | 'medium' | 'high') => {
 const Certifications = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Redirect to DashboardV2 in production - this page is dev-only
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') {
       router.replace('/DashboardV2');
+      return;
     }
   }, [router]);
-  
-  // Don't render anything in production (will redirect)
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [employees, setEmployees] = useState<EmployeeCertificationSummary[]>([]);
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");

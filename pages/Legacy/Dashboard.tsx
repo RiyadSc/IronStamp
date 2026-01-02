@@ -23,19 +23,15 @@ import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   
   // Redirect to DashboardV2 in production - this page is dev-only
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') {
       router.replace('/DashboardV2');
+      return;
     }
   }, [router]);
-  
-  // Don't render anything in production (will redirect)
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalEmployees: 0,
     activeCertifications: 0,

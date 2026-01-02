@@ -45,19 +45,6 @@ const Team = () => {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
-  
-  // Redirect to DashboardV2 in production - this page is dev-only
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
-      router.replace('/DashboardV2');
-    }
-  }, [router]);
-  
-  // Don't render anything in production (will redirect)
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-  
   const [userProfile, setUserProfile] = useState<UserProfile>({
     companyName: null,
     teamSize: null,
@@ -115,6 +102,14 @@ const Team = () => {
       setLoading(false);
     }
   }, [toast]);
+
+  // Redirect to DashboardV2 in production - this page is dev-only
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      router.replace('/DashboardV2');
+      return;
+    }
+  }, [router]);
 
   useEffect(() => {
     // Only load data if:
