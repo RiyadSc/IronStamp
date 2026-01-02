@@ -46,7 +46,6 @@ const publicPages = [
   '/LandingPageV2',
   '/privacy-policy',
   '/terms-of-service',
-  '/auth-debug',
   '/404'
 ]
 

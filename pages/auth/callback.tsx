@@ -116,10 +116,6 @@ export default function AuthCallback() {
     router.push('/auth/signin')
   }
 
-  const handleGoToDebug = () => {
-    router.push('/auth-debug')
-  }
-
   if (status === 'error' || status === 'timeout') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -151,11 +147,6 @@ export default function AuthCallback() {
                   <LogIn className="w-4 h-4 mr-2" />
                   Back to Sign In
                 </Button>
-                {process.env.NODE_ENV === 'development' && (
-                  <Button onClick={handleGoToDebug} variant="ghost" className="w-full text-xs">
-                    Debug Auth
-                  </Button>
-                )}
               </div>
 
               {process.env.NODE_ENV === 'development' && debugInfo && (

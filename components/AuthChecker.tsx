@@ -134,22 +134,13 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
             </Button>
 
             {process.env.NODE_ENV === 'development' && (
-              <>
-                <Button 
-                  onClick={handleContinueAnyway}
-                  variant="ghost"
-                  className="w-full text-xs"
-                >
-                  Continue Anyway (Dev)
-                </Button>
-                <Button 
-                  onClick={() => router.push('/auth-debug')}
-                  variant="ghost"
-                  className="w-full text-xs"
-                >
-                  Auth Debug Page
-                </Button>
-              </>
+              <Button 
+                onClick={handleContinueAnyway}
+                variant="ghost"
+                className="w-full text-xs"
+              >
+                Continue Anyway (Dev)
+              </Button>
             )}
           </div>
         </div>
