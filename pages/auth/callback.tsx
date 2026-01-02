@@ -74,7 +74,7 @@ export default function AuthCallback() {
           // If onboarding is completed, go to dashboard
           if (profile?.onboarding_completed) {
             console.log('OAuth callback: Onboarding completed, redirecting to dashboard')
-            router.push('/Dashboard')
+            router.push('/DashboardV2')
           } else {
             // Otherwise, go to onboarding
             console.log('OAuth callback: Onboarding not completed, redirecting to onboarding')

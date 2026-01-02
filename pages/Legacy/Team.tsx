@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/router";
 import { useToast } from "@/hooks/use-toast";
 import { getTeamMembersWithCerts, type TeamMember, getEmployeeCertificationSummary, type CertificationDetails, deleteTeamMember, archiveTeamMember, restoreTeamMember, getUserProfile, type UserProfile } from "@/lib/data-service";
 import { deleteCertification } from "@/lib/certification-service";
@@ -41,8 +42,22 @@ const getInitials = (name: string) => {
 };
 
 const Team = () => {
+  const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // Redirect to DashboardV2 in production - this page is dev-only
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      router.replace('/DashboardV2');
+    }
+  }, [router]);
+  
+  // Don't render anything in production (will redirect)
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+  
   const [userProfile, setUserProfile] = useState<UserProfile>({
     companyName: null,
     teamSize: null,

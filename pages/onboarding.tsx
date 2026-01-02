@@ -52,7 +52,7 @@ export default function Onboarding() {
       if (!error && profile) {
         // If onboarding is already completed, redirect to dashboard
         if (profile.onboarding_completed) {
-          router.push('/Dashboard')
+          router.push('/DashboardV2')
           return
         }
 
@@ -256,7 +256,7 @@ export default function Onboarding() {
       localStorage.removeItem('onboarding_bulk_data')
       
       // Redirect to dashboard
-      router.push('/Dashboard')
+      router.push('/DashboardV2')
     } catch (error) {
       console.error('Error completing import:', error)
     }
@@ -313,7 +313,7 @@ export default function Onboarding() {
         })
         .eq('id', user.id)
 
-      router.push('/Dashboard')
+      router.push('/DashboardV2')
     } catch (error) {
       console.error('Error saving individual certification:', error)
       throw error
@@ -336,7 +336,7 @@ export default function Onboarding() {
         })
         .eq('id', user.id)
 
-      router.push('/Dashboard')
+      router.push('/DashboardV2')
     } catch (error) {
       console.error('Error completing fresh start:', error)
     }
@@ -379,10 +379,10 @@ export default function Onboarding() {
       })
       
       // Redirect to dashboard
-      router.push('/Dashboard')
+      router.push('/DashboardV2')
     } catch (error) {
       console.error('Error completing onboarding:', error)
-      router.push('/Dashboard') // Still redirect even if there's an error
+      router.push('/DashboardV2') // Still redirect even if there's an error
     }
   }
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/Sidebar";
 import { AddCertificationModal } from "@/components/AddCertificationModal";
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useRouter } from "next/router";
 import { getEmployeeCertificationSummary, getCertificationStats, type EmployeeCertificationSummary, type CertificationDetails } from "@/lib/data-service";
 import { EditCertificationModal } from "@/components/EditCertificationModal";
 import { NotifyCertificationModal } from "@/components/NotifyCertificationModal";
@@ -65,7 +66,21 @@ const _getPriorityBadge = (priority: 'low' | 'medium' | 'high') => {
 };
 
 const Certifications = () => {
+  const router = useRouter();
   const { user } = useAuth();
+  
+  // Redirect to DashboardV2 in production - this page is dev-only
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      router.replace('/DashboardV2');
+    }
+  }, [router]);
+  
+  // Don't render anything in production (will redirect)
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [employees, setEmployees] = useState<EmployeeCertificationSummary[]>([]);
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());

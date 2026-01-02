@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/router";
 import { Sidebar } from "@/components/Sidebar";
 import { StatCard } from "@/components/StatCard";
 import { ExpirationTable } from "@/components/ExpirationTable";
@@ -21,6 +22,19 @@ import { LogOut, User, ChevronDown } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const router = useRouter();
+  
+  // Redirect to DashboardV2 in production - this page is dev-only
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      router.replace('/DashboardV2');
+    }
+  }, [router]);
+  
+  // Don't render anything in production (will redirect)
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
   const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalEmployees: 0,

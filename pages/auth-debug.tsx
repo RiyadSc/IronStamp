@@ -36,7 +36,7 @@ const AuthDebug = () => {
   }
 
   const handleGoToDashboard = () => {
-    router.push('/Dashboard')
+    router.push('/DashboardV2')
   }
 
   const handleRefresh = () => {

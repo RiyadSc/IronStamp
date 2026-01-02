@@ -5,14 +5,30 @@ import { Home, Users, FileText, Settings, Menu, ChevronLeft, Calendar } from '@/
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const menuItems = [
-  { name: 'Dashboard', href: '/Dashboard', icon: Home },
-  { name: 'Team', href: '/Team', icon: Users },
-  { name: 'Certifications', href: '/Certifications', icon: FileText },
+// Base menu items - always visible
+const baseMenuItems = [
   { name: 'Calendar', href: '/calendar-demo', icon: Calendar },
   { name: 'Settings', href: '/settings', icon: Settings },
   // { name: 'Billing', href: '/Billing', icon: CreditCard }, // Hidden - uncomment to enable
 ];
+
+// Dev-only menu items (retired pages)
+const devMenuItems = [
+  { name: 'Dashboard', href: '/Dashboard', icon: Home },
+  { name: 'Team', href: '/Team', icon: Users },
+  { name: 'Certifications', href: '/Certifications', icon: FileText },
+];
+
+// Combine menu items based on environment
+const getMenuItems = () => {
+  if (process.env.NODE_ENV === 'development') {
+    return [
+      ...baseMenuItems,
+      ...devMenuItems,
+    ];
+  }
+  return baseMenuItems;
+};
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -81,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1">
-        {menuItems.map((item) => {
+        {getMenuItems().map((item) => {
           const IconComponent = item.icon;
           const isActive = router.pathname === item.href;
           
