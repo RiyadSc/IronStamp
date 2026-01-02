@@ -1,11 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Trash2 } from '@/lib/icons';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { uploadCertification } from '../lib/certification-service';
 import { trackCertificationAction } from '@/lib/posthog';
@@ -43,15 +39,12 @@ interface ProcessingState {
   totalCount: number;
 }
 
-const MAX_FILE_SIZE = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '20971520'); // 20MB
-const MAX_FILES = 4;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILES = 1; // Single file upload
 const ACCEPTED_TYPES = {
   'application/pdf': ['.pdf'],
   'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-  'text/csv': ['.csv'],
-  'application/vnd.ms-excel': ['.xls'],
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png']
 };
@@ -112,41 +105,42 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
   }, []);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    // Check if adding these files would exceed the limit
-    const remainingSlots = MAX_FILES - stagedFiles.length;
-    const filesToAdd = acceptedFiles.slice(0, remainingSlots);
-    
-    if (filesToAdd.length < acceptedFiles.length) {
-      onError?.(`Only ${remainingSlots} more files can be added. Maximum ${MAX_FILES} files allowed.`);
+    // Only accept the first file for single upload
+    if (acceptedFiles.length > 1) {
+      onError?.('Only one file can be uploaded at a time.');
     }
 
-    // Validate each file
-    const validFiles: StagedFile[] = [];
-    for (const file of filesToAdd) {
-      if (file.size > MAX_FILE_SIZE) {
-        onError?.(
-          `File "${file.name}" exceeds 20MB limit (${(file.size / 1024 / 1024).toFixed(1)}MB)`
-        );
-        continue;
-      }
+    const file = acceptedFiles[0];
+    if (!file) return;
 
-      validFiles.push({
-        id: `${file.name}-${Date.now()}-${Math.random()}`,
-        file,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        status: 'staging',
-        stagingProgress: 0
-      });
+    // Check if a file is already staged
+    if (stagedFiles.length > 0) {
+      onError?.('Please remove the current file before uploading a new one.');
+      return;
     }
 
-    setStagedFiles(prev => [...prev, ...validFiles]);
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      onError?.(
+        `File "${file.name}" exceeds 5MB limit (${(file.size / 1024 / 1024).toFixed(1)}MB)`
+      );
+      return;
+    }
 
-    // Simulate staging progress for each file
-    validFiles.forEach((file) => {
-      simulateFileStaging(file.id);
-    });
+    const validFile: StagedFile = {
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'staging',
+      stagingProgress: 0
+    };
+
+    setStagedFiles([validFile]);
+
+    // Simulate staging progress
+    simulateFileStaging(validFile.id);
   }, [stagedFiles.length, onError, simulateFileStaging]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -288,13 +282,6 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
     onClose();
   };
 
-  const getFileIcon = (type: string) => {
-    if (type.includes('pdf')) return '📄';
-    if (type.includes('word') || type.includes('document')) return '📝';
-    if (type.includes('csv') || type.includes('excel') || type.includes('sheet')) return '📊';
-    return '📎';
-  };
-
   const getFileStatusIcon = (file: StagedFile) => {
     switch (file.status) {
       case 'staging':
@@ -306,7 +293,7 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
                 cy="8"
                 r="6"
                 fill="none"
-                stroke="#e5e7eb"
+                stroke="#E2E8F0"
                 strokeWidth="2"
               />
               <circle
@@ -314,7 +301,7 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
                 cy="8"
                 r="6"
                 fill="none"
-                stroke="#10b981"
+                stroke="#0038FF"
                 strokeWidth="2"
                 strokeDasharray={`${2 * Math.PI * 6}`}
                 strokeDashoffset={`${2 * Math.PI * 6 * (1 - file.stagingProgress / 100)}`}
@@ -324,106 +311,148 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
           </div>
         );
       case 'staged':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'processing':
-        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-[#0038FF] animate-spin" />;
       case 'success':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-red-600" />;
     }
   };
 
   const allFilesFullyStaged = stagedFiles.length > 0 && stagedFiles.every(f => f.status === 'staged');
   const canSubmit = allFilesFullyStaged && !processingState.isProcessing;
-  const canAddMore = stagedFiles.length < MAX_FILES && !processingState.isProcessing;
+  const canAddMore = stagedFiles.length === 0 && !processingState.isProcessing;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <FileText className="h-5 w-5" />
-            <span>Add Certifications (Batch Upload)</span>
+      <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] rounded-none p-0 gap-0 font-mono">
+        <style>{`
+          .font-mono { font-family: 'JetBrains Mono', monospace; }
+          .font-display { font-family: 'Oswald', sans-serif; }
+          
+          .border-tech {
+            border: 1px solid #E2E8F0;
+            position: relative;
+          }
+          .border-tech::after {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            width: 10px;
+            height: 10px;
+            border-top: 2px solid #0038FF;
+            border-left: 2px solid #0038FF;
+          }
+        `}</style>
+        <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50 sticky top-0 z-10 flex flex-row items-center justify-between">
+          <DialogTitle className="font-display text-2xl font-bold uppercase flex items-center gap-2 text-[#050505]">
+            <FileText className="h-5 w-5 text-[#0038FF]" />
+            <span>UPLOAD CERTIFICATION</span>
           </DialogTitle>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-[#050505] transition-colors p-1"
+            disabled={processingState.isProcessing}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="p-6 space-y-6 bg-white">
           {/* File Format Info */}
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Supported formats:</strong> PDF, DOC, DOCX, CSV, XLS, XLSX, JPEG, JPG, PNG<br />
-              <strong>Maximum:</strong> {MAX_FILES} files, 20MB each
-            </AlertDescription>
-          </Alert>
+          <div className="bg-[#0038FF]/5 border border-[#0038FF]/30 p-4 font-mono text-xs">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-[#0038FF] mt-0.5 flex-shrink-0" />
+              <div className="text-[#050505]">
+                <p className="font-bold uppercase mb-1">{'///'} SUPPORTED FORMATS {'///'}</p>
+                <p className="text-gray-600">PDF, DOC, DOCX, JPEG, JPG, PNG</p>
+                <p className="text-gray-600 mt-1">MAX: 5MB</p>
+              </div>
+            </div>
+          </div>
 
           {/* Upload Area */}
           {canAddMore && (
-            <Card className={cn(
-              "border-2 border-dashed transition-colors",
-              isDragActive ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-gray-400"
-            )}>
-            <CardContent className="p-6">
-              <div
-                {...getRootProps()}
-                  className="flex flex-col items-center justify-center space-y-4 cursor-pointer"
-              >
-                <input {...getInputProps()} />
-                
-                  <Upload className="h-8 w-8 text-gray-400" />
-                
-                <div className="text-center">
-                  <p className="text-lg font-medium text-gray-900">
-                      {stagedFiles.length === 0 
-                        ? "Drag and drop certification files here"
-                        : `Add more files (${stagedFiles.length}/${MAX_FILES})`
-                      }
-                  </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      or click to browse files
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div
+              {...getRootProps()}
+              className={cn(
+                "border-tech border-2 border-dashed p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-white",
+                isDragActive 
+                  ? "border-[#0038FF] bg-[#0038FF]/5" 
+                  : "border-[#0038FF]/30 hover:border-[#0038FF] hover:bg-[#0038FF]/5"
+              )}
+            >
+              <input {...getInputProps()} />
+              
+              <div className="w-16 h-16 bg-[#0038FF]/10 rounded-full flex items-center justify-center mb-4">
+                <Upload className="h-8 w-8 text-[#0038FF]" />
+              </div>
+              
+              <p className="font-display text-lg font-bold uppercase text-[#050505] mb-2">
+                {stagedFiles.length === 0 
+                  ? "DROP CERT FILE HERE"
+                  : "FILE READY"
+                }
+              </p>
+              <p className="font-mono text-xs text-gray-500">
+                OR CLICK TO BROWSE
+              </p>
+            </div>
           )}
 
-          {/* Staged Files List */}
+          {/* Staged File */}
           {stagedFiles.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-semibold text-sm text-gray-700">
-                Staged Files ({stagedFiles.length}/{MAX_FILES})
-              </h4>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+            <div className="space-y-3">
+              <p className="font-mono text-xs text-gray-500 font-bold uppercase">
+                {'///'} SELECTED FILE {'///'}
+              </p>
+              <div className="border-tech bg-white">
                 {stagedFiles.map((file) => (
                   <div
                     key={file.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                    className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
                   >
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <span className="text-lg">{getFileIcon(file.type)}</span>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-[#0038FF] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                                                 <p className="text-sm font-medium text-gray-900 truncate">
-                           {file.name}
-                         </p>
+                        <p className="font-mono text-sm font-bold text-[#050505] truncate">
+                          {file.name}
+                        </p>
+                        <p className="font-mono text-[10px] text-gray-500 mt-1">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
                         {file.status === 'error' && file.error && (
-                          <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                          <p className="font-mono text-[10px] text-red-600 mt-1">{file.error}</p>
+                        )}
+                        {file.status === 'staging' && (
+                          <div className="mt-2">
+                            <div className="w-full bg-gray-200 h-1.5">
+                              <div 
+                                className="bg-[#0038FF] h-1.5 transition-all duration-200"
+                                style={{ width: `${file.stagingProgress}%` }}
+                              />
+                            </div>
+                            <p className="font-mono text-[10px] text-gray-500 mt-1">
+                              PREPARING... {Math.round(file.stagingProgress)}%
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
                     
-                                         <div className="flex items-center space-x-2">
-                       {getFileStatusIcon(file)}
-                       {(file.status === 'staged' || file.status === 'staging') && (
-                    <Button 
-                          variant="ghost"
-                      size="sm" 
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {getFileStatusIcon(file)}
+                      {(file.status === 'staged' || file.status === 'staging') && (
+                        <button 
                           onClick={() => removeFile(file.id)}
-                          className="h-6 w-6 p-0"
-                    >
-                          <Trash2 className="h-3 w-3" />
-                    </Button>
+                          className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                          title="Remove file"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -434,20 +463,22 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
 
           {/* Processing Status */}
           {processingState.isProcessing && (
-            <div className="bg-blue-50 rounded-lg p-4 space-y-3">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-                <span className="font-medium text-blue-900">Processing Files...</span>
+            <div className="border-tech bg-white p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 text-[#0038FF] animate-spin" />
+                <span className="font-mono text-xs font-bold text-[#050505] uppercase">PROCESSING FILES...</span>
               </div>
               
-              <Progress value={processingState.progress} className="w-full" />
+              <div className="w-full bg-gray-200 h-2">
+                <div 
+                  className="bg-[#0038FF] h-2 transition-all duration-300"
+                  style={{ width: `${processingState.progress}%` }}
+                />
+              </div>
               
-              <div className="flex justify-between text-sm text-blue-700">
+              <div className="font-mono text-xs text-gray-600">
                 <span>
-                  {processingState.currentFile ? `Processing: ${processingState.currentFile}` : 'Finalizing...'}
-                </span>
-                <span>
-                  {processingState.completedCount}/{processingState.totalCount} completed
+                  {processingState.currentFile ? `PROCESSING: ${processingState.currentFile}` : 'EXTRACTING DATA...'}
                 </span>
               </div>
             </div>
@@ -455,47 +486,50 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
 
           {/* Success Summary */}
           {processingState.completedCount > 0 && !processingState.isProcessing && (
-            <div className="bg-green-50 rounded-lg p-4">
-              <h4 className="font-semibold text-green-800 mb-2">Processing Complete!</h4>
-              <div className="text-sm text-green-700">
-                <p>✅ {stagedFiles.filter(f => f.status === 'success').length} files processed successfully</p>
-                {stagedFiles.filter(f => f.status === 'error').length > 0 && (
-                  <p>❌ {stagedFiles.filter(f => f.status === 'error').length} files failed</p>
+            <div className="border-tech bg-white p-4">
+              <p className="font-mono text-xs font-bold uppercase text-[#050505] mb-2">{'///'} PROCESSING COMPLETE {'///'}</p>
+              <div className="font-mono text-xs">
+                {stagedFiles.filter(f => f.status === 'success').length > 0 ? (
+                  <p className="text-green-600 font-bold">
+                    ✓ CERTIFICATION UPLOADED SUCCESSFULLY
+                  </p>
+                ) : (
+                  <p className="text-red-600 font-bold">
+                    ✗ UPLOAD FAILED
+                  </p>
                 )}
               </div>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-between pt-4">
-            <Button 
-              variant="outline" 
+          <div className="flex justify-between pt-4 border-t border-gray-200">
+            <button
               onClick={handleClose}
               disabled={processingState.isProcessing}
+              className="font-mono text-xs font-bold px-6 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {processingState.completedCount > 0 && !processingState.isProcessing ? 'Close' : 'Cancel'}
-            </Button>
+              {processingState.completedCount > 0 && !processingState.isProcessing ? 'CLOSE' : 'CANCEL'}
+            </button>
             
-            <div className="space-x-2">
-              {stagedFiles.length > 0 && (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!canSubmit}
-                  className={cn(
-                    "transition-all duration-200",
-                    canSubmit 
-                      ? "bg-blue-600 hover:bg-blue-700" 
-                      : "bg-gray-300 cursor-not-allowed"
-                  )}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {canSubmit 
-                    ? `Process ${stagedFiles.length} File${stagedFiles.length > 1 ? 's' : ''}`
-                    : `Loading Files... (${stagedFiles.filter(f => f.status === 'staged').length}/${stagedFiles.length} ready)`
-                  }
-              </Button>
+            {stagedFiles.length > 0 && (
+              <button
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                className={cn(
+                  "font-mono text-xs font-bold px-6 py-3 flex items-center gap-2 transition-colors border shadow-[4px_4px_0px_#0038FF]",
+                  canSubmit 
+                    ? "bg-[#050505] text-white hover:bg-[#0038FF] border-[#050505]" 
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300 shadow-none"
+                )}
+              >
+                <Upload className="h-4 w-4" />
+                {canSubmit 
+                  ? 'UPLOAD & PROCESS'
+                  : 'PREPARING FILE...'
+                }
+              </button>
             )}
-            </div>
           </div>
         </div>
       </DialogContent>

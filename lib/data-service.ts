@@ -69,6 +69,10 @@ export interface CertificationDetails {
   daysLeft: number
   priority?: 'low' | 'medium' | 'high'
   notes?: string
+  fileUrl?: string
+  fileName?: string
+  hasDocument?: boolean
+  fileSize?: number
 }
 
 export interface TeamMember {
@@ -298,7 +302,7 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
 
     const { data, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes')
+      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, file_url, file_name, file_size')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
       .order('expiration_date', { ascending: true })
@@ -315,12 +319,16 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
         id: cert.id,
         employee: cert.employee_name,
         type: cert.certification_name,
-        issueDate: cert.issue_date || '',
+        issueDate: cert.issue_date ? String(cert.issue_date) : '',
         expirationDate: cert.expiration_date,
         status,
         daysLeft,
         priority: cert.priority || 'medium',
-        notes: cert.notes || undefined
+        notes: cert.notes || undefined,
+        fileUrl: cert.file_url || undefined,
+        fileName: cert.file_name || undefined,
+        hasDocument: !!cert.file_url,
+        fileSize: cert.file_size || undefined
       }
     })
   } catch (error) {
@@ -840,7 +848,7 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
         id: cert.id,
         employee: cert.employee_name,
         type: cert.certification_name,
-        issueDate: cert.issue_date || '',
+        issueDate: cert.issue_date ? String(cert.issue_date) : '',
         expirationDate: cert.expiration_date,
         status,
         daysLeft,

@@ -15,7 +15,8 @@ import {
   Pencil,
   Archive,
   Trash2,
-  Calendar
+  Calendar,
+  Users2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -25,10 +26,12 @@ import {
   deleteTeamMember,
   type TeamMember,
   type EmployeeCertificationSummary,
-  type UserProfile
+  type UserProfile,
+  type CertificationDetails
 } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/csrf-client';
+import { NotifyCertificationModal } from '@/components/NotifyCertificationModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,8 +44,8 @@ interface Technician {
   id: string;
   initials: string;
   name: string;
-  status: 'NON-COMPLIANT' | 'ACTION REQUIRED' | 'COMPLIANT';
-  statusColor: 'red' | 'yellow' | 'green';
+  status: 'NON-COMPLIANT' | 'ACTION REQUIRED' | 'COMPLIANT' | 'ARCHIVED';
+  statusColor: 'red' | 'yellow' | 'green' | 'gray';
   certifications: {
     name: string;
     status: 'EXPIRED' | 'VALID' | string;
@@ -96,14 +99,14 @@ const getInitials = (name: string) => {
 };
 
 // Helper function to determine technician status and process certifications
-const processTechnicianData = (teamMembers: TeamMember[], certSummaries: EmployeeCertificationSummary[]): Technician[] => {
+const processTechnicianData = (teamMembers: TeamMember[], certSummaries: EmployeeCertificationSummary[], showArchived: boolean = false): Technician[] => {
   return teamMembers
-    .filter(member => member.status !== 'Archived') // Only show active members
+    .filter(member => showArchived ? member.status === 'Archived' : member.status !== 'Archived')
     .map(member => {
       const employeeCerts = certSummaries.find(s => s.employeeName === member.name);
       
-      let status: 'NON-COMPLIANT' | 'ACTION REQUIRED' | 'COMPLIANT' = 'COMPLIANT';
-      let statusColor: 'red' | 'yellow' | 'green' = 'green';
+      let status: 'NON-COMPLIANT' | 'ACTION REQUIRED' | 'COMPLIANT' | 'ARCHIVED' = 'COMPLIANT';
+      let statusColor: 'red' | 'yellow' | 'green' | 'gray' = 'green';
       
       const certifications = employeeCerts?.certifications?.map(cert => {
         let statusText = 'VALID';
@@ -129,7 +132,11 @@ const processTechnicianData = (teamMembers: TeamMember[], certSummaries: Employe
       const hasExpired = certifications.some(c => c.statusType === 'crit');
       const hasExpiringSoon = certifications.some(c => c.statusType === 'warn');
       
-      if (hasNoCerts || hasExpired) {
+      // If archived, always show as archived status
+      if (member.status === 'Archived') {
+        status = 'ARCHIVED';
+        statusColor = 'gray';
+      } else if (hasNoCerts || hasExpired) {
         status = 'NON-COMPLIANT';
         statusColor = 'red';
       } else if (hasExpiringSoon) {
@@ -142,7 +149,7 @@ const processTechnicianData = (teamMembers: TeamMember[], certSummaries: Employe
         initials: getInitials(member.name),
         name: member.name,
         status,
-        statusColor,
+        statusColor: member.status === 'Archived' ? 'gray' : statusColor,
         certifications: certifications.slice(0, 3) // Show first 3 certifications
       };
     });
@@ -164,6 +171,7 @@ export default function Crew() {
   }, []);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [certSummaries, setCertSummaries] = useState<EmployeeCertificationSummary[]>([]);
@@ -174,6 +182,8 @@ export default function Crew() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'archive' | 'delete'>('archive');
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+  const [selectedCertification, setSelectedCertification] = useState<CertificationDetails | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     companyName: null,
     teamSize: null,
@@ -195,7 +205,7 @@ export default function Crew() {
       setTeamMembers(teamMembers);
       setCertSummaries(certSummaries);
 
-      const processedData = processTechnicianData(teamMembers, certSummaries);
+      const processedData = processTechnicianData(teamMembers, certSummaries, showArchived);
       setTechnicians(processedData);
       setUserProfile(profileData);
     } catch (error: any) {
@@ -208,7 +218,7 @@ export default function Crew() {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, showArchived]);
 
   useEffect(() => {
     if (user) {
@@ -218,6 +228,14 @@ export default function Crew() {
       setLoading(false);
     }
   }, [user, fetchData]);
+
+  // Update technicians when showArchived changes
+  useEffect(() => {
+    if (teamMembers.length > 0 && certSummaries.length > 0) {
+      const processedData = processTechnicianData(teamMembers, certSummaries, showArchived);
+      setTechnicians(processedData);
+    }
+  }, [showArchived, teamMembers, certSummaries]);
 
   const handleAddTeamMember = () => {
     setIsAddModalOpen(true);
@@ -251,6 +269,41 @@ export default function Crew() {
     setSelectedMember(member);
     setConfirmAction('delete');
     setIsConfirmModalOpen(true);
+  };
+
+  const handleNotify = (techId: string) => {
+    const member = teamMembers.find((m) => m.id === techId);
+    if (!member) return;
+
+    // Find the employee's certification summary
+    const employeeSummary = certSummaries.find(s => s.employeeName === member.name);
+    if (!employeeSummary || !employeeSummary.certifications || employeeSummary.certifications.length === 0) {
+      showToast({
+        title: "No Certifications",
+        description: `${member.name} has no certifications to notify about.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Find the first expired certification, or if none, the first expiring soon certification
+    const expiredCert = employeeSummary.certifications.find(c => c.daysLeft < 0);
+    const expiringCert = employeeSummary.certifications.find(c => c.daysLeft >= 0 && c.daysLeft <= 30);
+    const certToNotify = expiredCert || expiringCert || employeeSummary.certifications[0];
+
+    if (certToNotify) {
+      setSelectedCertification(certToNotify);
+      setIsNotifyModalOpen(true);
+    }
+  };
+
+  const handleNotificationSuccess = () => {
+    showToast({
+      title: "Notification Sent",
+      description: "The employee has been notified successfully.",
+    });
+    setIsNotifyModalOpen(false);
+    fetchData(); // Refresh data to show updated status
   };
 
   const executeArchive = async (): Promise<boolean> => {
@@ -509,7 +562,7 @@ export default function Crew() {
             <p className="font-mono text-[#0038FF] text-xs mb-1">{`/// PERSONNEL ROSTER ///`}</p>
             <h1 className="font-display text-4xl md:text-5xl font-bold uppercase">The Crew</h1>
             <p className="font-mono text-gray-500 text-sm mt-2">
-              Active Field Technicians: <span id="crew-count">{filteredTechnicians.length}</span>
+              {showArchived ? 'Archived' : 'Active'} Field Technicians: <span id="crew-count">{filteredTechnicians.length}</span>
             </p>
           </div>
 
@@ -526,11 +579,23 @@ export default function Crew() {
               />
             </div>
             <button 
-              onClick={handleAddTeamMember}
-              className="bg-[#050505] text-white px-6 py-3 flex items-center gap-3 font-bold font-mono text-sm hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[4px_4px_0px_#0038FF]"
+              onClick={() => setShowArchived(!showArchived)}
+              className={`px-6 py-3 flex items-center gap-3 font-bold font-mono text-sm transition-colors border-2 shadow-[4px_4px_0px_#0038FF] ${
+                showArchived 
+                  ? 'bg-gray-100 text-gray-700 border-gray-300' 
+                  : 'bg-white text-[#050505] border-[#050505]'
+              }`}
             >
-              <UserPlus className="w-4 h-4" /> ADD TECH
+              <Users2 className="w-4 h-4" /> {showArchived ? 'SHOW ACTIVE' : 'SHOW ARCHIVED'}
             </button>
+            {!showArchived && (
+              <button 
+                onClick={handleAddTeamMember}
+                className="bg-[#050505] text-white px-6 py-3 flex items-center gap-3 font-bold font-mono text-sm hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[4px_4px_0px_#0038FF]"
+              >
+                <UserPlus className="w-4 h-4" /> ADD TECH
+              </button>
+            )}
           </div>
         </header>
 
@@ -572,6 +637,8 @@ export default function Crew() {
                     ? 'bg-red-500'
                     : tech.statusColor === 'yellow'
                     ? 'bg-yellow-400'
+                    : tech.statusColor === 'gray'
+                    ? 'bg-gray-400'
                     : 'bg-green-500'
                 }`}
               ></div>
@@ -587,7 +654,11 @@ export default function Crew() {
                     {tech.initials}
                   </div>
                   <div>
-                    <h3 className="font-display text-xl font-bold group-hover:text-[#0038FF] transition-colors">
+                    <h3 className={`font-display text-xl font-bold transition-colors ${
+                      tech.statusColor === 'gray' 
+                        ? 'text-gray-500' 
+                        : 'group-hover:text-[#0038FF]'
+                    }`}>
                       {tech.name}
                     </h3>
                     <p
@@ -596,6 +667,8 @@ export default function Crew() {
                           ? 'text-red-600'
                           : tech.statusColor === 'yellow'
                           ? 'text-yellow-600'
+                          : tech.statusColor === 'gray'
+                          ? 'text-gray-500'
                           : 'text-green-600'
                       }`}
                     >
@@ -666,18 +739,29 @@ export default function Crew() {
                   PROFILE
                 </button>
                 {tech.statusColor === 'red' && (
-                  <button className="flex-1 py-2 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 border border-red-100">
+                  <button 
+                    onClick={() => handleNotify(tech.id)}
+                    className="flex-1 py-2 text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 border border-red-100"
+                  >
                     NOTIFY
                   </button>
                 )}
                 {tech.statusColor === 'yellow' && (
-                  <button className="flex-1 py-2 text-xs font-bold bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-100">
+                  <button 
+                    onClick={() => handleNotify(tech.id)}
+                    className="flex-1 py-2 text-xs font-bold bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-100"
+                  >
                     REMIND
                   </button>
                 )}
                 {tech.statusColor === 'green' && (
                   <button className="flex-1 py-2 text-xs font-bold text-gray-400 cursor-default">
                     NO ACTION
+                  </button>
+                )}
+                {tech.statusColor === 'gray' && (
+                  <button className="flex-1 py-2 text-xs font-bold text-gray-400 cursor-default">
+                    ARCHIVED
                   </button>
                 )}
               </div>
@@ -702,6 +786,7 @@ export default function Crew() {
             onClose={() => setIsProfileModalOpen(false)}
             member={selectedMember}
             summaries={certSummaries}
+            onCertificationUploaded={fetchData}
           />
         )}
 
@@ -732,6 +817,15 @@ export default function Crew() {
             technicianName={selectedMember?.name}
           />
         )}
+
+        {/* Notify Certification Modal */}
+        <NotifyCertificationModal
+          isOpen={isNotifyModalOpen}
+          onClose={() => setIsNotifyModalOpen(false)}
+          onSuccess={handleNotificationSuccess}
+          certification={selectedCertification}
+          managers={['manager@company.com', 'supervisor@company.com']} // Mock manager emails
+        />
       </main>
     </div>
   );

@@ -13,9 +13,17 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+        // Map variant for IronStamp styling - detect success by title
+        let toastVariant: "default" | "destructive" | "success" = variant || "default";
+        if (variant === "destructive") {
+          toastVariant = "destructive";
+        } else if (title === "Success" || (typeof title === "string" && title.toUpperCase() === "SUCCESS")) {
+          toastVariant = "success";
+        }
+        
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} variant={toastVariant} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

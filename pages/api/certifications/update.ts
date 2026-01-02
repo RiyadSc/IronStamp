@@ -4,6 +4,18 @@ import formidable from 'formidable';
 import fs from 'fs';
 import { validateCSRFRequest } from '@/lib/csrf';
 
+// Initialize Supabase admin client with service role for storage operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
 // Disable default body parser to handle multipart/form-data
 export const config = {
   api: {
@@ -145,7 +157,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const fileBuffer = fs.readFileSync(file.filepath);
         
-        const { data: _uploadData, error: uploadError } = await supabase.storage
+        // Use admin client for storage operations to bypass RLS policies
+        const { data: _uploadData, error: uploadError } = await supabaseAdmin.storage
           .from('certifications')
           .upload(filePath, fileBuffer, {
             cacheControl: '3600',
@@ -158,12 +171,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(500).json({ error: 'Failed to upload file' });
         }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('certifications')
-          .getPublicUrl(filePath);
-
-        updateData.file_url = publicUrl;
+        // Store file path instead of public URL (bucket is private)
+        // This path will be used to generate signed URLs when viewing files
+        updateData.file_url = filePath;
         updateData.file_name = file.originalFilename || fileName;
         updateData.file_size = file.size;
 

@@ -1,16 +1,19 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Phone, Mail, Briefcase, ShieldAlert, ShieldCheck, Clock, FileText } from "lucide-react";
+import { X, Phone, Mail, Briefcase, ShieldAlert, ShieldCheck, Clock, FileText, Upload, Loader2 } from "lucide-react";
 import type { TeamMember, EmployeeCertificationSummary, CertificationDetails } from "@/lib/data-service";
 import { formatDateToAmerican } from "@/lib/utils";
+import { uploadCertification } from "@/lib/certification-service";
+import { useToast } from "@/hooks/use-toast";
 
 interface CrewTechnicianProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   member: TeamMember | null;
   summaries: EmployeeCertificationSummary[];
+  onCertificationUploaded?: () => void;
 }
 
 function getInitials(name: string) {
@@ -52,7 +55,12 @@ export const CrewTechnicianProfileModal: React.FC<CrewTechnicianProfileModalProp
   onClose,
   member,
   summaries,
+  onCertificationUploaded,
 }) => {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const certs = useMemo(() => {
     if (!member) return [];
     const found = summaries.find((s) => s.employeeName === member.name);
@@ -61,6 +69,79 @@ export const CrewTechnicianProfileModal: React.FC<CrewTechnicianProfileModalProp
 
   const status = useMemo(() => getOverallStatus(certs), [certs]);
   const StatusIcon = status.icon;
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg',
+      'image/png'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please upload PDF, DOC, DOCX, JPG, or PNG files only.',
+        variant: 'destructive',
+      });
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: 'File Too Large',
+        description: 'File size must be less than 5MB.',
+        variant: 'destructive',
+      });
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Upload the file
+    setIsUploading(true);
+    try {
+      await uploadCertification(file);
+      toast({
+        title: 'Success',
+        description: 'Certification uploaded successfully',
+      });
+      if (onCertificationUploaded) {
+        onCertificationUploaded();
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Failed to upload certification. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -146,8 +227,34 @@ export const CrewTechnicianProfileModal: React.FC<CrewTechnicianProfileModalProp
             <div className="border border-gray-200 bg-white">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <div className="font-mono text-xs font-bold uppercase text-[#0038FF]">{`/// CERTIFICATIONS & LICENSES ///`}</div>
-                <div className="font-mono text-[10px] text-gray-500">
-                  {certs.length} on file
+                <div className="flex items-center gap-3">
+                  <div className="font-mono text-[10px] text-gray-500">
+                    {certs.length} on file
+                  </div>
+                  <button
+                    onClick={handleUploadClick}
+                    disabled={isUploading}
+                    className="font-mono text-xs font-bold px-3 py-1.5 bg-[#050505] text-white hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[2px_2px_0px_#0038FF] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        UPLOADING...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-3 h-3" />
+                        UPLOAD CERT
+                      </>
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </div>
               </div>
 

@@ -27,6 +27,7 @@ import {
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getTeamMembersWithCerts, type TeamMember, getEmployeeCertificationSummary, type CertificationDetails, deleteTeamMember, archiveTeamMember, restoreTeamMember, getUserProfile, type UserProfile } from "@/lib/data-service";
+import { deleteCertification } from "@/lib/certification-service";
 import { useAuth } from "@/hooks/useAuth";
 
 // Use TeamMember interface from data-service.ts
@@ -70,6 +71,8 @@ const Team = () => {
   const [viewCertsFor, setViewCertsFor] = useState<TeamMember | null>(null);
   const [certsLoading, setCertsLoading] = useState(false);
   const [employeeCerts, setEmployeeCerts] = useState<CertificationDetails[] | null>(null);
+  const [deleteCertConfirmOpen, setDeleteCertConfirmOpen] = useState(false);
+  const [selectedCert, setSelectedCert] = useState<CertificationDetails | null>(null);
 
   // Track if we've loaded data to prevent unnecessary re-loads on tab switches
   const loadedUserRef = useRef<string | null>(null);
@@ -306,6 +309,50 @@ const Team = () => {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to restore employee. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteCert = (cert: CertificationDetails) => {
+    setSelectedCert(cert);
+    setDeleteCertConfirmOpen(true);
+  };
+
+  const confirmDeleteCert = async () => {
+    if (!selectedCert) return;
+    
+    setDeleteLoading(true);
+    try {
+      await deleteCertification(selectedCert.id);
+      
+      toast({
+        title: "Certification Deleted",
+        description: `The certification "${selectedCert.type}" has been permanently deleted.`,
+        variant: "destructive",
+      });
+      
+      setDeleteCertConfirmOpen(false);
+      setSelectedCert(null);
+      
+      // Refresh the certifications list in the modal
+      if (viewCertsFor) {
+        setCertsLoading(true);
+        getEmployeeCertificationSummary().then((summaries) => {
+          const found = summaries.find(s => s.employeeName === viewCertsFor.name);
+          setEmployeeCerts(found ? found.certifications : []);
+        }).finally(() => setCertsLoading(false));
+      }
+      
+      // Also refresh team members to update counts
+      refreshTeamMembers();
+    } catch (error) {
+      console.error('Error deleting certification:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete certification. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -704,6 +751,46 @@ const Team = () => {
             </DialogContent>
           </Dialog>
 
+          {/* Delete Certification Confirmation Dialog */}
+          <Dialog open={deleteCertConfirmOpen} onOpenChange={setDeleteCertConfirmOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center text-red-600">
+                  <Trash2 className="w-5 h-5 mr-2" />
+                  Delete Certification
+                </DialogTitle>
+                <DialogDescription className="text-left space-y-3">
+                  <p className="font-medium text-gray-900">
+                    Are you sure you want to permanently delete the certification &quot;{selectedCert?.type}&quot;?
+                  </p>
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium mb-2">This will:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Permanently delete the certification record</li>
+                      <li>Delete the associated file (if any)</li>
+                      <li>Remove it from all reports and dashboards</li>
+                    </ul>
+                    <p className="mt-3 text-xs text-gray-500 font-semibold">
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setDeleteCertConfirmOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmDeleteCert}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete Certification'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           {/* Restore Confirmation Dialog */}
           <Dialog open={restoreConfirmOpen} onOpenChange={setRestoreConfirmOpen}>
             <DialogContent className="sm:max-w-[425px]">
@@ -762,11 +849,23 @@ const Team = () => {
               ) : employeeCerts && employeeCerts.length > 0 ? (
                 <div className="space-y-4">
                   {employeeCerts.map(cert => (
-                    <div key={cert.id} className="border rounded-lg p-4 flex flex-col gap-1 bg-gray-50">
-                      <div className="font-semibold text-gray-900">{cert.type}</div>
-                      <div className="text-xs text-gray-600">Start: {cert.issueDate ? formatDateToAmerican(cert.issueDate) : 'N/A'}</div>
-                      <div className="text-xs text-gray-600">Expiry: {cert.expirationDate ? formatDateToAmerican(cert.expirationDate) : 'N/A'}</div>
-                      <div className="text-xs text-gray-500">Status: {cert.status}</div>
+                    <div key={cert.id} className="border rounded-lg p-4 flex flex-col gap-1 bg-gray-50 relative">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900">{cert.type}</div>
+                          <div className="text-xs text-gray-600">Start: {cert.issueDate ? formatDateToAmerican(cert.issueDate) : 'N/A'}</div>
+                          <div className="text-xs text-gray-600">Expiry: {cert.expirationDate ? formatDateToAmerican(cert.expirationDate) : 'N/A'}</div>
+                          <div className="text-xs text-gray-500">Status: {cert.status}</div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCert(cert)}
+                          disabled={deleteLoading}
+                          className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1 flex-shrink-0"
+                          title="Delete certification"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getCSRFToken } from './csrf-client';
 
 export interface CertificationData {
   employeeName: string;
@@ -45,26 +46,33 @@ export async function uploadCertification(file: File): Promise<UploadResult> {
       throw new Error('Unsupported file type. Please upload PDF, DOC, DOCX, JPG, or PNG files.');
     }
 
-    // Validate file size (20MB limit)
-    const maxSize = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '20971520');
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      throw new Error(`File size exceeds ${maxSize / 1024 / 1024}MB limit`);
+      throw new Error(`File size exceeds 5MB limit`);
     }
 
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    // Get current user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
       throw new Error('User not authenticated');
     }
+
+    // Get CSRF token
+    const csrfToken = await getCSRFToken();
 
     // Create form data
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('userId', user.id);
+    formData.append('userId', session.user.id);
 
-    // Call the API route
+    // Call the API route with CSRF token and authorization
     const response = await fetch('/api/upload-certification', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-CSRF-Token': csrfToken,
+      },
       body: formData,
     });
 
@@ -134,7 +142,48 @@ export async function getUserCertifications() {
 }
 
 /**
- * Delete a certification
+ * Delete only the file from a certification (keeps the certification record)
+ */
+export async function deleteCertificationFile(id: string): Promise<void> {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get current session for authentication
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session?.access_token) {
+      throw new Error('Authentication required. Please sign in again.');
+    }
+
+    // Get CSRF token
+    const csrfToken = await getCSRFToken();
+
+    // Call the API endpoint to delete the file
+    const response = await fetch('/api/certifications/delete-file', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'X-CSRF-Token': csrfToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ certificationId: id })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Failed to delete file (${response.status})`);
+    }
+
+  } catch (error) {
+    console.error('Delete certification file error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a certification (entire record)
  */
 export async function deleteCertification(id: string): Promise<void> {
   try {
@@ -159,6 +208,34 @@ export async function deleteCertification(id: string): Promise<void> {
       throw new Error('Unauthorized to delete this certification');
     }
 
+    // Delete file from storage first (before database deletion)
+    if (certification.file_url) {
+      try {
+        // Extract file path from URL
+        // URL format: https://...supabase.co/storage/v1/object/public/certifications/path/to/file.pdf
+        const urlParts = certification.file_url.split('/');
+        const storageIndex = urlParts.findIndex((part: string) => part === 'certifications');
+        
+        if (storageIndex !== -1 && storageIndex < urlParts.length - 1) {
+          // Get everything after 'certifications' in the path
+          const filePath = urlParts.slice(storageIndex + 1).join('/');
+          const { error: storageError } = await supabase.storage
+            .from('certifications')
+            .remove([filePath]);
+          
+          if (storageError) {
+            console.warn('Failed to delete file from storage:', storageError);
+            // Continue with database deletion even if storage deletion fails
+          }
+        } else {
+          console.warn('Could not parse file URL for deletion:', certification.file_url);
+        }
+      } catch (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue with database deletion even if storage deletion fails
+      }
+    }
+
     // Delete from database
     const { error: deleteError } = await supabase
       .from('certifications')
@@ -166,16 +243,8 @@ export async function deleteCertification(id: string): Promise<void> {
       .eq('id', id);
 
     if (deleteError) {
-      throw new Error('Failed to delete certification');
-    }
-
-    // Delete file from storage
-    try {
-      const filePath = certification.file_url.split('/').slice(-2).join('/');
-      await supabase.storage.from('certifications').remove([filePath]);
-    } catch (storageError) {
-      console.error('Failed to delete file from storage:', storageError);
-      // Don't throw here as the database record is already deleted
+      console.error('Database delete error:', deleteError);
+      throw new Error(`Failed to delete certification: ${deleteError.message}`);
     }
 
   } catch (error) {
