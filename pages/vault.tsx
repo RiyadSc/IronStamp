@@ -926,7 +926,7 @@ export default function Vault() {
                   {doc.type === 'PDF' ? (
                     <FileText className="w-4 h-4 text-[#0038FF] flex-shrink-0" />
                   ) : (
-                    <Image className="w-4 h-4 text-[#0038FF] flex-shrink-0" />
+                    <Image className="w-4 h-4 text-[#0038FF] flex-shrink-0" aria-label="Image file" />
                   )}
                   <div className="flex items-center gap-2 min-w-0 flex-1 relative">
                     <div className="flex-1 min-w-0 relative">

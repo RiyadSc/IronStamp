@@ -165,7 +165,7 @@ export default function LandingPageV2() {
           </div>
 
           <p className="mt-12 max-w-xl text-lg text-gray-600 leading-relaxed">
-            <span className="font-bold text-black">Real talk:</span> You&apos;re running a business, not a filing cabinet. But the state of Massachusetts doesn&apos;t care. One surprise inspection, one expired EPA card, and you&apos;re looking at fines that wipe out your profit margin for the month.
+            <span className="font-bold text-black">Real talk:</span> You&apos;re running a business, not a filing cabinet. But the state of Massachusetts doesn&apos;t care. One surprise inspection, one expired state license, and you&apos;re looking at fines that wipe out your profit margin for the month.
           </p>
 
           <div className="mt-10 mb-16 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
@@ -198,10 +198,10 @@ export default function LandingPageV2() {
                 It&apos;s 3:30 PM. You&apos;re trying to wrap up payroll. Your phone rings. It&apos;s Mike. He&apos;s on the big commercial install downtown.
               </p>
               <p className="font-bold pl-4 border-l-4 border-red-500">
-                &quot;Boss, the GC is asking for my OSHA 30 card. I think I left it in the other truck... or maybe it expired last month? I don&apos;t know.&quot;
+                &quot;Boss, the GC is asking for my OSHA 30 card. I think I left it in the other truck... or maybe or maybe it’s too old for this site? I don&apos;t know.&quot;
               </p>
               <p>
-                Your stomach drops. If he gets kicked off the site, you lose the schedule. If the inspector writes it up, you lose the money.
+                Your stomach drops. In Massachusetts, if that card is over five years old, it’s as good as trash. If he gets kicked off the site, you lose the schedule. If the inspector writes it up, you lose the money.
               </p>
               <p>
                 You start digging through Google Drive folders named &quot;New Folder (2)&quot; and text message screenshots. <span className="bg-yellow-300 px-1">It&apos;s a mess.</span> And you know it.
@@ -417,7 +417,7 @@ export default function LandingPageV2() {
           </div>
 
           <div className="mt-24 pt-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center font-mono text-xs opacity-70">
-            <div>&copy; 2025 IRONSTAMP SYSTEMS. BOSTON, MA.</div>
+            <div>&copy; 2026 IRONSTAMP SYSTEMS. BOSTON, MA.</div>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="/privacy-policy" className="hover:text-white">PRIVACY</Link>
               <Link href="/terms-of-service" className="hover:text-white">TERMS</Link>
