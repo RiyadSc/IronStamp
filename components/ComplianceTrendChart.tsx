@@ -100,6 +100,9 @@ export const ComplianceTrendChart: React.FC = () => {
 
       // Count upcoming renewals (next 30 days)
       const upcomingRenewals = matchingCerts.filter(cert => {
+        // Skip lifetime certifications or those without expiration date
+        if (cert.isLifetime || !cert.expirationDate) return false;
+        
         const expirationDate = new Date(cert.expirationDate);
         return expirationDate >= today && expirationDate <= thirtyDaysFromNow;
       }).length;

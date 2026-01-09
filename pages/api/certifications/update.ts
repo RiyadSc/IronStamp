@@ -85,6 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const employeeName = Array.isArray(fields.employeeName) ? fields.employeeName[0] : fields.employeeName;
     const issueDate = Array.isArray(fields.issueDate) ? fields.issueDate[0] : fields.issueDate;
     const expirationDate = Array.isArray(fields.expirationDate) ? fields.expirationDate[0] : fields.expirationDate;
+    const isLifetime = (Array.isArray(fields.isLifetime) ? fields.isLifetime[0] : fields.isLifetime) === 'true';
     const priority = Array.isArray(fields.priority) ? fields.priority[0] : fields.priority;
     const notes = Array.isArray(fields.notes) ? fields.notes[0] : fields.notes;
 
@@ -94,12 +95,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       employeeName,
       issueDate,
       expirationDate,
+      isLifetime,
       priority,
       notes
     });
 
-    if (!certificationId || !certificationName || !employeeName || !issueDate || !expirationDate) {
+    if (!certificationId || !certificationName || !employeeName) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (!isLifetime && !expirationDate) {
+      return res.status(400).json({ error: 'Expiration date is required for non-lifetime certifications' });
     }
 
     // Debug: Check what certifications the authenticated user can see
@@ -139,8 +145,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const updateData: any = {
       certification_name: certificationName,
       employee_name: employeeName,
-      issue_date: issueDate,
-      expiration_date: expirationDate,
+      issue_date: issueDate || null,
+      expiration_date: isLifetime ? null : expirationDate,
+      is_lifetime: isLifetime,
       priority: priority || 'medium',
       notes: notes || null,
       updated_at: new Date().toISOString()

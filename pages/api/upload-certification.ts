@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import formidable from 'formidable';
 import fs from 'fs';
 import { validateCSRFRequest } from '@/lib/csrf';
+import { isLifetimeCertification } from '@/lib/certification-types';
 
 // Initialize OpenAI (server-side only)
 const openai = new OpenAI({
@@ -31,13 +32,19 @@ export const config = {
 interface CertificationData {
   employeeName: string;
   certificationName: string;
-  expirationDate: string;
+  expirationDate: string | null;
   issueDate?: string;
   priority: 'low' | 'medium' | 'high';
   confidence: number;
+  isLifetime: boolean;
 }
 
-function calculatePriority(expirationDate: string): 'low' | 'medium' | 'high' {
+function calculatePriority(expirationDate: string | null, isLifetime: boolean): 'low' | 'medium' | 'high' {
+  // Lifetime certifications never expire, so they're always low priority
+  if (isLifetime || !expirationDate) {
+    return 'low';
+  }
+  
   const expDate = new Date(expirationDate);
   const today = new Date();
   const diffTime = expDate.getTime() - today.getTime();
@@ -202,9 +209,22 @@ Analyze this certification document carefully, paying attention to BOTH text con
   "employeeName": "Full name of the certificate holder",
   "certificationName": "Complete name/type of the certification including state if mentioned (e.g., 'Massachusetts Refrigeration Technician License' or 'EPA 608 Universal')",
   "issueDate": "Issue date in YYYY-MM-DD format (if available, use null if not found)",
-  "expirationDate": "Expiration date in YYYY-MM-DD format",
+  "expirationDate": "Expiration date in YYYY-MM-DD format (use null for LIFETIME certifications - see below)",
+  "isLifetime": "Boolean - true if this is a lifetime credential that never expires, false otherwise",
   "confidence": "Your confidence level (0.0 to 1.0) in the extracted data"
 }
+
+LIFETIME CERTIFICATIONS (isLifetime = true, expirationDate = null):
+The following certifications NEVER EXPIRE and should have isLifetime: true and expirationDate: null:
+- EPA Section 608 (Universal, Type I, Type II, Type III) - Federal refrigerant handling
+- EPA Section 609 (MVAC) - Motor Vehicle Air Conditioning  
+- R-410A Safety Certification
+- OSHA 10-Hour Construction Safety Card
+- OSHA 30-Hour Construction Safety Card
+- HVAC Excellence "Employment Ready" certifications (entry-level/student certifications)
+
+If you identify the document as one of these lifetime certifications, set isLifetime: true and expirationDate: null.
+For any other certification, look for an expiration date and set isLifetime: false.
 
 CRITICAL EXTRACTION INSTRUCTIONS:
 
@@ -338,9 +358,21 @@ IMPORTANT:
     // Use robust JSON extraction instead of direct JSON.parse
     const extractedData = extractJsonFromResponse(content);
     
-    // Validate required fields
-    if (!extractedData.employeeName || !extractedData.certificationName || !extractedData.expirationDate) {
+    // Check if AI identified it as a lifetime certification
+    let isLifetime = extractedData.isLifetime === true;
+    
+    // Also check our known patterns in case AI didn't recognize it
+    if (!isLifetime && extractedData.certificationName) {
+      isLifetime = isLifetimeCertification(extractedData.certificationName);
+    }
+    
+    // Validate required fields - expirationDate only required for non-lifetime certs
+    if (!extractedData.employeeName || !extractedData.certificationName) {
       throw new Error('Could not extract required certification data');
+    }
+    
+    if (!isLifetime && !extractedData.expirationDate) {
+      throw new Error('Could not extract expiration date from certification');
     }
 
     // Normalize issue date - handle null, empty string, or invalid dates
@@ -359,16 +391,26 @@ IMPORTANT:
       }
     }
 
-    // Calculate priority
-    const priority = calculatePriority(extractedData.expirationDate);
+    // Normalize expiration date - null for lifetime certs
+    let expirationDate: string | null = null;
+    if (!isLifetime && extractedData.expirationDate) {
+      const expDateObj = new Date(extractedData.expirationDate);
+      if (!isNaN(expDateObj.getTime())) {
+        expirationDate = expDateObj.toISOString().split('T')[0];
+      }
+    }
+
+    // Calculate priority (lifetime certs are always low priority)
+    const priority = calculatePriority(expirationDate, isLifetime);
 
     return {
       employeeName: extractedData.employeeName,
       certificationName: extractedData.certificationName,
       issueDate: issueDate,
-      expirationDate: extractedData.expirationDate,
+      expirationDate: expirationDate,
       priority,
-      confidence: extractedData.confidence || 0.8
+      confidence: extractedData.confidence || 0.8,
+      isLifetime
     };
 
   } catch (error) {
@@ -464,9 +506,10 @@ async function saveCertificationToDatabase(
       // Update the existing record
       const updateData: any = {
         certification_name: data.certificationName, // Update with the new name (might have state prefix now)
-        expiration_date: data.expirationDate,
+        expiration_date: data.isLifetime ? null : data.expirationDate,
         issue_date: data.issueDate || null,
         priority: data.priority,
+        is_lifetime: data.isLifetime,
         file_url: filePath, // Store file path instead of public URL
         file_name: fileName,
         file_size: fileSize,
@@ -494,8 +537,9 @@ async function saveCertificationToDatabase(
         employee_name: data.employeeName,
         certification_name: data.certificationName,
         issue_date: data.issueDate || null,
-        expiration_date: data.expirationDate,
+        expiration_date: data.isLifetime ? null : data.expirationDate,
         priority: data.priority,
+        is_lifetime: data.isLifetime,
         file_url: filePath, // Store file path instead of public URL
         file_name: fileName,
         file_size: fileSize,

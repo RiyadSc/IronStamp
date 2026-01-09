@@ -49,7 +49,7 @@ interface Technician {
   certifications: {
     name: string;
     status: 'EXPIRED' | 'VALID' | string;
-    statusType: 'crit' | 'warn' | 'ok';
+    statusType: 'crit' | 'warn' | 'ok' | 'lifetime';
   }[];
 }
 
@@ -110,9 +110,13 @@ const processTechnicianData = (teamMembers: TeamMember[], certSummaries: Employe
       
       const certifications = employeeCerts?.certifications?.map(cert => {
         let statusText = 'VALID';
-        let statusType: 'crit' | 'warn' | 'ok' = 'ok';
+        let statusType: 'crit' | 'warn' | 'ok' | 'lifetime' = 'ok';
         
-        if (cert.daysLeft < 0) {
+        // Check if it's a lifetime certification
+        if (cert.isLifetime || cert.daysLeft === Infinity) {
+          statusText = 'LIFETIME';
+          statusType = 'lifetime';
+        } else if (cert.daysLeft < 0) {
           statusText = 'EXPIRED';
           statusType = 'crit';
         } else if (cert.daysLeft <= 30) {
@@ -723,6 +727,8 @@ export default function Crew() {
                           ? 'status-crit'
                           : cert.statusType === 'warn'
                           ? 'status-warn'
+                          : cert.statusType === 'lifetime'
+                          ? 'status-lifetime'
                           : 'status-ok'
                       }`}
                     >

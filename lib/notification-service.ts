@@ -193,6 +193,7 @@ export class NotificationService {
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
 
+      // Only get certifications that have expiration dates and are not lifetime certs
       const { data: certifications, error } = await supabase
         .from('certifications')
         .select(`
@@ -202,9 +203,12 @@ export class NotificationService {
           certification_name,
           expiration_date,
           user_id,
-          employee_id
+          employee_id,
+          is_lifetime
         `)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .neq('is_lifetime', true)
+        .not('expiration_date', 'is', null);
 
       if (error) {
         console.error('Error fetching certifications:', error);
@@ -217,6 +221,11 @@ export class NotificationService {
       const notificationsNeeded = [];
 
       for (const cert of certifications) {
+        // Skip lifetime certifications (double-check in case DB doesn't have is_lifetime set)
+        if (cert.is_lifetime === true || !cert.expiration_date) {
+          continue;
+        }
+        
         const expirationDate = new Date(cert.expiration_date);
         const timeDiff = expirationDate.getTime() - today.getTime();
         const daysUntilExpiry = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));

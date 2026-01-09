@@ -72,17 +72,21 @@ export default async function handler(
     console.log('Querying for user_id:', user.id);
 
     // Step 1: Get all expiring certifications for this user
+    // Exclude lifetime certifications (is_lifetime = true or expiration_date is null)
     console.log('STEP 1: Fetching certifications...');
     console.log('Query parameters:', {
       user_id: user.id,
       expiration_date_lte: thirtyDaysFromNow.toISOString().split('T')[0],
-      has_employee_id: 'not null'
+      has_employee_id: 'not null',
+      excludes: 'lifetime certifications'
     });
     
     const { data: certs, error: certsError } = await supabase
       .from('certifications')
-      .select('id, certification_name, expiration_date, employee_id')
+      .select('id, certification_name, expiration_date, employee_id, is_lifetime')
       .eq('user_id', user.id)
+      .neq('is_lifetime', true)
+      .not('expiration_date', 'is', null)
       .lte('expiration_date', thirtyDaysFromNow.toISOString().split('T')[0])
       .not('employee_id', 'is', null);
 

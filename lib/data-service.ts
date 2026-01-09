@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { User } from '@supabase/supabase-js'
+import { isLifetimeCertification, getCertificationStatus } from './certification-types'
 
 // Enhanced user authentication with better error handling
 async function getCurrentUser(): Promise<User | null> {
@@ -53,10 +54,11 @@ export interface ExpirationItem {
   id: string
   employee: string
   certification: string
-  expirationDate: string
+  expirationDate: string | null
   daysLeft: number
-  status: 'critical' | 'warning' | 'expired'
+  status: 'critical' | 'warning' | 'expired' | 'lifetime'
   priority: 'low' | 'medium' | 'high'
+  isLifetime?: boolean
 }
 
 export interface CertificationDetails {
@@ -64,7 +66,7 @@ export interface CertificationDetails {
   employee: string
   type: string
   issueDate: string
-  expirationDate: string
+  expirationDate: string | null
   status: string
   daysLeft: number
   priority?: 'low' | 'medium' | 'high'
@@ -73,6 +75,7 @@ export interface CertificationDetails {
   fileName?: string
   hasDocument?: boolean
   fileSize?: number
+  isLifetime?: boolean
 }
 
 export interface TeamMember {
@@ -201,16 +204,18 @@ export async function getDashboardStats(userId?: string): Promise<DashboardStats
       .eq('user_id', user.id)
       .neq('status', 'suspended')
 
-    // Get expired certifications
+    // Get expired certifications (exclude lifetime certs which have NULL expiration_date)
     const today = new Date().toISOString().split('T')[0]
     const { count: expiredCount } = await supabase
       .from('certifications')
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
       .neq('status', 'suspended')
+      .not('expiration_date', 'is', null)
+      .neq('is_lifetime', true)
       .lt('expiration_date', today)
 
-    // Get expiring soon (next 30 days)
+    // Get expiring soon (next 30 days) - exclude lifetime certs
     const thirtyDaysFromNow = new Date()
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
     const { count: expiringSoonCount } = await supabase
@@ -218,6 +223,8 @@ export async function getDashboardStats(userId?: string): Promise<DashboardStats
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
       .neq('status', 'suspended')
+      .not('expiration_date', 'is', null)
+      .neq('is_lifetime', true)
       .gte('expiration_date', today)
       .lte('expiration_date', thirtyDaysFromNow.toISOString().split('T')[0])
 
@@ -259,14 +266,17 @@ export async function getExpiringCertifications(_limit: number = 10, userId?: st
     }
 
     // Get certifications expiring in the next 60 days or already expired
+    // Exclude lifetime certifications (is_lifetime = true OR expiration_date IS NULL)
     const sixtyDaysFromNow = new Date()
     sixtyDaysFromNow.setDate(sixtyDaysFromNow.getDate() + 60)
 
     const { data, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, expiration_date, priority')
+      .select('id, employee_name, certification_name, expiration_date, priority, is_lifetime')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
+      .not('expiration_date', 'is', null)
+      .neq('is_lifetime', true)
       .lte('expiration_date', sixtyDaysFromNow.toISOString().split('T')[0])
       .order('expiration_date', { ascending: true })
 
@@ -281,7 +291,8 @@ export async function getExpiringCertifications(_limit: number = 10, userId?: st
         expirationDate: cert.expiration_date,
         daysLeft,
         status: getStatus(daysLeft),
-        priority: cert.priority || 'medium'
+        priority: cert.priority || 'medium',
+        isLifetime: false
       }
     })
   } catch (error) {
@@ -302,18 +313,23 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
 
     const { data, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, file_url, file_name, file_size')
+      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, file_url, file_name, file_size, is_lifetime')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
-      .order('expiration_date', { ascending: true })
+      .order('expiration_date', { ascending: true, nullsFirst: false })
 
     if (error) throw error
 
     return (data || []).map(cert => {
-      const daysLeft = calculateDaysBetween(cert.expiration_date)
-      let status = 'Active'
-      if (daysLeft < 0) status = 'Expired'
-      else if (daysLeft <= 30) status = 'Expiring Soon'
+      // Check if it's a lifetime certification (from DB or by pattern matching or if expiration date is null)
+      const isLifetime = cert.is_lifetime === true || 
+        cert.expiration_date === null || 
+        isLifetimeCertification(cert.certification_name)
+      
+      const daysLeft = isLifetime ? Infinity : calculateDaysBetween(cert.expiration_date)
+      
+      // Get status using the helper function
+      const status = getCertificationStatus(isLifetime, daysLeft === Infinity ? 0 : daysLeft)
 
       return {
         id: cert.id,
@@ -322,13 +338,14 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
         issueDate: cert.issue_date ? String(cert.issue_date) : '',
         expirationDate: cert.expiration_date,
         status,
-        daysLeft,
+        daysLeft: isLifetime ? Infinity : daysLeft,
         priority: cert.priority || 'medium',
         notes: cert.notes || undefined,
         fileUrl: cert.file_url || undefined,
         fileName: cert.file_name || undefined,
         hasDocument: !!cert.file_url,
-        fileSize: cert.file_size || undefined
+        fileSize: cert.file_size || undefined,
+        isLifetime
       }
     })
   } catch (error) {
@@ -826,7 +843,7 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
     // Get all certifications for the user
     const { data: certifications, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes')
+      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, is_lifetime')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
       .order('employee_name', { ascending: true })
@@ -839,10 +856,22 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
     const employeeMap = new Map<string, EmployeeCertificationSummary>()
 
     certifications.forEach(cert => {
-      const daysLeft = calculateDaysBetween(cert.expiration_date)
+      // Check if it's a lifetime certification (from DB or by pattern matching or if expiration date is null)
+      const isLifetime = cert.is_lifetime === true || 
+        cert.expiration_date === null || 
+        isLifetimeCertification(cert.certification_name)
+      
+      const daysLeft = isLifetime ? Infinity : calculateDaysBetween(cert.expiration_date)
+      
+      // Determine status
       let status = 'Active'
-      if (daysLeft < 0) status = 'Expired'
-      else if (daysLeft <= 30) status = 'Expiring Soon'
+      if (isLifetime) {
+        status = 'Lifetime'
+      } else if (daysLeft < 0) {
+        status = 'Expired'
+      } else if (daysLeft <= 30) {
+        status = 'Expiring Soon'
+      }
       
       const certDetail: CertificationDetails = {
         id: cert.id,
@@ -851,9 +880,10 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
         issueDate: cert.issue_date ? String(cert.issue_date) : '',
         expirationDate: cert.expiration_date,
         status,
-        daysLeft,
+        daysLeft: isLifetime ? Infinity : daysLeft,
         priority: cert.priority || 'medium',
-        notes: cert.notes || undefined
+        notes: cert.notes || undefined,
+        isLifetime
       }
 
       const employeeKey = cert.employee_name || 'Unknown Employee'
@@ -875,8 +905,8 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
       employee.certifications.push(certDetail)
       employee.totalCertifications++
 
-      // Count by status
-      if (certDetail.status === 'Active') {
+      // Count by status (lifetime certs count as active)
+      if (certDetail.status === 'Lifetime' || certDetail.status === 'Active') {
         employee.activeCertifications++
       } else if (certDetail.status === 'Expiring Soon') {
         employee.expiringSoonCertifications++
@@ -889,16 +919,18 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
     const result = Array.from(employeeMap.values()).map(employee => ({
       ...employee,
       certifications: employee.certifications.sort((a, b) => {
-        // Sort by status priority (expired first, then expiring soon, then active)
-        const statusPriority = { 'Expired': 0, 'Expiring Soon': 1, 'Active': 2 }
-        const aPriority = statusPriority[a.status as keyof typeof statusPriority] ?? 3
-        const bPriority = statusPriority[b.status as keyof typeof statusPriority] ?? 3
+        // Sort by status priority (expired first, then expiring soon, then active, then lifetime)
+        const statusPriority = { 'Expired': 0, 'Expiring Soon': 1, 'Active': 2, 'Lifetime': 3 }
+        const aPriority = statusPriority[a.status as keyof typeof statusPriority] ?? 4
+        const bPriority = statusPriority[b.status as keyof typeof statusPriority] ?? 4
         
         if (aPriority !== bPriority) {
           return aPriority - bPriority
         }
         
-        // If same status, sort by days left (ascending)
+        // If same status, sort by days left (ascending), but lifetime certs go last
+        if (a.daysLeft === Infinity) return 1
+        if (b.daysLeft === Infinity) return -1
         return a.daysLeft - b.daysLeft
       })
     }))

@@ -33,7 +33,7 @@ interface VaultDocument {
   name: string;
   technician: string;
   expDate: string;
-  expDateStatus: 'expired' | 'warning' | 'valid';
+  expDateStatus: 'expired' | 'warning' | 'valid' | 'lifetime';
   type: 'PDF' | 'JPG';
   category: string;
   hasDocument: boolean;
@@ -158,12 +158,17 @@ export default function Vault() {
   const convertToVaultDocuments = useCallback((certs: CertificationDetails[]): VaultDocument[] => {
     return certs.map(cert => {
       const daysLeft = cert.daysLeft;
-      let expDateStatus: 'expired' | 'warning' | 'valid' = 'valid';
+      const isLifetime = cert.isLifetime || daysLeft === Infinity;
+      let expDateStatus: 'expired' | 'warning' | 'valid' | 'lifetime' = 'valid';
       let expDate = '';
       
       // Validate and format expiration date
       try {
-        if (!cert.expirationDate) {
+        // Handle lifetime certifications first
+        if (isLifetime) {
+          expDate = 'LIFETIME';
+          expDateStatus = 'lifetime';
+        } else if (!cert.expirationDate) {
           expDate = 'No date';
           expDateStatus = 'expired';
         } else {
@@ -476,7 +481,8 @@ export default function Vault() {
       formData.append('certificationName', cert.type);
       formData.append('employeeName', cert.employee);
       formData.append('issueDate', cert.issueDate || '');
-      formData.append('expirationDate', cert.expirationDate);
+      formData.append('expirationDate', cert.expirationDate || '');
+      formData.append('isLifetime', String(!!cert.isLifetime));
       formData.append('priority', cert.priority || 'medium');
       formData.append('notes', cert.notes || '');
 
@@ -659,6 +665,8 @@ export default function Vault() {
         return 'text-yellow-600';
       case 'valid':
         return 'text-green-600';
+      case 'lifetime':
+        return 'text-indigo-600';
       default:
         return 'text-gray-600';
     }

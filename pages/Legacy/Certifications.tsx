@@ -1,4 +1,4 @@
-import { Plus, Filter, Download, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronRight, User, Bell } from "@/lib/icons";
+import { Plus, Filter, Download, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronRight, User, Bell, Shield } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,8 @@ const getStatusBadge = (status: string) => {
       return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 rounded-full px-2 py-0.5 font-medium text-xs"><AlertTriangle className="w-2 h-2 mr-1" />Expiring</Badge>;
     case "Expired":
       return <Badge className="bg-red-100 text-red-800 hover:bg-red-100 rounded-full px-2 py-0.5 font-medium text-xs"><XCircle className="w-2 h-2 mr-1" />Expired</Badge>;
+    case "Lifetime":
+      return <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100 rounded-full px-2 py-0.5 font-medium text-xs"><Shield className="w-2 h-2 mr-1" />Lifetime</Badge>;
     default:
       return <Badge variant="secondary">{status}</Badge>;
   }
@@ -316,13 +318,13 @@ const Certifications = () => {
 
 
   // Helper function to format dates to American format (MM/DD/YYYY)
-  const formatDateToAmerican = (dateString: string) => {
+  const formatDateToAmerican = (dateString: string | null | undefined) => {
     if (!dateString) return '';
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US');
     } catch {
-      return dateString; // Return original if parsing fails
+      return dateString || ''; // Return original or empty if parsing fails
     }
   };
 
@@ -343,13 +345,16 @@ const Certifications = () => {
         <td className="py-2 px-4 text-xs text-gray-600">
           <div>
             <div className="text-xs font-medium text-gray-500 mb-1">Expiration Date</div>
-            {formatDateToAmerican(cert.expirationDate)}
+            {cert.isLifetime ? 'Lifetime' : formatDateToAmerican(cert.expirationDate)}
           </div>
         </td>
         <td className="py-2 px-4 text-xs text-gray-600">
           <div>
             <div className="text-xs font-medium text-gray-500 mb-1">Days Remaining</div>
-            {cert.daysLeft > 0 ? `${cert.daysLeft} days` : `${Math.abs(cert.daysLeft)} days ago`}
+            {cert.isLifetime || cert.daysLeft === Infinity 
+              ? 'N/A' 
+              : (cert.daysLeft > 0 ? `${cert.daysLeft} days` : `${Math.abs(cert.daysLeft)} days ago`)
+            }
           </div>
         </td>
         <td className="py-2 px-4">

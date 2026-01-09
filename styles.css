@@ -215,6 +215,11 @@
   color: #991B1B;
 }
 
+.status-lifetime {
+  background: #E0E7FF;
+  color: #3730A3;
+}
+
 /* IronStamp button effect */
 .btn-ironstamp {
   box-shadow: 4px 4px 0px #0038FF;
