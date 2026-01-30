@@ -46,7 +46,7 @@ export const DEV_MODE_SESSION = {
 // Mock user profile for dev mode
 export const DEV_MODE_PROFILE = {
   companyName: 'Dev Company Inc.',
-  teamSize: 15,
+  teamSize: '15',
   businessFocus: 'HVAC',
   onboardingCompleted: true,
   userEmail: 'dev@localhost.test'

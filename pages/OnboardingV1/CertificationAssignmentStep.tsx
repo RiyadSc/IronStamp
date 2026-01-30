@@ -23,7 +23,6 @@ import {
   Upload,
   X,
   File,
-  Trash2,
   Edit2,
   Sparkles
 } from 'lucide-react'
@@ -155,8 +154,8 @@ export default function CertificationAssignmentStep({
   onBack, 
   saving 
 }: CertificationAssignmentStepProps) {
-  const teamMembers = initialData.team_members || []
-  const selectedCerts = initialData.required_certifications || []
+  const teamMembers = useMemo(() => initialData.team_members || [], [initialData.team_members])
+  const selectedCerts = useMemo(() => initialData.required_certifications || [], [initialData.required_certifications])
   
   // Import method selection
   const [importMethod, setImportMethod] = useState<CertImportMethod>('none')
@@ -433,6 +432,8 @@ export default function CertificationAssignmentStep({
     }
     
     setIsProcessingDocs(false)
+  // callback uses teamMembers/selectedCerts; keep in deps for correct behavior
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamMembers, selectedCerts, fuzzyMatchEmployee, matchCertificationType])
 
   // Remove an extracted cert and cleanup preview URL
@@ -638,6 +639,8 @@ export default function CertificationAssignmentStep({
     } finally {
       setIsParsingSpreadsheet(false)
     }
+  // parseSpreadsheetCerts is defined below; omit from deps to avoid reordering
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Helper: Convert Excel serial date to ISO date string
@@ -832,7 +835,7 @@ export default function CertificationAssignmentStep({
   }
 
   // Apply spreadsheet rows and go to grid (for editing/review)
-  const applySpreadsheetRows = () => {
+  const _applySpreadsheetRows = () => {
     setAssignments(prev => mergeSpreadsheetIntoMap(prev))
     setImportMethod('grid')
   }
@@ -872,7 +875,7 @@ export default function CertificationAssignmentStep({
 
   // Calculate stats
   const stats = useMemo(() => {
-    let totalPossible = teamMembers.length * selectedCerts.length
+    const totalPossible = teamMembers.length * selectedCerts.length
     let assigned = 0
     let withExpiration = 0
     
@@ -1382,11 +1385,11 @@ export default function CertificationAssignmentStep({
                               {cert.status === 'success' && data && (
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className={`text-xs font-mono px-2 py-0.5 rounded ${
-                                    data.confidence >= 0.9 ? 'bg-green-100 text-green-700' :
-                                    data.confidence >= 0.7 ? 'bg-yellow-100 text-yellow-700' :
+                                    (data.confidence ?? 0) >= 0.9 ? 'bg-green-100 text-green-700' :
+                                    (data.confidence ?? 0) >= 0.7 ? 'bg-yellow-100 text-yellow-700' :
                                     'bg-red-100 text-red-700'
                                   }`}>
-                                    {Math.round(data.confidence * 100)}% confidence
+                                    {Math.round((data.confidence ?? 0) * 100)}% confidence
                                   </span>
                                   {hasIssues && (
                                     <span className="text-xs text-orange-600 font-mono">⚠ Review needed</span>
@@ -1554,7 +1557,7 @@ export default function CertificationAssignmentStep({
                                     <div className="flex-1">
                                       <div className="text-xs font-mono font-bold text-orange-900 mb-1">Issues Detected:</div>
                                       <ul className="text-xs font-mono text-orange-800 space-y-1">
-                                        {cert.issues?.lowConfidence && <li>• Low AI confidence ({Math.round(data.confidence * 100)}%)</li>}
+                                        {cert.issues?.lowConfidence && <li>• Low AI confidence ({Math.round((data.confidence ?? 0) * 100)}%)</li>}
                                         {cert.issues?.nameMismatch && <li>• Employee name not matched to team member</li>}
                                         {cert.issues?.missingLicenseNumber && <li>• License number not found</li>}
                                         {cert.issues?.missingIssueDate && <li>• Issue date not found</li>}

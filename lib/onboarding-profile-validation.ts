@@ -47,7 +47,7 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-function filterToWhitelist<T>(arr: string[], allowed: Set<string>): string[] {
+function filterToWhitelist(arr: string[], allowed: Set<string>): string[] {
   return arr.filter((item) => allowed.has(item));
 }
 

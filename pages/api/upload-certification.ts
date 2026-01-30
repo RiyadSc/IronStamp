@@ -33,7 +33,7 @@ function validateFileSignature(filepath: string, mimetype: string): { valid: boo
   if (!signatures) {
     return { valid: false, error: 'Unsupported file type' };
   }
-  let fd: number;
+  let fd: number | undefined = undefined;
   try {
     fd = fs.openSync(filepath, 'r');
     const buf = Buffer.alloc(MAGIC_READ_LEN);
@@ -47,10 +47,10 @@ function validateFileSignature(filepath: string, mimetype: string): { valid: boo
       return { valid: false, error: 'File content does not match its type. Please upload a valid PDF or image.' };
     }
     return { valid: true };
-  } catch (err) {
+  } catch {
     try {
       if (fd !== undefined) fs.closeSync(fd);
-    } catch (_) {}
+    } catch {}
     return { valid: false, error: 'Could not verify file type' };
   }
 }
@@ -718,7 +718,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!signatureCheck.valid) {
       try {
         fs.unlinkSync(file.filepath);
-      } catch (_) {}
+      } catch {}
       return res.status(400).json({
         error: signatureCheck.error || 'File content does not match its type. Please upload a valid PDF or image.',
       });

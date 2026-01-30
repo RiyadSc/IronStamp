@@ -96,7 +96,13 @@ export function IndividualUploadStep({ onComplete, onBack, onSkip }: IndividualU
       setUploadState({
         status: 'success',
         progress: 100,
-        extractedData: result
+        extractedData: {
+          employeeName: result.employeeName,
+          certificationName: result.certificationName,
+          expirationDate: result.expirationDate ?? '',
+          priority: result.priority,
+          confidence: result.confidence
+        }
       })
 
       // Auto-populate form with extracted data

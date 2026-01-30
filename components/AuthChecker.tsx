@@ -17,11 +17,6 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
   const [timeoutReached, setTimeoutReached] = useState(false)
   const router = useRouter()
 
-  // DEV MODE: Skip all auth checks and render children immediately
-  if (isDevModeEnabled) {
-    return <>{children}</>
-  }
-
   useEffect(() => {
     // Set a timeout for loading state (in case it gets stuck)
     const timeoutId = setTimeout(() => {
@@ -52,6 +47,11 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
       setShowAuthError(false)
     }
   }, [loading, isSessionValid, error, router])
+
+  // DEV MODE: Skip all auth checks and render children immediately (after hooks)
+  if (isDevModeEnabled) {
+    return <>{children}</>
+  }
 
   const handleRefresh = async () => {
     setRefreshing(true)

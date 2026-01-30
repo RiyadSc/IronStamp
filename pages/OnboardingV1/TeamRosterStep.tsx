@@ -4,13 +4,11 @@ import * as XLSX from 'xlsx'
 import { 
   ArrowLeft, 
   Users, 
-  Upload, 
   FileSpreadsheet, 
   ClipboardPaste, 
   UserPlus, 
   AlertCircle, 
   CheckCircle, 
-  X, 
   Edit2, 
   Trash2,
   Plus,
@@ -22,7 +20,6 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { OnboardingData } from './index'
 import { isDevModeEnabled } from '@/lib/dev-mode'
 
@@ -218,7 +215,7 @@ export default function TeamRosterStep({ initialData, onComplete, onBack, saving
   const [isParsing, setIsParsing] = useState(false)
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const _fileInputRef = useRef<HTMLInputElement>(null)
   
   // New member form state
   const [newMember, setNewMember] = useState<Partial<TeamMember>>({

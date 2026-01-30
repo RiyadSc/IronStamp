@@ -200,7 +200,13 @@ export const AddCertificationModal: React.FC<AddCertificationModalProps> = ({
         const updatedFile: StagedFile = {
           ...file,
           status: 'success',
-          extractedData: result
+          extractedData: {
+            employeeName: result.employeeName,
+            certificationName: result.certificationName,
+            expirationDate: result.expirationDate ?? '',
+            priority: result.priority,
+            confidence: result.confidence
+          }
         };
         
         results.push(updatedFile);

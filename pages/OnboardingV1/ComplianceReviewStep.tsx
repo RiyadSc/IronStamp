@@ -8,7 +8,6 @@ import {
   Shield, 
   Building2,
   Calendar,
-  Clock,
   TrendingUp,
   FileCheck,
   Loader2,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react'
 import type { OnboardingData } from './index'
 import type { CertificationAssignment } from './CertificationAssignmentStep'
-import { isDevModeEnabled } from '@/lib/dev-mode'
+import { isDevModeEnabled as _isDevModeEnabled } from '@/lib/dev-mode'
 
 interface ComplianceReviewStepProps {
   initialData: OnboardingData
