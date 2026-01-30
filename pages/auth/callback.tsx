@@ -65,9 +65,9 @@ export default function AuthCallback() {
             .single()
 
           if (profileError) {
-            // If profile doesn't exist or error, go to onboarding
+            // If profile doesn't exist or error, go to new onboarding
             console.log('OAuth callback: No profile found, redirecting to onboarding')
-            router.push('/onboarding')
+            router.push('/OnboardingV1')
             return
           }
 
@@ -76,9 +76,9 @@ export default function AuthCallback() {
             console.log('OAuth callback: Onboarding completed, redirecting to dashboard')
             router.push('/DashboardV2')
           } else {
-            // Otherwise, go to onboarding
+            // Otherwise, go to new onboarding
             console.log('OAuth callback: Onboarding not completed, redirecting to onboarding')
-            router.push('/onboarding')
+            router.push('/OnboardingV1')
           }
         } else {
           // No session, redirect to signin

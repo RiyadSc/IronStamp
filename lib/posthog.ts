@@ -80,6 +80,10 @@ export const POSTHOG_PROPERTIES = {
   CERTIFICATION_COUNT: 'certification_count',
   EMPLOYEE_COUNT: 'employee_count',
   
+  // Onboarding properties
+  CERTS_TRACKED: 'certs_tracked',
+  CERTS_ASSIGNED: 'certs_assigned',
+  
   // Feature properties
   FEATURE_NAME: 'feature_name',
   FEATURE_CATEGORY: 'feature_category',

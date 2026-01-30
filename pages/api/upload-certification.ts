@@ -4,7 +4,56 @@ import { createClient } from '@supabase/supabase-js';
 import formidable from 'formidable';
 import fs from 'fs';
 import { validateCSRFRequest } from '@/lib/csrf';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { isLifetimeCertification } from '@/lib/certification-types';
+
+const UPLOAD_RATE_LIMIT_MAX = parseInt(process.env.UPLOAD_RATE_LIMIT_MAX || '10', 10);
+const UPLOAD_RATE_LIMIT_WINDOW_MS = (parseInt(process.env.UPLOAD_RATE_LIMIT_WINDOW_SEC || '60', 10) || 60) * 1000;
+
+/** Magic-byte (file signature) patterns for allowed upload types. Reject if content doesn't match claimed MIME. */
+const FILE_SIGNATURES: Record<string, Buffer[]> = {
+  'application/pdf': [Buffer.from([0x25, 0x50, 0x44, 0x46])], // %PDF
+  'image/jpeg': [Buffer.from([0xff, 0xd8, 0xff])],
+  'image/png': [Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+  'application/msword': [Buffer.from([0xd0, 0xcf, 0x11, 0xe0])], // OLE Compound (DOC)
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
+    Buffer.from([0x50, 0x4b, 0x03, 0x04]), // ZIP (DOCX)
+    Buffer.from([0x50, 0x4b, 0x05, 0x06]),
+  ],
+};
+
+const MAGIC_READ_LEN = 12;
+
+/**
+ * Validate file content matches claimed MIME type using magic bytes.
+ * Returns { valid: true } or { valid: false, error: string }.
+ */
+function validateFileSignature(filepath: string, mimetype: string): { valid: boolean; error?: string } {
+  const signatures = FILE_SIGNATURES[mimetype];
+  if (!signatures) {
+    return { valid: false, error: 'Unsupported file type' };
+  }
+  let fd: number;
+  try {
+    fd = fs.openSync(filepath, 'r');
+    const buf = Buffer.alloc(MAGIC_READ_LEN);
+    const bytesRead = fs.readSync(fd, buf, 0, MAGIC_READ_LEN, 0);
+    fs.closeSync(fd);
+    if (bytesRead < 4) {
+      return { valid: false, error: 'File too small or unreadable' };
+    }
+    const match = signatures.some((sig) => buf.subarray(0, sig.length).equals(sig));
+    if (!match) {
+      return { valid: false, error: 'File content does not match its type. Please upload a valid PDF or image.' };
+    }
+    return { valid: true };
+  } catch (err) {
+    try {
+      if (fd !== undefined) fs.closeSync(fd);
+    } catch (_) {}
+    return { valid: false, error: 'Could not verify file type' };
+  }
+}
 
 // Initialize OpenAI (server-side only)
 const openai = new OpenAI({
@@ -32,6 +81,7 @@ export const config = {
 interface CertificationData {
   employeeName: string;
   certificationName: string;
+  licenseNumber?: string | null;
   expirationDate: string | null;
   issueDate?: string;
   priority: 'low' | 'medium' | 'high';
@@ -208,6 +258,7 @@ Analyze this certification document carefully, paying attention to BOTH text con
 {
   "employeeName": "Full name of the certificate holder",
   "certificationName": "Complete name/type of the certification including state if mentioned (e.g., 'Massachusetts Refrigeration Technician License' or 'EPA 608 Universal')",
+  "licenseNumber": "License or certification number (if available, use null if not found)",
   "issueDate": "Issue date in YYYY-MM-DD format (if available, use null if not found)",
   "expirationDate": "Expiration date in YYYY-MM-DD format (use null for LIFETIME certifications - see below)",
   "isLifetime": "Boolean - true if this is a lifetime credential that never expires, false otherwise",
@@ -216,14 +267,14 @@ Analyze this certification document carefully, paying attention to BOTH text con
 
 LIFETIME CERTIFICATIONS (isLifetime = true, expirationDate = null):
 The following certifications NEVER EXPIRE and should have isLifetime: true and expirationDate: null:
-- EPA Section 608 (Universal, Type I, Type II, Type III) - Federal refrigerant handling
-- EPA Section 609 (MVAC) - Motor Vehicle Air Conditioning  
-- R-410A Safety Certification
+- EPA Section 608 (Universal, Type I, Type II, Type III) - Federal refrigerant handling (covers R-410A and other refrigerants; R-410A is a refrigerant, not a separate certification)
+- EPA Section 609 (MVAC) - Motor Vehicle Air Conditioning
 - OSHA 10-Hour Construction Safety Card
 - OSHA 30-Hour Construction Safety Card
 - HVAC Excellence "Employment Ready" certifications (entry-level/student certifications)
 
 If you identify the document as one of these lifetime certifications, set isLifetime: true and expirationDate: null.
+If the document mentions "R-410A" or "R410A" safety/training, treat it as EPA Section 608 certification (the cert required for handling R-410A).
 For any other certification, look for an expiration date and set isLifetime: false.
 
 CRITICAL EXTRACTION INSTRUCTIONS:
@@ -276,10 +327,12 @@ CRITICAL EXTRACTION INSTRUCTIONS:
    - "Dec 31, 2025" → "2025-12-31"
    - "December 31, 2025" → "2025-12-31"
 
-7. License/Certification Numbers: These can help identify the type:
-   - "RT-" prefix often indicates Refrigeration Technician
-   - "EPA-" or numbers with EPA context indicate EPA certifications
-   - State-specific prefixes indicate state licenses
+7. License/Certification Number: Extract the license or certification number from the document:
+   - Look for labels like "License Number:", "License #:", "Certification Number:", "Cert #:", "License ID:", "ID Number:"
+   - May appear near the employee name, issue date, or in a dedicated section
+   - Common formats: "RT-12345", "EPA-123456", "12345", "LIC-12345"
+   - Include any prefixes or suffixes that are part of the official number
+   - If no license number is visible anywhere on the document, use null (not an empty string)
 
 IMPORTANT: 
 - Examine the ENTIRE document including headers, footers, watermarks, seals, and all visual elements
@@ -400,12 +453,22 @@ IMPORTANT:
       }
     }
 
+    // Normalize license number - handle null, empty string, or undefined
+    let licenseNumber = extractedData.licenseNumber;
+    if (licenseNumber === null || licenseNumber === 'null' || licenseNumber === '' || licenseNumber === undefined) {
+      licenseNumber = null;
+    } else {
+      // Trim whitespace
+      licenseNumber = licenseNumber.trim();
+    }
+
     // Calculate priority (lifetime certs are always low priority)
     const priority = calculatePriority(expirationDate, isLifetime);
 
     return {
       employeeName: extractedData.employeeName,
       certificationName: extractedData.certificationName,
+      licenseNumber: licenseNumber,
       issueDate: issueDate,
       expirationDate: expirationDate,
       priority,
@@ -607,6 +670,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Invalid authentication token' });
     }
 
+    // Per-user rate limit (cost, storage, abuse)
+    const rateKey = `upload:${user.id}`;
+    const { allowed, remaining, resetInMs } = checkRateLimit(
+      rateKey,
+      UPLOAD_RATE_LIMIT_MAX,
+      UPLOAD_RATE_LIMIT_WINDOW_MS
+    );
+    if (!allowed) {
+      res.setHeader('Retry-After', Math.ceil(resetInMs / 1000));
+      res.setHeader('X-RateLimit-Limit', String(UPLOAD_RATE_LIMIT_MAX));
+      res.setHeader('X-RateLimit-Remaining', '0');
+      return res.status(429).json({
+        error: `Too many uploads. Please try again in ${Math.ceil(resetInMs / 1000)} seconds.`,
+      });
+    }
+    res.setHeader('X-RateLimit-Limit', String(UPLOAD_RATE_LIMIT_MAX));
+    res.setHeader('X-RateLimit-Remaining', String(remaining));
+
     // Parse the form data
     const form = formidable({
       maxFileSize: parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '20971520'),
@@ -629,6 +710,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!file) {
       return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Validate file content matches claimed MIME (magic bytes) to prevent spoofed types
+    const claimedMimetype = file.mimetype || 'application/pdf';
+    const signatureCheck = validateFileSignature(file.filepath, claimedMimetype);
+    if (!signatureCheck.valid) {
+      try {
+        fs.unlinkSync(file.filepath);
+      } catch (_) {}
+      return res.status(400).json({
+        error: signatureCheck.error || 'File content does not match its type. Please upload a valid PDF or image.',
+      });
     }
 
     // Step 1: Extract data using AI

@@ -27,11 +27,6 @@ export const LIFETIME_CERTIFICATION_PATTERNS = [
   'section 609',
   'mvac certification',
   
-  // R-410A Safety - Industry standard, never expires
-  'r-410a',
-  'r410a',
-  '410a safety',
-  
   // OSHA 10-Hour - Federal, never expires (MA 5-year rule is for public works only)
   'osha 10',
   'osha-10',

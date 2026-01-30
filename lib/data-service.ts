@@ -1,9 +1,23 @@
 import { supabase } from './supabase'
 import { User } from '@supabase/supabase-js'
 import { isLifetimeCertification, getCertificationStatus } from './certification-types'
+import { 
+  isDevModeEnabled, 
+  DEV_MODE_USER,
+  DEV_MODE_STATS,
+  DEV_MODE_EXPIRING_CERTS,
+  DEV_MODE_PROFILE,
+  DEV_MODE_ACTIVITY,
+  DEV_MODE_TEAM_MEMBERS
+} from './dev-mode'
 
 // Enhanced user authentication with better error handling
 async function getCurrentUser(): Promise<User | null> {
+  // DEV MODE: Return mock user immediately
+  if (isDevModeEnabled) {
+    return DEV_MODE_USER as unknown as User
+  }
+
   try {
     // First try to get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -170,6 +184,11 @@ const getStatus = (daysLeft: number): 'critical' | 'warning' | 'expired' => {
 
 // Get dashboard statistics
 export async function getDashboardStats(userId?: string): Promise<DashboardStats> {
+  // DEV MODE: Return mock stats
+  if (isDevModeEnabled) {
+    return DEV_MODE_STATS
+  }
+
   try {
     let user: any = null;
     
@@ -249,6 +268,11 @@ export async function getDashboardStats(userId?: string): Promise<DashboardStats
 
 // Get expiring certifications for dashboard table
 export async function getExpiringCertifications(_limit: number = 10, userId?: string): Promise<ExpirationItem[]> {
+  // DEV MODE: Return mock expiring certs
+  if (isDevModeEnabled) {
+    return DEV_MODE_EXPIRING_CERTS.slice(0, _limit)
+  }
+
   try {
     let user: any = null;
     
@@ -303,6 +327,22 @@ export async function getExpiringCertifications(_limit: number = 10, userId?: st
 
 // Get all certifications for certifications page
 export async function getAllCertifications(): Promise<CertificationDetails[]> {
+  // DEV MODE: Return mock certifications
+  if (isDevModeEnabled) {
+    return DEV_MODE_EXPIRING_CERTS.map(cert => ({
+      id: cert.id,
+      employee: cert.employee,
+      type: cert.certification,
+      issueDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      expirationDate: cert.expirationDate,
+      status: cert.daysLeft < 0 ? 'Expired' : cert.daysLeft <= 30 ? 'Expiring Soon' : 'Valid',
+      daysLeft: cert.daysLeft,
+      priority: cert.priority,
+      hasDocument: false,
+      isLifetime: false
+    }))
+  }
+
   try {
     const user = await getCurrentUser()
     
@@ -356,6 +396,11 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
 
 // Get team members with certification counts
 export async function getTeamMembersWithCerts(): Promise<TeamMember[]> {
+  // DEV MODE: Return mock team members
+  if (isDevModeEnabled) {
+    return DEV_MODE_TEAM_MEMBERS
+  }
+
   try {
     const user = await getCurrentUser()
     
@@ -945,6 +990,11 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
 
 // Get user profile data for dashboard display
 export async function getUserProfile(): Promise<UserProfile> {
+  // DEV MODE: Return mock profile
+  if (isDevModeEnabled) {
+    return DEV_MODE_PROFILE
+  }
+
   try {
     const user = await getCurrentUser()
     
@@ -999,6 +1049,11 @@ export async function getUserProfile(): Promise<UserProfile> {
 
 // Get recent activity logs for dashboard
 export async function getRecentActivity(limit: number = 5): Promise<ActivityLog[]> {
+  // DEV MODE: Return mock activity
+  if (isDevModeEnabled) {
+    return DEV_MODE_ACTIVITY.slice(0, limit)
+  }
+
   try {
     const user = await getCurrentUser()
     
@@ -1036,6 +1091,12 @@ export async function logActivity(
   action: string, 
   details: Record<string, any>
 ): Promise<boolean> {
+  // DEV MODE: Just log to console instead of database
+  if (isDevModeEnabled) {
+    console.log('🔧 DEV MODE: Activity logged:', { action, details })
+    return true
+  }
+
   try {
     const user = await getCurrentUser()
     

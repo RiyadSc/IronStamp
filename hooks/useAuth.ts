@@ -2,12 +2,31 @@ import { useState, useEffect, useCallback } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { trackEvent, identifyUser, POSTHOG_EVENTS } from '@/lib/posthog'
+import { isDevModeEnabled, DEV_MODE_USER, DEV_MODE_SESSION } from '@/lib/dev-mode'
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // DEV MODE: Return mock user/session immediately
+  if (isDevModeEnabled) {
+    return {
+      user: DEV_MODE_USER as unknown as User,
+      session: DEV_MODE_SESSION as unknown as Session,
+      loading: false,
+      error: null,
+      signOut: async () => {
+        console.log('🔧 DEV MODE: signOut called (no-op)')
+        window.location.href = '/'
+      },
+      refreshSession: async () => true,
+      forceRefresh: async () => true,
+      isAuthenticated: true,
+      isSessionValid: true,
+    }
+  }
 
   // Function to refresh session
   const refreshSession = useCallback(async () => {

@@ -4,14 +4,20 @@ import { getCSRFToken } from './csrf-client';
 export interface CertificationData {
   employeeName: string;
   certificationName: string;
-  expirationDate: string;
+  licenseNumber?: string | null;
+  expirationDate: string | null;
+  issueDate?: string | null;
   priority: 'low' | 'medium' | 'high';
   confidence: number;
+  isLifetime: boolean;
 }
 
 export interface UploadResult extends CertificationData {
   id: string;
-  fileUrl: string;
+  filePath?: string;
+  fileUrl?: string;
+  isUpdate?: boolean;
+  message?: string;
 }
 
 /**

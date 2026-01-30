@@ -244,15 +244,6 @@ export const QuickActionsWidget: React.FC = () => {
     );
   };
 
-  const handleExpirationCalendar = async () => {
-    setIsExportModalOpen(false);
-    await downloadReport(
-      'expiration-calendar',
-      `certification-expiration-calendar-${new Date().toISOString().split('T')[0]}.pdf`,
-      'Expiration Calendar'
-    );
-  };
-
   const handleComplianceSummary = async () => {
     setIsExportModalOpen(false);
     await downloadReport(
@@ -504,18 +495,6 @@ export const QuickActionsWidget: React.FC = () => {
                 </div>
               </Button>
               
-              <Button 
-                variant="outline" 
-                className="w-full justify-start h-auto p-4"
-                onClick={handleExpirationCalendar}
-                disabled={exportLoading === 'Expiration Calendar'}
-              >
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Expiration Calendar</p>
-                  <p className="text-xs text-gray-500">Calendar view of upcoming expirations (PDF)</p>
-                </div>
-              </Button>
-
               <Button 
                 variant="outline" 
                 className="w-full justify-start h-auto p-4"

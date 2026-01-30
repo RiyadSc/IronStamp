@@ -24,10 +24,10 @@ export default function ConfirmEmail() {
 
         // Always show success if the page loads (confirmation link was used)
         setStatus('success')
-        setMessage('Your email has been confirmed! Please sign in to continue.')
-        // Redirect to signin after 3 seconds
+        setMessage('Your email has been confirmed! Redirecting to setup...')
+        // Redirect to onboarding after 3 seconds
         setTimeout(() => {
-          router.push('/auth/signin')
+          router.push('/OnboardingV1')
         }, 3000)
       } catch (error) {
         console.error('Confirmation error:', error)
@@ -40,7 +40,7 @@ export default function ConfirmEmail() {
   }, [router])
 
   const handleContinueToDashboard = () => {
-    router.push('/onboarding')
+    router.push('/OnboardingV1')
   }
 
   const handleBackToSignIn = () => {

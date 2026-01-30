@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { isLifetimeCertification } from '@/lib/certification-types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -59,9 +60,10 @@ interface CertificationRow {
   employee_name: string;
   certification_name: string;
   issue_date: string | null;
-  expiration_date: string;
+  expiration_date: string | null;
   priority: string | null;
   notes: string | null;
+  is_lifetime?: boolean | null;
 }
 
 // Safe HTML escaping for server-side
@@ -74,12 +76,19 @@ function safeEscape(text: string): string {
     .replace(/'/g, '&#x27;');
 }
 
-function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priorityActions: any[], employeeSummaries: any[]): string {
+function generateSimpleCompliancePDFHTML(
+  companyName: string,
+  stats: any,
+  priorityActions: any[],
+  employeeSummaries: any[],
+  logoUrl?: string
+): string {
   const complianceRate = stats.activeCertifications > 0 
     ? Math.round((stats.activeCertifications / (stats.activeCertifications + stats.expiredCertifications)) * 100)
     : 0;
 
   const safeCompanyName = safeEscape(companyName);
+  const safeLogoUrl = logoUrl ? safeEscape(logoUrl) : null;
   const currentDate = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -93,6 +102,13 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compliance Summary Report</title>
     <style>
+        :root {
+            --blueprint-blue: #0038FF;
+            --blueprint-dark: #001F8C;
+            --paper-white: #F0F4F8;
+            --ink-black: #050505;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -100,37 +116,99 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
         }
         
         body {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.4;
-            color: #333;
-            background: white;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--ink-black);
+            background: #FFFFFF;
         }
         
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px 28px 32px 28px;
+            background: var(--paper-white);
+            border-radius: 12px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
         }
         
         .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 3px solid var(--blueprint-blue);
         }
         
-        .title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1e293b;
-            margin-bottom: 10px;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .subtitle {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 5px;
+
+        .brand-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: #050505;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+        }
+
+        .brand-mark img {
+            width: 26px;
+            height: auto;
+            display: block;
+        }
+
+        .brand-text {
+            font-family: "Oswald", system-ui, sans-serif;
+            letter-spacing: 0.16em;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .brand-text span {
+            display: block;
+        }
+
+        .brand-text span:first-child {
+            font-size: 9px;
+            color: rgba(148, 163, 184, 0.9);
+        }
+
+        .brand-text span:last-child {
+            font-size: 16px;
+            color: var(--ink-black);
+        }
+
+        .report-meta {
+            text-align: right;
+            font-size: 11px;
+            color: #6B7280;
+        }
+
+        .report-title {
+            font-family: "Oswald", system-ui, sans-serif;
+            font-size: 20px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink-black);
+            margin-bottom: 4px;
+        }
+
+        .report-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+            font-size: 9px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-top: 4px;
         }
         
         .section {
@@ -147,15 +225,15 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
         }
         
         .summary-box {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #0038FF, #001F8C);
             color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
         
         .summary-text {
-            font-size: 16px;
+            font-size: 14px;
             line-height: 1.6;
         }
         
@@ -193,9 +271,8 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
         }
         
         .stat-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            background: #F9FAFB;
+            border-radius: 10px;
             padding: 20px;
             text-align: center;
         }
@@ -203,14 +280,14 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
         .stat-value {
             font-size: 32px;
             font-weight: bold;
-            color: #2563eb;
+            color: var(--blueprint-blue);
             margin-bottom: 5px;
             display: block;
         }
         
         .stat-label {
             font-size: 14px;
-            color: #64748b;
+            color: #6B7280;
         }
         
         .priority-high {
@@ -242,7 +319,7 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
         }
         
         th {
-            background: #f9fafb;
+            background: #F3F4F6;
             font-weight: 600;
         }
         
@@ -276,6 +353,27 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
             color: #f59e0b;
             font-weight: bold;
         }
+
+        .footer {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(148, 163, 184, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #6B7280;
+        }
+
+        .footer-left {
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+        }
+
+        .footer-right {
+            font-family: "Oswald", system-ui, sans-serif;
+            font-size: 11px;
+        }
         
         @media print {
             .section {
@@ -291,10 +389,24 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
 <body>
     <div class="container">
         <div class="header">
-            <div class="title">Compliance Summary Report</div>
-            <div class="subtitle">Company: ${safeCompanyName}</div>
-            <div class="subtitle">Generated: ${currentDate}</div>
-            <div class="subtitle">Reporting Period: Current Status</div>
+            <div class="brand">
+                <div class="brand-mark">
+                    ${safeLogoUrl
+                      ? `<img src="${safeLogoUrl}" alt="IronStamp logo" />`
+                      : `<span style="font-size: 16px; font-weight: 700; color: #F9FAFB;">IS</span>`}
+                </div>
+                <div class="brand-text">
+                    <span>COMPLIANCE SYSTEM</span>
+                    <span>IRONSTAMP</span>
+                </div>
+            </div>
+            <div class="report-meta">
+                <div class="report-title">Compliance Summary</div>
+                <div>Company: <strong>${safeCompanyName}</strong></div>
+                <div>Generated: ${currentDate}</div>
+                <div>Reporting Period: Current Status</div>
+                <div class="report-tag">EXECUTIVE BRIEFING</div>
+            </div>
         </div>
         
         <div class="section">
@@ -407,6 +519,11 @@ function generateSimpleCompliancePDFHTML(companyName: string, stats: any, priori
                 <li>Consider bulk renewal for multiple employees with similar certification types</li>
             </ul>
         </div>
+
+        <div class="footer">
+            <div class="footer-left">Generated by IronStamp</div>
+            <div class="footer-right">www.ironstamp.app</div>
+        </div>
     </div>
 </body>
 </html>`;
@@ -464,7 +581,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       supabase
         .from('certifications')
-        .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes')
+        .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, is_lifetime')
         .eq('user_id', user.id)
     ]);
 
@@ -484,10 +601,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const employeeMap = new Map();
 
     allCertifications.forEach((cert: CertificationRow) => {
-      const daysLeft = calculateDaysBetween(cert.expiration_date);
+      // Determine if this is a lifetime certification (never expires)
+      const isLifetime =
+        cert.is_lifetime === true ||
+        cert.expiration_date === null ||
+        isLifetimeCertification(cert.certification_name);
+
+      const daysLeft = !isLifetime && cert.expiration_date
+        ? calculateDaysBetween(cert.expiration_date)
+        : Infinity;
+
       let status = 'Active';
       
-      if (daysLeft < 0) {
+      if (isLifetime) {
+        // Lifetime certifications are always treated as active and never expired
+        status = 'Lifetime';
+        activeCertifications++;
+      } else if (daysLeft < 0) {
         status = 'Expired';
         expiredCertifications++;
       } else if (daysLeft <= 30) {
@@ -500,8 +630,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         activeCertifications++;
       }
 
-      // Add to priority actions if needed
-      if (daysLeft < 0 || daysLeft <= 30) {
+      // Add to priority actions if needed (skip lifetime certs)
+      if (!isLifetime && (daysLeft < 0 || daysLeft <= 30)) {
         let priority: 'high' | 'medium' | 'low' = 'low';
         let type: 'expiring' | 'expired' = 'expiring';
         
@@ -540,11 +670,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           expiredCertifications: 0
         });
       }
-
+      
       const employee = employeeMap.get(employeeKey);
       employee.totalCertifications++;
-
-      if (status === 'Active') {
+      
+      if (status === 'Active' || status === 'Lifetime') {
         employee.activeCertifications++;
       } else if (status === 'Expiring Soon') {
         employee.expiringSoonCertifications++;
@@ -571,8 +701,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return (a.daysLeft || -999) - (b.daysLeft || -999);
     });
 
+    // Derive logo URL so Puppeteer can load it while rendering static HTML
+    const originHeader = (req.headers['x-forwarded-host'] || req.headers.host) as string | undefined;
+    const origin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (originHeader ? `${req.headers['x-forwarded-proto'] || 'https'}://${originHeader}` : '');
+    const logoUrl = origin ? `${origin}/IronStampLogov3.png` : undefined;
+
     // Generate HTML content
-    const htmlContent = generateSimpleCompliancePDFHTML(companyName, stats, priorityActions, employeeSummaries);
+    const htmlContent = generateSimpleCompliancePDFHTML(
+      companyName,
+      stats,
+      priorityActions,
+      employeeSummaries,
+      logoUrl
+    );
 
     // Environment-specific Puppeteer configuration
     if (process.env.NODE_ENV === 'development') {

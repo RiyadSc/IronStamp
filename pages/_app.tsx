@@ -11,6 +11,7 @@ import '../styles.css'
 import { useEffect } from 'react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
+import { isDevModeEnabled } from '@/lib/dev-mode'
 
 // Self-hosted fonts via next/font (eliminates render-blocking @import)
 import { JetBrains_Mono, Oswald } from 'next/font/google'
@@ -82,10 +83,18 @@ export default function App({ Component, pageProps }: AppProps) {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className={`${jetbrainsMono.variable} ${oswald.variable}`}>
-        <Toaster />
-        <Sonner />
-        <Component {...pageProps} />
-        <Analytics />
+        {/* Dev Mode Banner */}
+        {isDevModeEnabled && (
+          <div className="bg-yellow-400 text-black px-4 py-2 text-center font-mono text-sm font-bold fixed top-0 left-0 right-0 z-50 shadow-md">
+            DEV MODE ACTIVE - Authentication Bypassed
+          </div>
+        )}
+        <div className={isDevModeEnabled ? 'pt-10' : ''}>
+          <Toaster />
+          <Sonner />
+          <Component {...pageProps} />
+          <Analytics />
+        </div>
         </div>
       </TooltipProvider>
     </QueryClientProvider>

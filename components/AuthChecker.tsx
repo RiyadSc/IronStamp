@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, AlertTriangle, LogIn } from '@/lib/icons'
 import { useRouter } from 'next/router'
+import { isDevModeEnabled } from '@/lib/dev-mode'
 
 interface AuthCheckerProps {
   children: React.ReactNode
@@ -15,6 +16,11 @@ export const AuthChecker: React.FC<AuthCheckerProps> = ({ children }) => {
   const [refreshing, setRefreshing] = useState(false)
   const [timeoutReached, setTimeoutReached] = useState(false)
   const router = useRouter()
+
+  // DEV MODE: Skip all auth checks and render children immediately
+  if (isDevModeEnabled) {
+    return <>{children}</>
+  }
 
   useEffect(() => {
     // Set a timeout for loading state (in case it gets stuck)

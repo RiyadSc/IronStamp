@@ -215,7 +215,6 @@ const response = await resend.emails.send({
 ### Available Reports
 
 - **Compliance Summary** - Overall team compliance status
-- **Expiration Calendar** - Visual calendar of upcoming expirations
 - **Team Certification Report** - Detailed certification breakdown
 - **Individual Employee Reports** - Per-employee certification status
 

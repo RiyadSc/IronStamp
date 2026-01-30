@@ -4,8 +4,20 @@ import crypto from 'crypto'
 // CSRF token configuration
 const CSRF_TOKEN_EXPIRY = 24 * 60 * 60 * 1000 // 24 hours in ms
 
-// Secret key for HMAC signing (use env variable in production)
-const CSRF_SECRET = process.env.CSRF_SECRET || process.env.NEXTAUTH_SECRET || 'ironstamp-csrf-secret-key-change-in-production'
+// Secret key for HMAC signing. In production we require an env var; in development we allow a fallback.
+function getCsrfSecret(): string {
+  const secret = process.env.CSRF_SECRET || process.env.NEXTAUTH_SECRET
+  if (secret) return secret
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'CSRF_SECRET or NEXTAUTH_SECRET must be set in production. Add CSRF_SECRET to your environment variables.'
+    )
+  }
+  // Development fallback so local dev works without .env; do not use in production.
+  return 'ironstamp-csrf-secret-key-change-in-production'
+}
+
+const CSRF_SECRET = getCsrfSecret()
 
 /**
  * Generate a stateless CSRF token using HMAC
