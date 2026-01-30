@@ -90,22 +90,23 @@ jest.mock('@/lib/dev-mode', () => ({
   isDevModeEnabled: false,
 }))
 
-// Mock XLSX library
-jest.mock('xlsx', () => ({
-  read: jest.fn(() => ({
-    SheetNames: ['Sheet1'],
-    Sheets: {
-      Sheet1: {},
-    },
-  })),
-  utils: {
-    sheet_to_json: jest.fn(() => [
-      ['Name', 'Email', 'Phone'],
-      ['John Doe', 'john@example.com', '555-1234'],
-      ['Jane Smith', 'jane@example.com', '555-5678'],
-    ]),
-  },
-}))
+// Mock ExcelJS library (1-indexed row.values: [empty, col1, col2, ...])
+jest.mock('exceljs', () => {
+  const mockWorksheet = {
+    eachRow: jest.fn((cb) => {
+      cb({ values: [, 'Name', 'Email', 'Phone'] }, 1)
+      cb({ values: [, 'John Doe', 'john@example.com', '555-1234'] }, 2)
+      cb({ values: [, 'Jane Smith', 'jane@example.com', '555-5678'] }, 3)
+    }),
+  }
+  return {
+    __esModule: true,
+    default: jest.fn(() => ({
+      xlsx: { load: jest.fn().mockResolvedValue(undefined) },
+      worksheets: [mockWorksheet],
+    })),
+  }
+})
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {

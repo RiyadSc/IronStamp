@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { 
   ArrowLeft, 
   Shield, 
@@ -593,20 +593,26 @@ export default function CertificationAssignmentStep({
     try {
       let rows: string[][] = []
       
-      // Check file type
-      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ||
-                      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                      file.type === 'application/vnd.ms-excel'
+      // Check file type (.xlsx only for ExcelJS; .xls not supported)
+      const isXlsx = file.name.endsWith('.xlsx') ||
+                      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       
-      if (isExcel) {
+      if (isXlsx) {
         const buffer = await file.arrayBuffer()
-        const workbook = XLSX.read(buffer, { type: 'array' })
-        const firstSheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[firstSheetName]
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' })
-        rows = jsonData.map(row => 
-          Array.isArray(row) ? row.map(cell => String(cell || '').trim()) : []
-        )
+        const workbook = new ExcelJS.Workbook()
+        await workbook.xlsx.load(buffer as ArrayBuffer)
+        const worksheet = workbook.worksheets[0]
+        if (!worksheet) {
+          throw new Error('No sheet found in workbook')
+        }
+        const rowArrays: string[][] = []
+        worksheet.eachRow((row, _rowNumber) => {
+          const values = row.values as (string | number | Date | null | undefined)[]
+          rowArrays.push((values?.slice(1) ?? []).map(v => (v != null ? String(v) : '').trim()))
+        })
+        rows = rowArrays
+      } else if (file.name.endsWith('.xls') || file.type === 'application/vnd.ms-excel') {
+        throw new Error('Please use .xlsx or CSV. Legacy .xls format is not supported.')
       } else {
         // CSV
         const text = await file.text()
@@ -866,7 +872,6 @@ export default function CertificationAssignmentStep({
     onDrop: handleSpreadsheetDrop,
     accept: {
       'text/csv': ['.csv'],
-      'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
     },
     maxFiles: 1,
@@ -1128,7 +1133,7 @@ export default function CertificationAssignmentStep({
                         Import from Excel or CSV with employee names, cert types, and expiration dates.
                       </p>
                       <p className="font-mono text-[10px] text-gray-400 mt-2 uppercase">
-                        Supported: .xlsx, .xls, .csv
+                        Supported: .xlsx, .csv
                       </p>
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#0038FF] flex-shrink-0" />
@@ -1880,7 +1885,7 @@ export default function CertificationAssignmentStep({
                             Drag & drop your spreadsheet here, or click to browse
                           </p>
                           <p className="font-mono text-[10px] text-gray-400 mt-2 uppercase">
-                            Excel (.xlsx, .xls) or CSV
+                            Excel (.xlsx) or CSV
                           </p>
                         </>
                       )}

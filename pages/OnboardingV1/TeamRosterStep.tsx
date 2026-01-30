@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { 
   ArrowLeft, 
   Users, 
@@ -235,25 +235,26 @@ export default function TeamRosterStep({ initialData, onComplete, onBack, saving
     try {
       let rows: string[][] = []
       
-      // Check if it's an Excel file (.xlsx, .xls)
-      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || 
-                      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                      file.type === 'application/vnd.ms-excel'
+      // Check if it's an Excel file (.xlsx only; .xls not supported)
+      const isXlsx = file.name.endsWith('.xlsx') ||
+                      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       
-      if (isExcel) {
-        // Parse Excel files using xlsx library
+      if (isXlsx) {
         const buffer = await file.arrayBuffer()
-        const workbook = XLSX.read(buffer, { type: 'array' })
-        
-        // Get first sheet
-        const firstSheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[firstSheetName]
-        
-        // Convert to array of arrays
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' })
-        rows = jsonData.map(row => 
-          Array.isArray(row) ? row.map(cell => String(cell || '').trim()) : []
-        )
+        const workbook = new ExcelJS.Workbook()
+        await workbook.xlsx.load(buffer as ArrayBuffer)
+        const worksheet = workbook.worksheets[0]
+        if (!worksheet) {
+          throw new Error('No sheet found in workbook')
+        }
+        const rowArrays: string[][] = []
+        worksheet.eachRow((row, _rowNumber) => {
+          const values = row.values as (string | number | Date | null | undefined)[]
+          rowArrays.push((values?.slice(1) ?? []).map(v => (v != null ? String(v) : '').trim()))
+        })
+        rows = rowArrays
+      } else if (file.name.endsWith('.xls') || file.type === 'application/vnd.ms-excel') {
+        throw new Error('Please use .xlsx or CSV. Legacy .xls format is not supported.')
       } else if (file.name.endsWith('.csv') || file.type === 'text/csv') {
         // Parse CSV files
         const text = await file.text()
@@ -298,7 +299,6 @@ export default function TeamRosterStep({ initialData, onComplete, onBack, saving
     onDrop,
     accept: {
       'text/csv': ['.csv'],
-      'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
     },
     maxFiles: 1,
@@ -535,7 +535,7 @@ export default function TeamRosterStep({ initialData, onComplete, onBack, saving
                         Upload your existing employee list (Excel, CSV). We&apos;ll extract names, emails, and phone numbers automatically.
                       </p>
                       <p className="font-mono text-[10px] text-gray-400 mt-2 uppercase">
-                        Supported: .xlsx, .xls, .csv
+                        Supported: .xlsx, .csv
                       </p>
                     </div>
                   </div>
