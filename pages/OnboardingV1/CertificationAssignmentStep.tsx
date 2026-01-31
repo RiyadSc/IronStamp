@@ -608,7 +608,11 @@ export default function CertificationAssignmentStep({
         const rowArrays: string[][] = []
         worksheet.eachRow((row, _rowNumber) => {
           const values = row.values as (string | number | Date | null | undefined)[]
-          rowArrays.push((values?.slice(1) ?? []).map(v => (v != null ? String(v) : '').trim()))
+          rowArrays.push((values?.slice(1) ?? []).map(v => {
+            if (v == null) return ''
+            if (v instanceof Date) return v.toISOString().split('T')[0]
+            return String(v).trim()
+          }))
         })
         rows = rowArrays
       } else if (file.name.endsWith('.xls') || file.type === 'application/vnd.ms-excel') {
@@ -649,21 +653,35 @@ export default function CertificationAssignmentStep({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Helper: Convert Excel serial date to ISO date string
+  // Helper: Convert Excel serial date or any date string to date-only (YYYY-MM-DD)
   const excelDateToISO = (value: string): string => {
+    const trimmed = value?.trim() ?? ''
+    if (!trimmed) return trimmed
     // Check if it's a number (Excel serial date)
-    const num = parseFloat(value)
+    const num = parseFloat(trimmed)
     if (!isNaN(num) && num > 10000 && num < 100000) {
-      // Excel serial date: days since 1899-12-30
       const date = new Date((num - 25569) * 86400 * 1000)
       return date.toISOString().split('T')[0]
     }
     // Check if it looks like a date already (MM/DD/YYYY or YYYY-MM-DD)
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
-      const [m, d, y] = value.split('/')
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+      const [m, d, y] = trimmed.split('/')
       return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
     }
-    return value
+    // Full datetime string (e.g. from Date.toString() or locale string with GMT) → date only
+    if (/GMT|T\d{2}:\d{2}|^\w{3}\s+\w{3}\s+\d{1,2}\s+\d{4}/.test(trimmed)) {
+      const d = new Date(trimmed)
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
+    }
+    return trimmed
+  }
+
+  // Display date-only (no time/timezone); normalizes any stored datetime string
+  const formatDateDisplay = (value: string | null | undefined): string => {
+    if (value == null || value === '') return ''
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return value
+    return d.toISOString().split('T')[0]
   }
 
   // Parse spreadsheet data into cert rows
@@ -1526,7 +1544,7 @@ export default function CertificationAssignmentStep({
                                     <div className={`mt-1 px-2 py-1.5 rounded font-mono text-xs ${
                                       cert.issues?.missingIssueDate ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'
                                     }`}>
-                                      {data.issueDate || <span className="text-gray-400">Not found</span>}
+                                      {formatDateDisplay(data.issueDate) || <span className="text-gray-400">Not found</span>}
                                     </div>
                                   )}
                                 </div>
@@ -1548,7 +1566,7 @@ export default function CertificationAssignmentStep({
                                     <div className={`mt-1 px-2 py-1.5 rounded font-mono text-xs ${
                                       cert.issues?.missingExpirationDate ? 'bg-orange-50 border border-orange-200' : 'bg-blue-50'
                                     }`}>
-                                      {data.expirationDate || <span className="text-gray-400">Not found</span>}
+                                      {formatDateDisplay(data.expirationDate) || <span className="text-gray-400">Not found</span>}
                                     </div>
                                   )}
                                 </div>
@@ -1983,13 +2001,13 @@ export default function CertificationAssignmentStep({
                                 {row.issueDate && (
                                   <div>
                                     <Label className="text-[10px] font-mono text-gray-400 uppercase">Issue Date</Label>
-                                    <p className="font-mono text-gray-600">{row.issueDate}</p>
+                                    <p className="font-mono text-gray-600">{formatDateDisplay(row.issueDate)}</p>
                                   </div>
                                 )}
                                 <div>
                                   <Label className="text-[10px] font-mono text-gray-400 uppercase">Expiration</Label>
                                   <p className={`font-mono ${row.isLifetime ? 'text-green-600' : 'text-gray-600'}`}>
-                                    {row.isLifetime ? '∞ Lifetime' : row.expirationDate || 'N/A'}
+                                    {row.isLifetime ? '∞ Lifetime' : (formatDateDisplay(row.expirationDate) || 'N/A')}
                                   </p>
                                 </div>
                               </div>

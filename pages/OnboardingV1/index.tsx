@@ -57,9 +57,9 @@ const devModeOnboardingData: OnboardingData = {
   onboarding_step: 0
 }
 
-/** Normalize a name for comparison (lowercase + trim). */
+/** Normalize a name for comparison (lowercase, trim, collapse spaces). */
 function normalizeName(name: string | null | undefined): string {
-  return (name || '').toLowerCase().trim()
+  return (name || '').toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
 /**
@@ -88,6 +88,10 @@ async function persistCertificationAssignments(
     employeeMap.set(normalizeName(emp.name), emp.id)
   })
 
+  if (!employees?.length) {
+    return { saved: 0, error: 'No team members found. Complete Step 2 (team roster) first, then try again.' }
+  }
+
   // Fetch existing certifications for this user once so we can de-duplicate.
   // This lets us link document-uploaded certs (which already exist) to team members
   // instead of creating near-identical duplicates.
@@ -111,6 +115,7 @@ async function persistCertificationAssignments(
 
   const toInsert: any[] = []
   const toUpdate: { id: string; data: any }[] = []
+  const insertedKeySet = new Set<string>() // avoid duplicate (employee_id, cert_name) from CSV dupes
 
   assignments.forEach(assignment => {
     const normalizedMemberName = normalizeName(assignment.memberName)
@@ -148,10 +153,19 @@ async function persistCertificationAssignments(
       // Link and update the existing certification (e.g., created via document upload)
       toUpdate.push({ id: existingId, data: baseData })
     } else {
-      // No matching existing certification – create a new row
-      toInsert.push(baseData)
+      // Dedupe: same person + same cert can appear multiple rows in CSV; insert once
+      const insertKey = `${employeeId}|${normalizeName(certNameTrimmed)}`
+      if (!insertedKeySet.has(insertKey)) {
+        insertedKeySet.add(insertKey)
+        toInsert.push(baseData)
+      }
     }
   })
+
+  // If we had assignments but none matched roster names, return a clear error
+  if (assignments.length > 0 && toInsert.length === 0 && toUpdate.length === 0) {
+    return { saved: 0, error: 'No assignments could be matched to team members. Check that names in your spreadsheet match the roster exactly.' }
+  }
 
   let savedCount = 0
 
@@ -398,9 +412,12 @@ export default function OnboardingV1() {
         const { saved, error: persistError } = await persistCertificationAssignments(user.id, assignments)
         if (persistError) {
           console.error('Error creating certifications:', persistError)
+          const description = saved > 0
+            ? `${saved} saved. Some could not be matched to team members.`
+            : persistError
           toast({
             title: 'Certifications not fully saved',
-            description: saved > 0 ? `${saved} saved. Some could not be matched to team members.` : 'Failed to save. Check that team member names in assignments match the roster.',
+            description,
             variant: 'destructive'
           })
         }

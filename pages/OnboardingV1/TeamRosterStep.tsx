@@ -250,7 +250,11 @@ export default function TeamRosterStep({ initialData, onComplete, onBack, saving
         const rowArrays: string[][] = []
         worksheet.eachRow((row, _rowNumber) => {
           const values = row.values as (string | number | Date | null | undefined)[]
-          rowArrays.push((values?.slice(1) ?? []).map(v => (v != null ? String(v) : '').trim()))
+          rowArrays.push((values?.slice(1) ?? []).map(v => {
+            if (v == null) return ''
+            if (v instanceof Date) return v.toISOString().split('T')[0]
+            return String(v).trim()
+          }))
         })
         rows = rowArrays
       } else if (file.name.endsWith('.xls') || file.type === 'application/vnd.ms-excel') {
