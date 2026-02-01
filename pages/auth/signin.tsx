@@ -178,7 +178,7 @@ export default function SignIn() {
 
         {/* Footer */}
         <div className="relative z-10">
-          <p className="font-mono text-xs text-gray-500">© 2025 IRONSTAMP SYSTEMS. BOSTON, MA.</p>
+          <p className="font-mono text-xs text-gray-500">© 2026 IRONSTAMP SYSTEMS. BOSTON, MA.</p>
         </div>
       </div>
       

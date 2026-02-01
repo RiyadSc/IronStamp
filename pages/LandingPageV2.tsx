@@ -351,7 +351,7 @@ export default function LandingPageV2() {
               },
               {
                 question: "Is there a mobile app?",
-                answer: "Yes! IronStamp works perfectly on mobile browsers, and we have native iOS and Android apps coming Q2 2024. You can upload photos of certificates directly from your phone."
+                answer: "Yes! IronStamp works perfectly on mobile browsers, and native iOS and Android apps are coming soon. You can upload photos of certificates directly from your phone."
               },
               {
                 question: "What file formats are supported?",
