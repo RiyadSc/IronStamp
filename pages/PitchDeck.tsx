@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Rocket, Handshake } from 'lucide-react'
+import { Rocket, Handshake, GraduationCap, Target, Network } from 'lucide-react'
 
 export default function PitchDeck() {
   return (
@@ -29,152 +29,109 @@ export default function PitchDeck() {
       <div className="bg-tech-grid pt-20 pb-16 md:pt-24 md:pb-24">
         <div className="mx-auto max-w-6xl px-4 md:px-6">
           <main className="space-y-12 md:space-y-16">
-            {/* Slide 1: Compliance failure headline + stat */}
+            {/* Slide 1: The Hook — headline + stat only */}
             <section
               id="headline"
               className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
-              <div className="max-w-4xl mx-auto space-y-6">
+              <div className="max-w-4xl mx-auto space-y-8">
                 <h1 className="font-display text-3xl md:text-5xl font-bold uppercase text-[#050505] leading-tight">
-                  When an HVAC technician's license expires in Massachusetts, it doesn't just affect the technician - it can shut down an entire business.
+                  ONE EXPIRED LICENSE CAN SHUT DOWN AN ENTIRE BUSINESS.
                 </h1>
                 <div className="pt-8 border-t-2 border-[#050505]">
-                  <div className="text-6xl md:text-8xl font-bold text-[#0038FF] mb-3">$7,000</div>
-                  <div className="text-xl md:text-2xl font-bold text-gray-700 font-mono">
-                    Per instance found during audit
-                  </div>
+                  <div className="text-6xl md:text-8xl font-bold text-[#0038FF]">$7,000</div>
                 </div>
-                <p className="text-base md:text-lg text-gray-700 font-mono pt-2">
-                  My name is <span className="font-bold text-[#050505]">Riyad Scally</span>, and I'm building{' '}
-                  <span className="font-bold text-[#050505]">IronStamp</span> to solve this compliance risk.
-                </p>
               </div>
             </section>
 
-            {/* Slide 2: Problem bullets */}
+            {/* Slide 2: The Problem — three labels + chaos visual */}
             <section
               id="problem"
               className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
-              <div className="max-w-4xl mx-auto space-y-6">
-                <h2 className="font-display text-2xl md:text-3xl font-bold uppercase text-[#050505]">
-                  The Problem
-                </h2>
-                <p className="text-base md:text-lg text-gray-700 font-mono">
-                  HVAC companies manage teams of <span className="font-bold">5 to 50 technicians</span>, and every technician must maintain active state licenses to legally work. If even one license expires, business owners face:
-                </p>
-                <ul className="space-y-3 text-base md:text-lg text-gray-700 font-mono list-none">
-                  <li className="flex items-start gap-3">
-                    <span className="text-[#0038FF] font-bold mt-1">•</span>
-                    <span>Fines up to <span className="font-bold">$7,000 per instance found during audit</span></span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-[#0038FF] font-bold mt-1">•</span>
-                    <span>Denied insurance claims</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-[#0038FF] font-bold mt-1">•</span>
-                    <span>Job sites shut down instantly</span>
-                  </li>
-                </ul>
-                <div className="pt-4 border-t-2 border-gray-200">
-                  <p className="text-base md:text-lg text-gray-700 font-mono font-bold mb-3">Right now, companies rely on broken systems:</p>
-                  <ul className="space-y-2 text-sm md:text-base text-gray-600 font-mono list-none">
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-500 font-bold mt-1">•</span>
-                      <span>State reminders go only to technicians, not owners</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-500 font-bold mt-1">•</span>
-                      <span>Spreadsheets become outdated instantly</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <span className="text-red-500 font-bold mt-1">•</span>
-                      <span>Physical license cards can be lost or expired without warning</span>
-                    </li>
-                  </ul>
+              <div className="max-w-4xl mx-auto space-y-8">
+                <div className="flex flex-wrap gap-6 md:gap-10 justify-center">
+                  <span className="font-display text-xl md:text-2xl font-bold uppercase text-[#050505] border-2 border-[#050505] px-4 py-2 bg-[#0038FF]/10">
+                    $7,000 Fines
+                  </span>
+                  <span className="font-display text-xl md:text-2xl font-bold uppercase text-[#050505] border-2 border-[#050505] px-4 py-2 bg-[#0038FF]/10">
+                    Denied Claims
+                  </span>
+                  <span className="font-display text-xl md:text-2xl font-bold uppercase text-[#050505] border-2 border-[#050505] px-4 py-2 bg-[#0038FF]/10">
+                    Instant Shutdowns
+                  </span>
+                </div>
+                <div className="relative overflow-hidden border-2 border-[#050505]">
+                  <img
+                    src="/Nightmare.png"
+                    alt="Chaos of the current broken system"
+                    className="w-full h-auto object-cover object-center"
+                  />
                 </div>
               </div>
             </section>
 
-            {/* Slide 3: IronStamp dashboard screenshot */}
+            {/* Slide 3: The Solution — UI only, no copy */}
             <section
               id="solution"
               className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
-              <div className="max-w-5xl mx-auto space-y-6">
-                <h2 className="font-display text-2xl md:text-3xl font-bold uppercase text-[#050505]">
-                  The Solution: IronStamp
-                </h2>
-                <p className="text-base md:text-lg text-gray-700 font-mono">
-                  IronStamp centralizes all technician licenses into one dashboard and actively monitors expiration dates and compliance requirements. Instead of reacting to violations, owners get proactive alerts and audit-ready verification tools.
-                </p>
-                <div className="mt-8 border-2 border-[#050505] overflow-hidden">
-                  <div className="bg-[#050505] px-4 py-2 border-b-2 border-[#050505]">
-                    <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white">
-                      Live MVP Dashboard
-                    </p>
-                  </div>
+              <div className="max-w-5xl mx-auto">
+                <div className="border-2 border-[#050505] overflow-hidden">
                   <img
                     src="/Dashboardv2.png"
-                    alt="IronStamp dashboard"
+                    alt="IronStamp dashboard — see how easy it is to spot a problem"
                     className="w-full h-auto object-cover"
                   />
                 </div>
               </div>
             </section>
 
-            {/* Slide 4: MVP + timeline */}
+            {/* Slide 4: Traction & Founder — timeline + Babson logo */}
             <section
               id="traction"
               className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
-              <div className="max-w-4xl mx-auto space-y-6">
-                <h2 className="font-display text-2xl md:text-3xl font-bold uppercase text-[#050505]">
-                  MVP & Timeline
-                </h2>
-                <p className="text-base md:text-lg text-gray-700 font-mono">
-                  We currently have a <span className="font-bold">live MVP</span> and are preparing for launch while validating the market directly with HVAC business owners.
-                </p>
-                <div className="grid md:grid-cols-3 gap-4 pt-4">
-                  <div className="border-2 border-[#050505] p-4 bg-[#0038FF]/5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 rounded-full bg-[#0038FF]" />
-                      <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#050505]">
-                        Today · 2026
-                      </p>
+              <div className="max-w-4xl mx-auto space-y-10">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8">
+                  <div className="flex-1">
+                    <h2 className="font-display text-xl md:text-2xl font-bold uppercase text-[#050505] mb-6">
+                      Traction
+                    </h2>
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                      <div className="flex items-center gap-3 border-2 border-[#050505] px-4 py-3 bg-[#0038FF]/10 flex-1">
+                        <Rocket className="w-5 h-5 text-[#0038FF] shrink-0" />
+                        <div>
+                          <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-gray-500">Now</p>
+                          <p className="font-display font-bold text-[#050505]">MVP LIVE</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 border-2 border-[#050505] px-4 py-3 bg-[#10B981]/10 flex-1">
+                        <Rocket className="w-5 h-5 text-[#10B981] shrink-0" />
+                        <div>
+                          <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-gray-500">Q2</p>
+                          <p className="font-display font-bold text-[#050505]">Market Validation</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 border-2 border-[#050505] px-4 py-3 bg-[#FBBF24]/10 flex-1">
+                        <Rocket className="w-5 h-5 text-[#FBBF24] shrink-0" />
+                        <div>
+                          <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-gray-500">Q3</p>
+                          <p className="font-display font-bold text-[#050505]">Scale</p>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm font-mono text-gray-700">
-                      Live MVP with full onboarding, dashboard, and notifications
-                    </p>
                   </div>
-                  <div className="border-2 border-[#050505] p-4 bg-[#10B981]/5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 rounded-full bg-[#10B981]" />
-                      <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#050505]">
-                        Next 3–6 Months
-                      </p>
-                    </div>
-                    <p className="text-sm font-mono text-gray-700">
-                      Design partners, refine licensing rules, prove retention
-                    </p>
+                  <div className="flex flex-col items-center md:items-end gap-2">
+                    <h2 className="font-display text-xl md:text-2xl font-bold uppercase text-[#050505]">
+                      Founder
+                    </h2>
+                    <img
+                      src="/Babson-College-2C.jpg"
+                      alt="Babson College"
+                      className="h-16 md:h-20 w-auto object-contain"
+                    />
                   </div>
-                  <div className="border-2 border-[#050505] p-4 bg-[#FBBF24]/5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 rounded-full bg-[#FBBF24]" />
-                      <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#050505]">
-                        Next 6–12 Months
-                      </p>
-                    </div>
-                    <p className="text-sm font-mono text-gray-700">
-                      Scale, expand beyond MA, formalize partnerships
-                    </p>
-                  </div>
-                </div>
-                <div className="pt-4 border-t-2 border-gray-200">
-                  <p className="text-sm md:text-base text-gray-600 font-mono">
-                    I'm building this because I focus on regulatory-driven SaaS solutions and am developing IronStamp while studying entrepreneurship at <span className="font-bold">Babson College</span>, giving me access to strong startup mentorship and operator networks.
-                  </p>
                 </div>
               </div>
             </section>
@@ -184,22 +141,35 @@ export default function PitchDeck() {
               id="etower"
               className="scroll-mt-24 bg-white border-2 border-[#0038FF] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
-              <div className="max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Handshake className="w-6 h-6 text-[#0038FF]" />
-                  <h2 className="font-display text-2xl md:text-3xl font-bold uppercase text-[#050505]">
-                    How eTower Helps
-                  </h2>
+              <div className="max-w-4xl mx-auto space-y-10">
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <Handshake className="w-6 h-6 text-[#0038FF]" />
+                    <h2 className="font-display text-2xl md:text-3xl font-bold uppercase text-[#050505]">
+                      How eTower Helps
+                    </h2>
+                  </div>
+                  <div className="flex flex-wrap gap-4 md:gap-6">
+                    <div className="flex items-center gap-2 border-2 border-[#050505] px-4 py-3 bg-[#0038FF]/10">
+                      <GraduationCap className="w-5 h-5 text-[#0038FF] shrink-0" />
+                      <span className="font-display font-bold uppercase text-[#050505]">Mentorship</span>
+                    </div>
+                    <div className="flex items-center gap-2 border-2 border-[#050505] px-4 py-3 bg-[#0038FF]/10">
+                      <Target className="w-5 h-5 text-[#0038FF] shrink-0" />
+                      <span className="font-display font-bold uppercase text-[#050505]">GTM Strategy</span>
+                    </div>
+                    <div className="flex items-center gap-2 border-2 border-[#050505] px-4 py-3 bg-[#0038FF]/10">
+                      <Network className="w-5 h-5 text-[#0038FF] shrink-0" />
+                      <span className="font-display font-bold uppercase text-[#050505]">Founder Network</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-base md:text-lg text-gray-700 font-mono">
-                  eTower would help accelerate IronStamp through mentorship, go-to-market strategy, and founder network support as we prepare for market entry.
-                </p>
-                <div className="pt-6 border-t-2 border-[#050505]">
-                  <p className="text-xl md:text-2xl font-display font-bold text-[#050505] mb-4">
-                    IronStamp's goal is simple:
+                <div className="pt-8 border-t-2 border-[#050505] text-center space-y-4">
+                  <p className="text-sm md:text-base font-mono font-bold uppercase tracking-[0.2em] text-gray-500">
+                    The IronStamp Vision
                   </p>
-                  <p className="text-2xl md:text-3xl font-display font-bold text-[#0038FF] uppercase">
-                    Prevent compliance failures before they become business-ending problems.
+                  <p className="text-2xl md:text-4xl font-display font-bold text-[#0038FF] uppercase leading-tight max-w-3xl mx-auto">
+                    Preventing compliance failures before they become business-ending problems.
                   </p>
                 </div>
                 <div className="pt-6 text-center">
