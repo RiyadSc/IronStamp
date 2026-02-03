@@ -45,6 +45,7 @@ const publicPages = [
   '/auth/callback',
   '/LandingPage',
   '/LandingPageV2',
+  '/PitchDeck',
   '/privacy-policy',
   '/terms-of-service',
   '/404'
