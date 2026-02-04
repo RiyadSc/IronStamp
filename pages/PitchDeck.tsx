@@ -32,8 +32,9 @@ export default function PitchDeck() {
             {/* Slide 1: The Hook — headline + stat only */}
             <section
               id="headline"
-              className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
+              className="relative scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
+              <span className="absolute top-3 left-3 text-xs font-mono font-bold text-gray-400" aria-hidden>1</span>
               <div className="max-w-4xl mx-auto space-y-8">
                 <h1 className="font-display text-3xl md:text-5xl font-bold uppercase text-[#050505] leading-tight">
                   ONE EXPIRED LICENSE CAN SHUT DOWN AN ENTIRE BUSINESS.
@@ -47,8 +48,9 @@ export default function PitchDeck() {
             {/* Slide 2: The Problem — three labels + chaos visual */}
             <section
               id="problem"
-              className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
+              className="relative scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
+              <span className="absolute top-3 left-3 text-xs font-mono font-bold text-gray-400" aria-hidden>2</span>
               <div className="max-w-4xl mx-auto space-y-8">
                 <div className="flex flex-wrap gap-6 md:gap-10 justify-center">
                   <span className="font-display text-xl md:text-2xl font-bold uppercase text-[#050505] border-2 border-[#050505] px-4 py-2 bg-[#0038FF]/10">
@@ -74,8 +76,9 @@ export default function PitchDeck() {
             {/* Slide 3: The Solution — UI only, no copy */}
             <section
               id="solution"
-              className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
+              className="relative scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
+              <span className="absolute top-3 left-3 text-xs font-mono font-bold text-gray-400" aria-hidden>3</span>
               <div className="max-w-5xl mx-auto">
                 <div className="border-2 border-[#050505] overflow-hidden">
                   <img
@@ -90,8 +93,9 @@ export default function PitchDeck() {
             {/* Slide 4: Traction & Founder — timeline + Babson logo */}
             <section
               id="traction"
-              className="scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
+              className="relative scroll-mt-24 bg-white border-2 border-[#050505] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
+              <span className="absolute top-3 left-3 text-xs font-mono font-bold text-gray-400" aria-hidden>4</span>
               <div className="max-w-4xl mx-auto space-y-10">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8">
                   <div className="flex-1">
@@ -139,8 +143,9 @@ export default function PitchDeck() {
             {/* Slide 5: eTower + vision */}
             <section
               id="etower"
-              className="scroll-mt-24 bg-white border-2 border-[#0038FF] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
+              className="relative scroll-mt-24 bg-white border-2 border-[#0038FF] shadow-[8px_8px_0px_#0038FF] p-8 md:p-12"
             >
+              <span className="absolute top-3 left-3 text-xs font-mono font-bold text-gray-400" aria-hidden>5</span>
               <div className="max-w-4xl mx-auto space-y-10">
                 <div>
                   <div className="flex items-center gap-3 mb-6">
