@@ -59,6 +59,7 @@ interface CertificationRow {
   id: string;
   employee_name: string;
   certification_name: string;
+  certification_number: string | null;
   issue_date: string | null;
   expiration_date: string | null;
   priority: string | null;
@@ -413,6 +414,7 @@ function generateSimplePDFHTML(
                     <thead>
                         <tr>
                             <th>Certification</th>
+                            <th>License #</th>
                             <th>Issue Date</th>
                             <th>Expiration Date</th>
                             <th>Status</th>
@@ -423,6 +425,7 @@ function generateSimplePDFHTML(
                         ${employee.certifications.map((cert: any) => `
                             <tr>
                                 <td>${safeEscape(cert.type)}</td>
+                                <td>${cert.licenseNumber ? safeEscape(cert.licenseNumber) : '—'}</td>
                                 <td>${cert.issueDate || 'N/A'}</td>
                                 <td>${cert.expirationDate}</td>
                                 <td class="status-${cert.status.toLowerCase().replace(' ', '-')}">${cert.status}</td>
@@ -495,7 +498,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get all certifications for the user
     const { data: certifications, error: certsError } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes')
+      .select('id, employee_name, certification_name, certification_number, issue_date, expiration_date, priority, notes')
       .eq('user_id', user.id)
       .order('employee_name', { ascending: true }) as { data: CertificationRow[] | null, error: any };
 
@@ -535,6 +538,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: cert.id,
         employee: cert.employee_name,
         type: cert.certification_name,
+        licenseNumber: cert.certification_number || null,
         issueDate: cert.issue_date || '',
         expirationDate: cert.expiration_date,
         status,

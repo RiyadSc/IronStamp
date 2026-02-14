@@ -13,6 +13,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Menu,
   Calendar,
   Loader2,
 } from 'lucide-react';
@@ -50,6 +51,7 @@ export default function CalendarDemoPage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     companyName: null,
     teamSize: null,
@@ -135,111 +137,86 @@ export default function CalendarDemoPage() {
     );
   }
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="font-mono bg-[#F8FAFC] text-[#050505] min-h-screen flex flex-col md:flex-row">
-      {/* SIDEBAR NAV */}
+      {mobileMenuOpen && (
+        <button type="button" aria-label="Close menu" className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={closeMobileMenu} />
+      )}
+
       <aside
         id="sidebar"
-        className={`sidebar w-full md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 ${
+        className={`sidebar fixed md:relative left-0 top-0 bottom-0 z-50 w-64 md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 transition-transform duration-200 ease-out ${
           sidebarCollapsed ? 'collapsed' : ''
-        }`}
+        } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="pt-6 pr-6 pb-6 pl-4 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <Link href="/DashboardV2" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <img src="/IronStampLogov3.png" alt="IronStamp" className="h-8 w-auto" />
-              <span className="sidebar-text font-display font-bold text-2xl tracking-tighter transition-opacity">
-                IRONSTAMP
-              </span>
-            </Link>
-            <button
-              onClick={toggleSidebar}
-              className="hidden md:block text-gray-400 hover:text-white transition-colors p-1"
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4" />
-              ) : (
-                <PanelLeftClose className="w-4 h-4" />
-              )}
+              <span className="sidebar-text font-display font-bold text-2xl tracking-tighter transition-opacity">IRONSTAMP</span>
+            </div>
+            <button onClick={toggleSidebar} className="hidden md:block text-gray-400 hover:text-white transition-colors p-1">
+              {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </button>
           </div>
-          <div className="sidebar-text mt-2 text-[10px] font-mono text-gray-500 transition-opacity">
-            SYS.STATUS: ONLINE
-          </div>
+          <div className="sidebar-text mt-2 text-[10px] font-mono text-gray-500 transition-opacity">SYS.STATUS: ONLINE</div>
         </div>
 
         <nav className="flex-1 py-4 space-y-2">
-          <Link
-            href="/DashboardV2"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/DashboardV2" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <Radar className="w-4 h-4" />
             <span className="sidebar-text">THE RADAR</span>
           </Link>
-          <Link
-            href="/Crew"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/Crew" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <Users className="w-4 h-4" />
             <span className="sidebar-text">THE CREW</span>
           </Link>
-          <Link
-            href="/calendar-demo"
-            className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold"
-          >
+          <Link href="/calendar-demo" className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold" onClick={closeMobileMenu}>
             <Calendar className="w-4 h-4" />
             <span className="sidebar-text">CALENDAR</span>
           </Link>
-          <Link
-            href="/vault"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/vault" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <FileCheck className="w-4 h-4" />
             <span className="sidebar-text">THE VAULT</span>
           </Link>
-          <Link
-            href="/config"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/config" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <Settings className="w-4 h-4" />
             <span className="sidebar-text">CONFIG</span>
           </Link>
         </nav>
 
-        {/* User Profile Section */}
         <div className="p-4 border-t border-white/10">
           <div className={`flex items-center gap-3 px-2 py-2 ${sidebarCollapsed ? 'justify-center' : ''}`}>
             <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-mono text-sm font-bold">
-                {getInitials(profileName)}
-              </span>
+              <span className="text-white font-mono text-sm font-bold">{getInitials(profileName)}</span>
             </div>
             <div className="flex-1 min-w-0 sidebar-text">
-              <p className="text-white font-mono text-sm font-bold truncate">
-                {profileName}
-              </p>
-              <p className="text-gray-400 font-mono text-xs truncate">
-                {profileEmail}
-              </p>
+              <p className="text-white font-mono text-sm font-bold truncate">{profileName}</p>
+              <p className="text-gray-400 font-mono text-xs truncate">{profileEmail}</p>
             </div>
           </div>
         </div>
 
-        {/* Bottom Action */}
         <div className="p-4 border-t border-white/10">
-          <button 
-            onClick={handleLogout}
-            className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs"
-          >
+          <button onClick={() => { closeMobileMenu(); handleLogout(); }} className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs">
             <LogOut className="w-3 h-3" />
             <span className="sidebar-text">LOGOUT</span>
           </button>
         </div>
       </aside>
 
-      {/* MAIN INTERFACE */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto bg-tech-grid">
-        {/* HEADER */}
+      <main className="flex-1 min-w-0 p-6 md:p-12 overflow-y-auto bg-tech-grid">
+        <div className="md:hidden flex items-center justify-between mb-6 -mt-2 -mx-2 px-2 py-3">
+          <div className="flex items-center gap-2">
+            <img src="/IronStampLogov3.png" alt="IronStamp" className="h-7 w-auto" />
+            <span className="font-display font-bold text-xl tracking-tighter text-[#050505]">IRONSTAMP</span>
+          </div>
+          <button type="button" aria-label="Open menu" onClick={() => setMobileMenuOpen(true)} className="p-2 rounded-lg text-[#050505] hover:bg-[#050505]/10 transition-colors">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
         <header className="mb-8">
           <p className="font-mono text-[#0038FF] text-xs mb-1">{`/// EXPIRATION TIMELINE ///`}</p>
           <h1 className="font-display text-4xl md:text-5xl font-bold uppercase">Certification Calendar</h1>

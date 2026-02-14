@@ -68,6 +68,7 @@ export interface ExpirationItem {
   id: string
   employee: string
   certification: string
+  certificationNumber?: string | null
   expirationDate: string | null
   daysLeft: number
   status: 'critical' | 'warning' | 'expired' | 'lifetime'
@@ -79,6 +80,7 @@ export interface CertificationDetails {
   id: string
   employee: string
   type: string
+  certificationNumber?: string | null
   issueDate: string
   expirationDate: string | null
   status: string
@@ -296,7 +298,7 @@ export async function getExpiringCertifications(_limit: number = 10, userId?: st
 
     const { data, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, expiration_date, priority, is_lifetime')
+      .select('id, employee_name, certification_name, certification_number, expiration_date, priority, is_lifetime')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
       .not('expiration_date', 'is', null)
@@ -312,6 +314,7 @@ export async function getExpiringCertifications(_limit: number = 10, userId?: st
         id: cert.id,
         employee: cert.employee_name,
         certification: cert.certification_name,
+        certificationNumber: cert.certification_number || null,
         expirationDate: cert.expiration_date,
         daysLeft,
         status: getStatus(daysLeft),
@@ -353,7 +356,7 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
 
     const { data, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, file_url, file_name, file_size, is_lifetime')
+      .select('id, employee_name, certification_name, certification_number, issue_date, expiration_date, priority, notes, file_url, file_name, file_size, is_lifetime')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
       .order('expiration_date', { ascending: true, nullsFirst: false })
@@ -375,6 +378,7 @@ export async function getAllCertifications(): Promise<CertificationDetails[]> {
         id: cert.id,
         employee: cert.employee_name,
         type: cert.certification_name,
+        certificationNumber: cert.certification_number || null,
         issueDate: cert.issue_date ? String(cert.issue_date) : '',
         expirationDate: cert.expiration_date,
         status,
@@ -888,7 +892,7 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
     // Get all certifications for the user
     const { data: certifications, error } = await supabase
       .from('certifications')
-      .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, is_lifetime')
+      .select('id, employee_name, certification_name, certification_number, issue_date, expiration_date, priority, notes, is_lifetime')
       .eq('user_id', user.id)
       .neq('status', 'suspended')
       .order('employee_name', { ascending: true })
@@ -922,6 +926,7 @@ export async function getEmployeeCertificationSummary(userId?: string): Promise<
         id: cert.id,
         employee: cert.employee_name,
         type: cert.certification_name,
+        certificationNumber: cert.certification_number || null,
         issueDate: cert.issue_date ? String(cert.issue_date) : '',
         expirationDate: cert.expiration_date,
         status,

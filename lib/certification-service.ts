@@ -34,10 +34,15 @@ export function calculatePriority(expirationDate: string): 'low' | 'medium' | 'h
   return 'low';
 }
 
+export interface UploadOptions {
+  /** If true, uses higher rate limits suitable for bulk onboarding uploads */
+  isOnboarding?: boolean;
+}
+
 /**
  * Main upload function that calls the API route
  */
-export async function uploadCertification(file: File): Promise<UploadResult> {
+export async function uploadCertification(file: File, options?: UploadOptions): Promise<UploadResult> {
   try {
     // Validate file type
     const allowedTypes = [
@@ -71,6 +76,11 @@ export async function uploadCertification(file: File): Promise<UploadResult> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('userId', session.user.id);
+    
+    // Pass onboarding flag if set (for higher rate limits)
+    if (options?.isOnboarding) {
+      formData.append('isOnboarding', 'true');
+    }
 
     // Call the API route with CSRF token and authorization
     const response = await fetch('/api/upload-certification', {

@@ -59,6 +59,7 @@ interface CertificationRow {
   id: string;
   employee_name: string;
   certification_name: string;
+  certification_number: string | null;
   issue_date: string | null;
   expiration_date: string | null;
   priority: string | null;
@@ -454,6 +455,7 @@ function generateSimpleCompliancePDFHTML(
                         <tr>
                             <th>Employee</th>
                             <th>Certification</th>
+                            <th>License #</th>
                             <th>Status</th>
                             <th>Priority</th>
                             <th>Action Required</th>
@@ -464,6 +466,7 @@ function generateSimpleCompliancePDFHTML(
                             <tr>
                                 <td>${safeEscape(action.employee)}</td>
                                 <td>${safeEscape(action.certification)}</td>
+                                <td>${action.licenseNumber ? safeEscape(action.licenseNumber) : '—'}</td>
                                 <td>${action.type === 'expired' ? 'EXPIRED' : `Expires in ${action.daysLeft} days`}</td>
                                 <td class="priority-${action.priority}">${action.priority.toUpperCase()}</td>
                                 <td>${action.type === 'expired' ? 'Immediate renewal required' : 'Schedule renewal'}</td>
@@ -581,7 +584,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       supabase
         .from('certifications')
-        .select('id, employee_name, certification_name, issue_date, expiration_date, priority, notes, is_lifetime')
+        .select('id, employee_name, certification_name, certification_number, issue_date, expiration_date, priority, notes, is_lifetime')
         .eq('user_id', user.id)
     ]);
 
@@ -652,6 +655,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type,
             employee: cert.employee_name,
             certification: cert.certification_name,
+            licenseNumber: cert.certification_number || null,
             daysLeft: daysLeft >= 0 ? daysLeft : undefined,
             priority,
             expirationDate: cert.expiration_date

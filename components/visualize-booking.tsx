@@ -11,6 +11,7 @@ export type CertificationType = {
   id: string;
   employee_name: string;
   certification_name: string;
+  certification_number?: string | null;
   expiration_date: string;
   priority: 'low' | 'medium' | 'high';
   status?: string;
@@ -525,6 +526,11 @@ const InteractiveCalendar = React.forwardRef<
                         <p className="mb-1 text-sm text-gray-500">
                           {cert.employee_name}
                         </p>
+                        {cert.certification_number && (
+                          <p className="mb-1 text-xs font-mono text-gray-400">
+                            License #: {cert.certification_number}
+                          </p>
+                        )}
                                                   <div className="flex items-center text-blue-500">
                             <Clock className="mr-1 h-4 w-4" />
                             <span className="text-sm">

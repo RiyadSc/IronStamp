@@ -9,6 +9,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Menu,
   Printer,
   Siren,
   Clock,
@@ -62,6 +63,7 @@ const ACCEPTED_TYPES = {
 
 export default function DashboardV2() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats>({
@@ -433,14 +435,26 @@ export default function DashboardV2() {
     disabled: uploadingFiles
   });
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="font-mono bg-[#F8FAFC] text-[#050505] min-h-screen flex flex-col md:flex-row">
-      {/* SIDEBAR NAV */}
+      {/* Mobile backdrop: close menu when tapping outside */}
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeMobileMenu}
+        />
+      )}
+
+      {/* SIDEBAR NAV: on mobile fixed + slide in/out; on desktop static */}
       <aside
         id="sidebar"
-        className={`sidebar w-full md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 ${
+        className={`sidebar fixed md:relative left-0 top-0 bottom-0 z-50 w-64 md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 transition-transform duration-200 ease-out ${
           sidebarCollapsed ? 'collapsed' : ''
-        }`}
+        } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="pt-6 pr-6 pb-6 pl-4 border-b border-white/10">
         <div className="flex items-center justify-between">
@@ -470,6 +484,7 @@ export default function DashboardV2() {
           <Link
             href="/DashboardV2"
             className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold"
+            onClick={closeMobileMenu}
           >
             <Radar className="w-4 h-4" />
             <span className="sidebar-text">THE RADAR</span>
@@ -477,6 +492,7 @@ export default function DashboardV2() {
           <Link
             href="/Crew"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
+            onClick={closeMobileMenu}
           >
             <Users className="w-4 h-4" />
             <span className="sidebar-text">THE CREW</span>
@@ -484,6 +500,7 @@ export default function DashboardV2() {
           <Link
             href="/calendar-demo"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
+            onClick={closeMobileMenu}
           >
             <Calendar className="w-4 h-4" />
             <span className="sidebar-text">CALENDAR</span>
@@ -491,6 +508,7 @@ export default function DashboardV2() {
           <Link
             href="/vault"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
+            onClick={closeMobileMenu}
           >
             <FileCheck className="w-4 h-4" />
             <span className="sidebar-text">THE VAULT</span>
@@ -498,6 +516,7 @@ export default function DashboardV2() {
           <Link
             href="/config"
             className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
+            onClick={closeMobileMenu}
           >
             <Settings className="w-4 h-4" />
             <span className="sidebar-text">CONFIG</span>
@@ -526,7 +545,7 @@ export default function DashboardV2() {
         {/* Bottom Action */}
         <div className="p-4 border-t border-white/10">
           <button 
-            onClick={handleLogout}
+            onClick={() => { closeMobileMenu(); handleLogout(); }}
             className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs"
           >
             <LogOut className="w-3 h-3" />
@@ -536,7 +555,23 @@ export default function DashboardV2() {
       </aside>
 
       {/* MAIN INTERFACE */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto bg-tech-grid">
+      <main className="flex-1 min-w-0 p-6 md:p-12 overflow-y-auto bg-tech-grid">
+        {/* Mobile top bar: burger + logo (only on mobile) */}
+        <div className="md:hidden flex items-center justify-between mb-6 -mt-2 -mx-2 px-2 py-3">
+          <div className="flex items-center gap-2">
+            <img src="/IronStampLogov3.png" alt="IronStamp" className="h-7 w-auto" />
+            <span className="font-display font-bold text-xl tracking-tighter text-[#050505]">IRONSTAMP</span>
+          </div>
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 rounded-lg text-[#050505] hover:bg-[#050505]/10 transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+
         {/* HEADER: "The Radar" */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
@@ -641,16 +676,16 @@ export default function DashboardV2() {
                   </DialogHeader>
                   
                   <div className="bg-white">
-                    {/* Header Row */}
-                    <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-mono text-xs text-gray-500 font-bold uppercase sticky top-[73px] z-10">
-                      <div className="col-span-4">Technician</div>
-                      <div className="col-span-4">Certification</div>
+                    {/* Header Row - desktop only */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-mono text-xs text-gray-500 font-bold uppercase sticky top-[73px] z-10">
+                      <div className="col-span-3">Technician</div>
+                      <div className="col-span-3">Certification</div>
+                      <div className="col-span-2">License #</div>
                       <div className="col-span-2">Status</div>
                       <div className="col-span-2 text-right">Action</div>
                     </div>
 
                     {allExpiringCerts.map((cert) => {
-                      // Determine visual style based on priority
                       let rowClass = "hover:bg-gray-50 transition-colors";
                       let statusBadgeClass = "status-ok";
                       let statusText = "VALID";
@@ -672,30 +707,36 @@ export default function DashboardV2() {
                       }
 
                       return (
-                        <div key={cert.id} className={`grid grid-cols-12 gap-4 p-4 border-b border-gray-100 items-center ${rowClass}`}>
-                          <div className="col-span-4 flex items-center gap-3">
-                            <div className={`w-8 h-8 flex items-center justify-center font-mono text-xs font-bold ${cert.daysLeft < 0 ? 'bg-[#050505] text-white' : 'bg-gray-200 text-gray-600'}`}>
+                        <div
+                          key={cert.id}
+                          className={`p-4 border-b border-gray-100 flex flex-col gap-2 md:grid md:grid-cols-12 md:gap-4 md:items-center ${rowClass}`}
+                        >
+                          <div className="flex items-center gap-3 md:col-span-3 min-w-0">
+                            <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center font-mono text-xs font-bold ${cert.daysLeft < 0 ? 'bg-[#050505] text-white' : 'bg-gray-200 text-gray-600'}`}>
                               {cert.employee.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                             </div>
-                            <span className="font-bold text-sm truncate">{cert.employee}</span>
+                            <span className="font-bold text-sm break-words md:truncate">{cert.employee}</span>
                           </div>
-                          <div className="col-span-4 font-mono text-xs truncate" title={cert.certification}>
+                          <div className="font-mono text-xs text-gray-600 break-words md:col-span-3 md:truncate" title={cert.certification}>
                             {cert.certification}
                           </div>
-                          <div className="col-span-2">
-                            <span className={`status-badge ${statusBadgeClass}`}>{statusText}</span>
+                          <div className="font-mono text-xs text-gray-500 break-words md:col-span-2 md:truncate" title={cert.certificationNumber || ''}>
+                            {cert.certificationNumber || <span className="text-gray-300">—</span>}
                           </div>
-                          <div className="col-span-2 text-right">
-                            <button 
-                              className={`font-mono text-xs font-bold ${actionClass}`}
-                              onClick={() => {
-                                if (actionText === "FIX NOW" || actionText === "PING") {
-                                  handleNotify(cert);
-                                }
-                              }}
-                            >
-                              {actionText}
-                            </button>
+                          <div className="flex items-center justify-between gap-2 md:contents">
+                            <span className={`status-badge ${statusBadgeClass} md:col-span-2`}>{statusText}</span>
+                            <div className="md:col-span-2 md:text-right">
+                              <button
+                                className={`font-mono text-xs font-bold ${actionClass}`}
+                                onClick={() => {
+                                  if (actionText === "FIX NOW" || actionText === "PING") {
+                                    handleNotify(cert);
+                                  }
+                                }}
+                              >
+                                {actionText}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -706,10 +747,11 @@ export default function DashboardV2() {
             </div>
 
             <div className="bg-white border border-gray-200 shadow-sm">
-              {/* Header Row */}
-              <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-mono text-xs text-gray-500 font-bold uppercase">
-                <div className="col-span-4">Technician</div>
-                <div className="col-span-4">Certification</div>
+              {/* Header Row - desktop only */}
+              <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-mono text-xs text-gray-500 font-bold uppercase">
+                <div className="col-span-3">Technician</div>
+                <div className="col-span-3">Certification</div>
+                <div className="col-span-2">License #</div>
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2 text-right">Action</div>
               </div>
@@ -724,7 +766,6 @@ export default function DashboardV2() {
                 </div>
               ) : (
                 expiringCerts.map((cert) => {
-                  // Determine visual style based on priority
                   let rowClass = "hover:bg-gray-50 transition-colors";
                   let statusBadgeClass = "status-ok";
                   let statusText = "VALID";
@@ -746,30 +787,36 @@ export default function DashboardV2() {
                   }
 
                   return (
-                    <div key={cert.id} className={`grid grid-cols-12 gap-4 p-4 border-b border-gray-100 items-center ${rowClass}`}>
-                      <div className="col-span-4 flex items-center gap-3">
-                        <div className={`w-8 h-8 flex items-center justify-center font-mono text-xs font-bold ${cert.daysLeft < 0 ? 'bg-[#050505] text-white' : 'bg-gray-200 text-gray-600'}`}>
+                    <div
+                      key={cert.id}
+                      className={`p-4 border-b border-gray-100 flex flex-col gap-2 md:grid md:grid-cols-12 md:gap-4 md:items-center ${rowClass}`}
+                    >
+                      <div className="flex items-center gap-3 md:col-span-3 min-w-0">
+                        <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center font-mono text-xs font-bold ${cert.daysLeft < 0 ? 'bg-[#050505] text-white' : 'bg-gray-200 text-gray-600'}`}>
                           {cert.employee.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                         </div>
-                        <span className="font-bold text-sm truncate">{cert.employee}</span>
+                        <span className="font-bold text-sm break-words md:truncate">{cert.employee}</span>
                       </div>
-                      <div className="col-span-4 font-mono text-xs truncate" title={cert.certification}>
+                      <div className="font-mono text-xs text-gray-600 break-words md:col-span-3 md:truncate" title={cert.certification}>
                         {cert.certification}
                       </div>
-                      <div className="col-span-2">
-                        <span className={`status-badge ${statusBadgeClass}`}>{statusText}</span>
+                      <div className="font-mono text-xs text-gray-500 break-words md:col-span-2 md:truncate" title={cert.certificationNumber || ''}>
+                        {cert.certificationNumber || <span className="text-gray-300">—</span>}
                       </div>
-                      <div className="col-span-2 text-right">
-                        <button 
-                          className={`font-mono text-xs font-bold ${actionClass}`}
-                          onClick={() => {
-                            if (actionText === "FIX NOW" || actionText === "PING") {
-                              handleNotify(cert);
-                            }
-                          }}
-                        >
-                          {actionText}
-                        </button>
+                      <div className="flex items-center justify-between gap-2 md:contents">
+                        <span className={`status-badge ${statusBadgeClass} md:col-span-2`}>{statusText}</span>
+                        <div className="md:col-span-2 md:text-right">
+                          <button
+                            className={`font-mono text-xs font-bold ${actionClass}`}
+                            onClick={() => {
+                              if (actionText === "FIX NOW" || actionText === "PING") {
+                                handleNotify(cert);
+                              }
+                            }}
+                          >
+                            {actionText}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

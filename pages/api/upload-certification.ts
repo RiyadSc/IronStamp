@@ -10,6 +10,10 @@ import { isLifetimeCertification } from '@/lib/certification-types';
 const UPLOAD_RATE_LIMIT_MAX = parseInt(process.env.UPLOAD_RATE_LIMIT_MAX || '10', 10);
 const UPLOAD_RATE_LIMIT_WINDOW_MS = (parseInt(process.env.UPLOAD_RATE_LIMIT_WINDOW_SEC || '60', 10) || 60) * 1000;
 
+// Higher limits during onboarding to support bulk document uploads
+const ONBOARDING_RATE_LIMIT_MAX = parseInt(process.env.ONBOARDING_RATE_LIMIT_MAX || '100', 10);
+const ONBOARDING_RATE_LIMIT_WINDOW_MS = (parseInt(process.env.ONBOARDING_RATE_LIMIT_WINDOW_SEC || '300', 10) || 300) * 1000; // 5 minutes
+
 /** Magic-byte (file signature) patterns for allowed upload types. Reject if content doesn't match claimed MIME. */
 const FILE_SIGNATURES: Record<string, Buffer[]> = {
   'application/pdf': [Buffer.from([0x25, 0x50, 0x44, 0x46])], // %PDF
@@ -569,6 +573,7 @@ async function saveCertificationToDatabase(
       // Update the existing record
       const updateData: any = {
         certification_name: data.certificationName, // Update with the new name (might have state prefix now)
+        certification_number: data.licenseNumber ?? null,
         expiration_date: data.isLifetime ? null : data.expirationDate,
         issue_date: data.issueDate || null,
         priority: data.priority,
@@ -599,6 +604,7 @@ async function saveCertificationToDatabase(
         user_id: userId,
         employee_name: data.employeeName,
         certification_name: data.certificationName,
+        certification_number: data.licenseNumber ?? null,
         issue_date: data.issueDate || null,
         expiration_date: data.isLifetime ? null : data.expirationDate,
         priority: data.priority,
@@ -670,25 +676,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Invalid authentication token' });
     }
 
-    // Per-user rate limit (cost, storage, abuse)
-    const rateKey = `upload:${user.id}`;
-    const { allowed, remaining, resetInMs } = checkRateLimit(
-      rateKey,
-      UPLOAD_RATE_LIMIT_MAX,
-      UPLOAD_RATE_LIMIT_WINDOW_MS
-    );
-    if (!allowed) {
-      res.setHeader('Retry-After', Math.ceil(resetInMs / 1000));
-      res.setHeader('X-RateLimit-Limit', String(UPLOAD_RATE_LIMIT_MAX));
-      res.setHeader('X-RateLimit-Remaining', '0');
-      return res.status(429).json({
-        error: `Too many uploads. Please try again in ${Math.ceil(resetInMs / 1000)} seconds.`,
-      });
-    }
-    res.setHeader('X-RateLimit-Limit', String(UPLOAD_RATE_LIMIT_MAX));
-    res.setHeader('X-RateLimit-Remaining', String(remaining));
-
-    // Parse the form data
+    // Parse the form data first to check for onboarding flag
     const form = formidable({
       maxFileSize: parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '20971520'),
       filter: (part) => {
@@ -704,9 +692,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    const [_fields, files] = await form.parse(req);
+    const [fields, files] = await form.parse(req);
     
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
+    
+    // Check if this is an onboarding upload (higher rate limits apply)
+    const isOnboardingField = fields.isOnboarding;
+    const isOnboarding = Array.isArray(isOnboardingField) 
+      ? isOnboardingField[0] === 'true' 
+      : isOnboardingField === 'true';
+
+    // Per-user rate limit (cost, storage, abuse)
+    // Use higher limits during onboarding to support bulk document uploads
+    const rateLimitMax = isOnboarding ? ONBOARDING_RATE_LIMIT_MAX : UPLOAD_RATE_LIMIT_MAX;
+    const rateLimitWindow = isOnboarding ? ONBOARDING_RATE_LIMIT_WINDOW_MS : UPLOAD_RATE_LIMIT_WINDOW_MS;
+    const rateKey = isOnboarding ? `onboarding-upload:${user.id}` : `upload:${user.id}`;
+    
+    const { allowed, remaining, resetInMs } = checkRateLimit(
+      rateKey,
+      rateLimitMax,
+      rateLimitWindow
+    );
+    if (!allowed) {
+      res.setHeader('Retry-After', Math.ceil(resetInMs / 1000));
+      res.setHeader('X-RateLimit-Limit', String(rateLimitMax));
+      res.setHeader('X-RateLimit-Remaining', '0');
+      return res.status(429).json({
+        error: `Too many uploads. Please try again in ${Math.ceil(resetInMs / 1000)} seconds.`,
+      });
+    }
+    res.setHeader('X-RateLimit-Limit', String(rateLimitMax));
+    res.setHeader('X-RateLimit-Remaining', String(remaining));
 
     if (!file) {
       return res.status(400).json({ error: 'No file provided' });

@@ -9,6 +9,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Menu,
   Search,
   UserPlus,
   MoreVertical,
@@ -174,6 +175,7 @@ export default function Crew() {
     return { id: '', dismiss: () => {}, update: () => {} };
   }, []);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -458,14 +460,24 @@ export default function Crew() {
     }
   };
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="font-mono bg-[#F8FAFC] text-[#050505] min-h-screen flex flex-col md:flex-row">
-      {/* SIDEBAR */}
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeMobileMenu}
+        />
+      )}
+
       <aside
         id="sidebar"
-        className={`sidebar w-full md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 ${
+        className={`sidebar fixed md:relative left-0 top-0 bottom-0 z-50 w-64 md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 transition-transform duration-200 ease-out ${
           sidebarCollapsed ? 'collapsed' : ''
-        }`}
+        } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="pt-6 pr-6 pb-6 pl-4 border-b border-white/10">
           <div className="flex items-center justify-between">
@@ -491,66 +503,43 @@ export default function Crew() {
           </div>
         </div>
         <nav className="flex-1 py-4 space-y-2">
-          <Link
-            href="/DashboardV2"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/DashboardV2" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <Radar className="w-4 h-4" />
             <span className="sidebar-text">THE RADAR</span>
           </Link>
-          <Link
-            href="/Crew"
-            className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold"
-          >
+          <Link href="/Crew" className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold" onClick={closeMobileMenu}>
             <Users className="w-4 h-4" />
             <span className="sidebar-text">THE CREW</span>
           </Link>
-          <Link
-            href="/calendar-demo"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/calendar-demo" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <Calendar className="w-4 h-4" />
             <span className="sidebar-text">CALENDAR</span>
           </Link>
-          <Link
-            href="/vault"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/vault" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <FileCheck className="w-4 h-4" />
             <span className="sidebar-text">THE VAULT</span>
           </Link>
-          <Link
-            href="/config"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/config" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={closeMobileMenu}>
             <Settings className="w-4 h-4" />
             <span className="sidebar-text">CONFIG</span>
           </Link>
         </nav>
 
-        {/* User Profile Section */}
         <div className="p-4 border-t border-white/10">
           <div className={`flex items-center gap-3 px-2 py-2 ${sidebarCollapsed ? 'justify-center' : ''}`}>
             <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-mono text-sm font-bold">
-                {getInitials(profileName)}
-              </span>
+              <span className="text-white font-mono text-sm font-bold">{getInitials(profileName)}</span>
             </div>
             <div className="flex-1 min-w-0 sidebar-text">
-              <p className="text-white font-mono text-sm font-bold truncate">
-                {profileName}
-              </p>
-              <p className="text-gray-400 font-mono text-xs truncate">
-                {profileEmail}
-              </p>
+              <p className="text-white font-mono text-sm font-bold truncate">{profileName}</p>
+              <p className="text-gray-400 font-mono text-xs truncate">{profileEmail}</p>
             </div>
           </div>
         </div>
 
-        {/* Bottom Action */}
         <div className="p-4 border-t border-white/10">
-          <button 
-            onClick={handleLogout}
+          <button
+            onClick={() => { closeMobileMenu(); handleLogout(); }}
             className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs"
           >
             <LogOut className="w-3 h-3" />
@@ -559,9 +548,17 @@ export default function Crew() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto bg-tech-grid">
-        <header className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+      <main className="flex-1 min-w-0 p-6 md:p-12 overflow-y-auto bg-tech-grid">
+        <div className="md:hidden flex items-center justify-between mb-6 -mt-2 -mx-2 px-2 py-3">
+          <div className="flex items-center gap-2">
+            <img src="/IronStampLogov3.png" alt="IronStamp" className="h-7 w-auto" />
+            <span className="font-display font-bold text-xl tracking-tighter text-[#050505]">IRONSTAMP</span>
+          </div>
+          <button type="button" aria-label="Open menu" onClick={() => setMobileMenuOpen(true)} className="p-2 rounded-lg text-[#050505] hover:bg-[#050505]/10 transition-colors">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
             <p className="font-mono text-[#0038FF] text-xs mb-1">{`/// PERSONNEL ROSTER ///`}</p>
             <h1 className="font-display text-4xl md:text-5xl font-bold uppercase">The Crew</h1>
@@ -570,8 +567,8 @@ export default function Crew() {
             </p>
           </div>
 
-          <div className="flex gap-4 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
+          <div className="flex flex-col gap-3 w-full md:flex-row md:gap-4 md:w-auto">
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -582,24 +579,26 @@ export default function Crew() {
                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 font-mono text-xs focus:outline-none focus:border-[#0038FF] focus:ring-1 focus:ring-[#0038FF] shadow-sm"
               />
             </div>
-            <button 
-              onClick={() => setShowArchived(!showArchived)}
-              className={`px-6 py-3 flex items-center gap-3 font-bold font-mono text-sm transition-colors border-2 shadow-[4px_4px_0px_#0038FF] ${
-                showArchived 
-                  ? 'bg-gray-100 text-gray-700 border-gray-300' 
-                  : 'bg-white text-[#050505] border-[#050505]'
-              }`}
-            >
-              <Users2 className="w-4 h-4" /> {showArchived ? 'SHOW ACTIVE' : 'SHOW ARCHIVED'}
-            </button>
-            {!showArchived && (
+            <div className="flex gap-3 flex-shrink-0">
               <button 
-                onClick={handleAddTeamMember}
-                className="bg-[#050505] text-white px-6 py-3 flex items-center gap-3 font-bold font-mono text-sm hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[4px_4px_0px_#0038FF]"
+                onClick={() => setShowArchived(!showArchived)}
+                className={`px-4 py-2.5 md:px-6 md:py-3 flex items-center gap-2 md:gap-3 font-bold font-mono text-xs md:text-sm transition-colors border-2 shadow-[4px_4px_0px_#0038FF] ${
+                  showArchived 
+                    ? 'bg-gray-100 text-gray-700 border-gray-300' 
+                    : 'bg-white text-[#050505] border-[#050505]'
+                }`}
               >
-                <UserPlus className="w-4 h-4" /> ADD TECH
+                <Users2 className="w-4 h-4 flex-shrink-0" /> <span className="whitespace-nowrap">{showArchived ? 'SHOW ACTIVE' : 'SHOW ARCHIVED'}</span>
               </button>
-            )}
+              {!showArchived && (
+                <button 
+                  onClick={handleAddTeamMember}
+                  className="bg-[#050505] text-white px-4 py-2.5 md:px-6 md:py-3 flex items-center gap-2 md:gap-3 font-bold font-mono text-xs md:text-sm hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[4px_4px_0px_#0038FF] whitespace-nowrap"
+                >
+                  <UserPlus className="w-4 h-4 flex-shrink-0" /> ADD TECH
+                </button>
+              )}
+            </div>
           </div>
         </header>
 

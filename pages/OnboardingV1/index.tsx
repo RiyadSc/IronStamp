@@ -62,6 +62,103 @@ function normalizeName(name: string | null | undefined): string {
   return (name || '').toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
+const ONBOARDING_EMPLOYEE_BATCH_SIZE = 50
+const ONBOARDING_CERT_BATCH_SIZE = 50
+
+/** Delay helper for retry backoff */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Insert a single row, with retry logic for transient failures.
+ * For employees with duplicate emails, treat as success (they already exist).
+ * Returns true if successful, false otherwise.
+ */
+async function insertSingleRowWithRetry(
+  table: 'employees' | 'certifications',
+  row: any,
+  maxRetries = 3
+): Promise<{ success: boolean; error?: string }> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const { error } = await supabase.from(table).insert([row])
+    
+    if (!error) {
+      return { success: true }
+    }
+    
+    // For employees table: duplicate email means the employee already exists - treat as success
+    if (table === 'employees' && error.code === '23505' && error.message?.includes('unique_email_per_user')) {
+      return { success: true } // Employee already exists, that's fine
+    }
+    
+    // Check for non-retryable errors (constraint violations, etc.)
+    const isNonRetryable = 
+      error.code === '23505' || // unique constraint violation
+      error.code === '23503' || // foreign key violation
+      error.code === '23502'    // not null violation
+    
+    if (isNonRetryable) {
+      return { success: false, error: error.message }
+    }
+    
+    // Retry with exponential backoff for transient errors
+    if (attempt < maxRetries - 1) {
+      await delay(Math.pow(2, attempt) * 500) // 500ms, 1s, 2s
+    } else {
+      return { success: false, error: error.message }
+    }
+  }
+  return { success: false, error: 'Max retries exceeded' }
+}
+
+/**
+ * Insert rows in batches with resilient error handling:
+ * - Continues processing even if a batch fails
+ * - Falls back to individual inserts for failed batches
+ * - Reports total successes and any failures
+ */
+async function insertRowsInBatches(
+  table: 'employees' | 'certifications',
+  rows: any[],
+  batchSize: number
+): Promise<{ inserted: number; failed: number; errors: string[] }> {
+  if (rows.length === 0) return { inserted: 0, failed: 0, errors: [] }
+
+  let inserted = 0
+  let failed = 0
+  const errors: string[] = []
+
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const batch = rows.slice(i, i + batchSize)
+
+    const { error } = await supabase.from(table).insert(batch)
+
+    if (!error) {
+      inserted += batch.length
+      continue
+    }
+
+    // Batch failed - fall back to individual inserts to salvage what we can
+    console.warn(`Batch insert failed for ${table}, falling back to individual inserts:`, error.message)
+
+    for (const row of batch) {
+      const result = await insertSingleRowWithRetry(table, row)
+      if (result.success) {
+        inserted++
+      } else {
+        failed++
+        const identifier = row.name || row.employee_name || row.certification_name || 'unknown'
+        errors.push(`${identifier}: ${result.error}`)
+      }
+    }
+
+    await delay(100)
+  }
+
+  return { inserted, failed, errors }
+}
+
 /**
  * Persist certification assignments to the certifications table.
  *
@@ -122,10 +219,9 @@ async function persistCertificationAssignments(
     const employeeId = employeeMap.get(normalizedMemberName)
     if (!employeeId) return
 
-    const issueDate = (assignment as { issueDate?: string }).issueDate
     const cleanIssueDate =
-      issueDate && issueDate !== 'N/A'
-        ? issueDate
+      assignment.issueDate && assignment.issueDate !== 'N/A'
+        ? assignment.issueDate
         : null
     const cleanExpirationDate =
       assignment.expirationDate && assignment.expirationDate !== 'N/A'
@@ -137,11 +233,14 @@ async function persistCertificationAssignments(
     const existingKey = `${normalizeName(employeeNameTrimmed)}|${normalizeName(certNameTrimmed)}`
     const existingId = existingMap.get(existingKey)
 
+    const cleanLicenseNumber = assignment.licenseNumber && assignment.licenseNumber !== 'N/A' ? assignment.licenseNumber.trim() : null
+
     const baseData = {
       user_id: userId,
       employee_id: employeeId,
       employee_name: employeeNameTrimmed,
       certification_name: certNameTrimmed,
+      certification_number: cleanLicenseNumber,
       issue_date: cleanIssueDate,
       expiration_date: cleanExpirationDate,
       is_lifetime: Boolean(assignment.isLifetime),
@@ -168,29 +267,55 @@ async function persistCertificationAssignments(
   }
 
   let savedCount = 0
+  const allErrors: string[] = []
 
   if (toInsert.length > 0) {
-    const { error: insertError } = await supabase.from('certifications').insert(toInsert)
-    if (insertError) {
-      console.error('Error inserting certifications:', insertError)
-      return { saved: savedCount, error: insertError.message }
+    const insertResult = await insertRowsInBatches('certifications', toInsert, ONBOARDING_CERT_BATCH_SIZE)
+    savedCount += insertResult.inserted
+
+    if (insertResult.failed > 0) {
+      console.warn(`${insertResult.failed} certifications failed to insert:`, insertResult.errors)
+      allErrors.push(...insertResult.errors)
     }
-    savedCount += toInsert.length
   }
 
   if (toUpdate.length > 0) {
-    // Perform updates sequentially; volume is small in onboarding.
+    // Perform updates sequentially with retry logic; volume is small in onboarding.
     for (const item of toUpdate) {
-      const { error: updateError } = await supabase
-        .from('certifications')
-        .update(item.data)
-        .eq('id', item.id)
-      if (updateError) {
-        console.error('Error updating certification:', updateError)
-        return { saved: savedCount, error: updateError.message }
+      let success = false
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { error: updateError } = await supabase
+          .from('certifications')
+          .update(item.data)
+          .eq('id', item.id)
+        
+        if (!updateError) {
+          savedCount += 1
+          success = true
+          break
+        }
+        
+        // Retry with backoff for transient errors
+        if (attempt < 2) {
+          await delay(Math.pow(2, attempt) * 500)
+        } else {
+          console.error('Error updating certification after retries:', updateError)
+          allErrors.push(`${item.data.employee_name} - ${item.data.certification_name}: ${updateError.message}`)
+        }
       }
-      savedCount += 1
     }
+  }
+
+  // Return partial success with warning if some items failed
+  if (allErrors.length > 0 && savedCount > 0) {
+    return { 
+      saved: savedCount, 
+      error: `Saved ${savedCount} certifications, but ${allErrors.length} failed. Check console for details.` 
+    }
+  }
+  
+  if (allErrors.length > 0 && savedCount === 0) {
+    return { saved: 0, error: `Failed to save certifications: ${allErrors[0]}` }
   }
 
   return { saved: savedCount }
@@ -352,22 +477,32 @@ export default function OnboardingV1() {
     try {
       // Create employees in the database
       if (teamMembers.length > 0) {
-        const employeesToInsert = teamMembers.map(member => ({
+        const employeesToInsert = teamMembers
+          .map(member => ({
           user_id: user?.id,
-          name: member.name,
+          name: (member.name || '').trim(),
           email: member.email || null,
           phone: member.phone || null,
           role: member.role,
           status: 'Active'
         }))
+          .filter(member => member.user_id && member.name.length > 0)
 
-        const { error: employeeError } = await supabase
-          .from('employees')
-          .insert(employeesToInsert)
-
-        if (employeeError) {
-          console.error('Error creating employees:', employeeError)
-          // Don't throw - continue with onboarding even if employee insert fails
+        const insertResult = await insertRowsInBatches('employees', employeesToInsert, ONBOARDING_EMPLOYEE_BATCH_SIZE)
+        
+        // Report partial failures but don't block onboarding
+        if (insertResult.failed > 0) {
+          console.warn(`${insertResult.failed} employees failed to insert:`, insertResult.errors)
+          // Only throw if nothing was inserted
+          if (insertResult.inserted === 0) {
+            throw new Error(insertResult.errors[0] || 'Failed to create team members')
+          }
+          // Partial success - show a warning toast later
+          toast({
+            title: 'Warning',
+            description: `${insertResult.inserted} team members saved, but ${insertResult.failed} could not be saved.`,
+            variant: 'default'
+          })
         }
       }
 
@@ -420,6 +555,7 @@ export default function OnboardingV1() {
             description,
             variant: 'destructive'
           })
+          throw new Error(persistError)
         }
       }
 
@@ -465,7 +601,10 @@ export default function OnboardingV1() {
           .eq('user_id', user.id)
         if (count === 0) {
           const { error: persistErr } = await persistCertificationAssignments(user.id, onboardingData.certification_assignments)
-          if (persistErr) console.error('Step 4 cert persist:', persistErr)
+          if (persistErr) {
+            console.error('Step 4 cert persist:', persistErr)
+            throw new Error('Could not save certifications. Please return to Step 3 and try again.')
+          }
         }
       }
 

@@ -107,6 +107,8 @@ export interface CertificationAssignment {
   hasCert: boolean
   expirationDate?: string // ISO date string, null for lifetime certs
   isLifetime: boolean
+  licenseNumber?: string | null
+  issueDate?: string | null
 }
 
 // Certification metadata (aligned with ComplianceReviewStep)
@@ -270,28 +272,82 @@ export default function CertificationAssignmentStep({
 
   // ==================== HELPER FUNCTIONS ====================
   
-  // Helper: Fuzzy match employee name
+  // Normalize name for matching: lowercase, trim, collapse spaces, remove common punctuation/suffixes
+  const normalizeNameForMatch = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/,/g, ' ')
+      .replace(/\./g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\b(jr|sr|ii|iii|iv)\b\.?/gi, '')
+      .trim()
+  }
+
+  // Try "Last, First" -> "First Last" for roster matching
+  const trySwapLastFirst = (name: string): string => {
+    const parts = name.split(',').map(p => p.trim()).filter(Boolean)
+    if (parts.length === 2 && parts[0].length > 0 && parts[1].length > 0) {
+      return `${parts[1]} ${parts[0]}`
+    }
+    return name
+  }
+
+  // Helper: Fuzzy match employee name (handles "Last, First", punctuation, suffixes)
   const fuzzyMatchEmployee = (name: string): TeamMember | undefined => {
-    const normalizedName = name.toLowerCase().trim()
-    
-    // Exact match first
-    let match = teamMembers.find(m => m.name.toLowerCase().trim() === normalizedName)
+    const normalized = normalizeNameForMatch(name)
+    const normalizedSwap = normalizeNameForMatch(trySwapLastFirst(name))
+
+    // Exact match (including after normalizing)
+    let match = teamMembers.find(m => normalizeNameForMatch(m.name) === normalized || normalizeNameForMatch(m.name) === normalizedSwap)
     if (match) return match
-    
-    // Check if name contains employee name or vice versa
+
+    // Try swapped "Last, First" vs roster "First Last"
     match = teamMembers.find(m => {
-      const memberName = m.name.toLowerCase().trim()
-      return normalizedName.includes(memberName) || memberName.includes(normalizedName)
+      const rosterNorm = normalizeNameForMatch(m.name)
+      return rosterNorm === normalizedSwap || normalized === normalizeNameForMatch(trySwapLastFirst(m.name))
     })
     if (match) return match
-    
-    // Try matching by parts (first name or last name)
-    const nameParts = normalizedName.split(/\s+/)
+
+    // One name contains the other (after normalize)
     match = teamMembers.find(m => {
-      const memberParts = m.name.toLowerCase().split(/\s+/)
-      return nameParts.some(np => memberParts.some(mp => np === mp && np.length > 2))
+      const memberName = normalizeNameForMatch(m.name)
+      return normalized.includes(memberName) || memberName.includes(normalized) ||
+             normalizedSwap.includes(memberName) || memberName.includes(normalizedSwap)
     })
-    
+    if (match) return match
+
+    // Match by significant name parts (e.g. "Jordan Smith" vs "Smith, Jordan" -> same tokens)
+    const tokens = [...new Set([...normalized.split(/\s+/), ...normalizedSwap.split(/\s+/)].filter(t => t.length > 1))]
+    match = teamMembers.find(m => {
+      const memberTokens = normalizeNameForMatch(m.name).split(/\s+/).filter(t => t.length > 1)
+      const overlap = tokens.filter(t => memberTokens.some(mt => mt === t || mt.includes(t) || t.includes(mt)))
+      return overlap.length >= 2 || (overlap.length === 1 && (memberTokens.some(mt => mt.length > 2) && tokens.some(t => t.length > 2)))
+    })
+    if (match) return match
+
+    // "First Initial. Last" or "Last, First Initial." e.g. "J. Smith" / "Smith, J." -> "Jordan Smith"
+    const parts = normalized.split(/\s+/)
+    const initialPart = parts.find(p => /^[a-z]\.?$/.test(p) || p.length === 1)
+    const lastPart = parts.filter(p => p !== initialPart).join(' ')
+    if (initialPart && lastPart && lastPart.length > 1) {
+      match = teamMembers.find(m => {
+        const memberNorm = normalizeNameForMatch(m.name)
+        const memberParts = memberNorm.split(/\s+/)
+        const memberLast = memberParts[memberParts.length - 1]
+        const memberFirst = memberParts[0]
+        return (memberLast === lastPart || memberNorm.endsWith(lastPart)) &&
+               (memberFirst.charAt(0) === initialPart.charAt(0))
+      })
+      if (match) return match
+    }
+
+    // Single significant word match (e.g. unique last name)
+    const nameParts = normalized.split(/\s+/).filter(p => p.length > 2)
+    match = teamMembers.find(m => {
+      const memberParts = normalizeNameForMatch(m.name).split(/\s+/)
+      return nameParts.some(np => memberParts.some(mp => np === mp || (np.length > 2 && mp.length > 2 && (np.includes(mp) || mp.includes(np)))))
+    })
+
     return match
   }
 
@@ -364,8 +420,8 @@ export default function CertificationAssignmentStep({
           c.id === certId ? { ...c, status: 'processing' as const, progress: 30 } : c
         ))
         
-        // Call the AI extraction API
-        const result = await uploadCertification(file)
+        // Call the AI extraction API (with onboarding flag for higher rate limits)
+        const result = await uploadCertification(file, { isOnboarding: true })
         
         // Use isLifetime from API response (already calculated there)
         const isLifetime = result.isLifetime || false
@@ -537,40 +593,48 @@ export default function CertificationAssignmentStep({
       const newMap = new Map(prev)
       
       extractedCerts.forEach(ec => {
-        if (ec.status === 'success' && ec.matchedMemberId && ec.matchedCertId) {
-          // Use edited data if available, otherwise use extracted data
-          const finalData = ec.editedData ? { ...ec.extractedData, ...ec.editedData } : ec.extractedData
-          
-          const key = `${ec.matchedMemberId}-${ec.matchedCertId}`
-          const current = newMap.get(key)
-          
-          // Get member and cert info
-          const member = teamMembers.find(m => m.id === ec.matchedMemberId)
-          const certInfo = getCertInfo(ec.matchedCertId)
-          
-          if (finalData && member) {
-            if (current) {
-              // Update existing assignment
-              newMap.set(key, {
-                ...current,
-                hasCert: true,
-                expirationDate: finalData.isLifetime ? undefined : (finalData.expirationDate || undefined),
-                isLifetime: finalData.isLifetime || false
-              })
-            } else {
-              // Create new assignment for cert not in selectedCerts
-              // This allows users to track certs they uploaded but didn't select in Step 3
-              newMap.set(key, {
-                memberId: member.id,
-                memberName: member.name,
-                certificationId: ec.matchedCertId,
-                certificationName: certInfo.name,
-                hasCert: true,
-                expirationDate: finalData.isLifetime ? undefined : (finalData.expirationDate || undefined),
-                isLifetime: finalData.isLifetime || false
-              })
-            }
-          }
+        if (ec.status !== 'success' || !ec.matchedMemberId) return // Must have a matched team member
+        
+        // Use edited data if available, otherwise use extracted data
+        const finalData = ec.editedData ? { ...ec.extractedData, ...ec.editedData } : ec.extractedData
+        if (!finalData) return
+        
+        const member = teamMembers.find(m => m.id === ec.matchedMemberId)
+        if (!member) return
+        
+        // Use matched cert info if available, otherwise use raw cert name from extraction
+        const rawCertName = finalData.certificationName || 'Unknown'
+        const certId = ec.matchedCertId || `custom_${rawCertName.toLowerCase().replace(/\s+/g, '_')}`
+        const certInfo = ec.matchedCertId ? getCertInfo(ec.matchedCertId) : null
+        const certName = certInfo?.name || rawCertName
+        
+        const key = `${ec.matchedMemberId}-${certId}`
+        const current = newMap.get(key)
+        
+        if (current) {
+          // Update existing assignment
+          newMap.set(key, {
+            ...current,
+            hasCert: true,
+            expirationDate: finalData.isLifetime ? undefined : (finalData.expirationDate || undefined),
+            isLifetime: finalData.isLifetime || false,
+            licenseNumber: finalData.licenseNumber || current.licenseNumber || null,
+            issueDate: finalData.issueDate || current.issueDate || null,
+          })
+        } else {
+          // Create new assignment for cert not in selectedCerts
+          // This allows users to track certs they uploaded but didn't select in Step 3
+          newMap.set(key, {
+            memberId: member.id,
+            memberName: member.name,
+            certificationId: certId,
+            certificationName: certName,
+            hasCert: true,
+            expirationDate: finalData.isLifetime ? undefined : (finalData.expirationDate || undefined),
+            isLifetime: finalData.isLifetime || false,
+            licenseNumber: finalData.licenseNumber || null,
+            issueDate: finalData.issueDate || null,
+          })
         }
       })
       
@@ -831,29 +895,34 @@ export default function CertificationAssignmentStep({
     return results
   }
 
-  // Helper: merge spreadsheet rows into an assignment map (used by both apply paths)
+  // Helper: merge spreadsheet rows into an assignment map (used by both apply paths).
+  // Each row = one (member, cert) pair. Team members can have multiple certs; same person
+  // in multiple rows with different cert types produces multiple assignments.
   const mergeSpreadsheetIntoMap = (prev: Map<string, CertificationAssignment>): Map<string, CertificationAssignment> => {
     const newMap = new Map(prev)
     spreadsheetRows.forEach(row => {
-      if (row.matchedMemberId && row.matchedCertId) {
-        const key = `${row.matchedMemberId}-${row.matchedCertId}`
-        const info = certificationInfo[row.matchedCertId]
-        const member = teamMembers.find(m => m.id === row.matchedMemberId)
-        if (!info || !member) return
-        
-        const current = newMap.get(key)
-        const isLifetime = row.isLifetime || info.isLifetime || false
-        const assignment: CertificationAssignment = {
-          memberId: row.matchedMemberId,
-          memberName: member.name,
-          certificationId: row.matchedCertId,
-          certificationName: info.name,
-          hasCert: true,
-          expirationDate: isLifetime ? undefined : row.expirationDate,
-          isLifetime
-        }
-        newMap.set(key, current ? { ...current, ...assignment } : assignment)
+      if (!row.matchedMemberId) return
+      const member = teamMembers.find(m => m.id === row.matchedMemberId)
+      if (!member) return
+
+      const certId = row.matchedCertId || `custom_${row.certificationName.toLowerCase().replace(/\s+/g, '_')}`
+      const info = row.matchedCertId ? certificationInfo[row.matchedCertId] : null
+      const certName = info?.name || row.certificationName
+      const key = `${row.matchedMemberId}-${certId}`
+      const current = newMap.get(key)
+      const isLifetime = row.isLifetime || info?.isLifetime || false
+      const assignment: CertificationAssignment = {
+        memberId: row.matchedMemberId,
+        memberName: member.name,
+        certificationId: certId,
+        certificationName: certName,
+        hasCert: true,
+        expirationDate: isLifetime ? undefined : row.expirationDate,
+        isLifetime,
+        licenseNumber: row.licenseNumber || null,
+        issueDate: row.issueDate || null,
       }
+      newMap.set(key, current ? { ...current, ...assignment } : assignment)
     })
     return newMap
   }
@@ -910,17 +979,22 @@ export default function CertificationAssignmentStep({
     })
     
     const memberStats = teamMembers.map(member => {
-      let hasCerts = 0
+      let requiredCertsHeld = 0
       selectedCerts.forEach(certId => {
         const key = `${member.id}-${certId}`
-        if (assignments.get(key)?.hasCert) hasCerts++
+        if (assignments.get(key)?.hasCert) requiredCertsHeld++
       })
+      // Count all certs for this member (multiple certs per member are supported)
+      const totalCertsHeld = Array.from(assignments.values()).filter(
+        a => a.memberId === member.id && a.hasCert
+      ).length
       return {
         memberId: member.id,
         memberName: member.name,
-        certsHeld: hasCerts,
+        certsHeld: requiredCertsHeld,
         totalCerts: selectedCerts.length,
-        complete: hasCerts === selectedCerts.length
+        totalCertsHeld,
+        complete: requiredCertsHeld === selectedCerts.length
       }
     })
     
@@ -1763,7 +1837,8 @@ export default function CertificationAssignmentStep({
 
   // ==================== SPREADSHEET UPLOAD VIEW ====================
   if (importMethod === 'spreadsheet') {
-    const validRows = spreadsheetRows.filter(r => r.matchedMemberId && r.matchedCertId).length
+    // Count rows that will be applied: only need matched team member (cert type is optional for display/classification)
+    const validRows = spreadsheetRows.filter(r => r.matchedMemberId).length
     
     return (
       <div className="min-h-screen bg-[#F0F4F8] flex font-mono">
@@ -1810,7 +1885,7 @@ export default function CertificationAssignmentStep({
 
             <div className="mt-8 p-4 bg-green-500/10 border border-green-500/30">
               <p className="font-mono text-xs text-green-300">
-                <strong>Tip:</strong> Your spreadsheet should have columns for employee name, certification type, and expiration date.
+                <strong>Tip:</strong> Your spreadsheet should have columns for employee name, certification type, and expiration date. Team members can have multiple certifications—include one row per certification.
               </p>
             </div>
           </div>
@@ -2311,8 +2386,15 @@ export default function CertificationAssignmentStep({
                             memberStat?.complete ? 'text-green-600' : 'text-gray-600'
                           }`}>
                             {memberStat?.certsHeld}/{memberStat?.totalCerts}
+                            {memberStat && memberStat.totalCertsHeld > memberStat.totalCerts && (
+                              <span className="font-normal text-gray-500 ml-1">
+                                · {memberStat.totalCertsHeld} total
+                              </span>
+                            )}
                           </div>
-                          <div className="font-mono text-[10px] text-gray-400 uppercase">Certs</div>
+                          <div className="font-mono text-[10px] text-gray-400 uppercase">
+                            {memberStat && memberStat.totalCertsHeld > 1 ? 'Certs (multiple ok)' : 'Certs'}
+                          </div>
                         </div>
                         {isExpanded ? (
                           <ChevronUp className="w-5 h-5 text-gray-400" />
@@ -2397,6 +2479,34 @@ export default function CertificationAssignmentStep({
                             </div>
                           )
                         })}
+                        {/* Other certifications (from spreadsheet/import, not in required list) */}
+                        {(() => {
+                          const otherCerts = Array.from(assignments.values()).filter(
+                            a => a.memberId === member.id && a.hasCert && !selectedCerts.includes(a.certificationId)
+                          )
+                          if (otherCerts.length === 0) return null
+                          return (
+                            <div className="mt-4 pt-3 border-t border-gray-200">
+                              <div className="font-mono text-[10px] text-gray-500 uppercase mb-2">Other certifications ({otherCerts.length})</div>
+                              <div className="space-y-2">
+                                {otherCerts.map(a => (
+                                  <div key={a.certificationId} className="p-3 border border-gray-200 bg-gray-50 flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                    <div>
+                                      <span className="font-mono text-sm font-medium text-gray-800">{a.certificationName}</span>
+                                      {a.expirationDate && (
+                                        <span className="font-mono text-xs text-gray-500 ml-2">Expires {a.expirationDate}</span>
+                                      )}
+                                      {a.isLifetime && (
+                                        <span className="font-mono text-xs text-gray-500 ml-2">Lifetime</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })()}
                       </div>
                     )}
                   </div>

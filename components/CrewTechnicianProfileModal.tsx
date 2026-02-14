@@ -269,7 +269,7 @@ export const CrewTechnicianProfileModal: React.FC<CrewTechnicianProfileModalProp
                 <div className="divide-y divide-gray-100">
                   {certs.map((cert) => (
                     <div key={cert.id} className="p-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
-                      <div className="md:col-span-4">
+                      <div className="md:col-span-3">
                         <div className="font-display font-bold text-gray-900 truncate" title={cert.type}>
                           {cert.type}
                         </div>
@@ -278,7 +278,12 @@ export const CrewTechnicianProfileModal: React.FC<CrewTechnicianProfileModalProp
                         </div>
                       </div>
 
-                      <div className="md:col-span-3 font-mono text-xs text-gray-700">
+                      <div className="md:col-span-2 font-mono text-xs text-gray-700">
+                        <div className="text-gray-500 uppercase text-[10px] font-bold">License #</div>
+                        <div className="truncate" title={cert.certificationNumber || ''}>{cert.certificationNumber || "—"}</div>
+                      </div>
+
+                      <div className="md:col-span-2 font-mono text-xs text-gray-700">
                         <div className="text-gray-500 uppercase text-[10px] font-bold">Issued</div>
                         <div>{cert.issueDate ? formatDateToAmerican(cert.issueDate) : "N/A"}</div>
                       </div>

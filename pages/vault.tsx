@@ -8,6 +8,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Menu,
   Search,
   Upload,
   ChevronLeft,
@@ -32,6 +33,7 @@ interface VaultDocument {
   id: string;
   name: string;
   technician: string;
+  certificationNumber?: string | null;
   expDate: string;
   expDateStatus: 'expired' | 'warning' | 'valid' | 'lifetime';
   type: 'PDF' | 'JPG';
@@ -44,6 +46,7 @@ export default function Vault() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('ALL DOCS');
   const [certifications, setCertifications] = useState<CertificationDetails[]>([]);
@@ -216,6 +219,7 @@ export default function Vault() {
         id: cert.id,
         name: certType, // Use certification type instead of filename
         technician: employeeName,
+        certificationNumber: cert.certificationNumber || null,
         expDate,
         expDateStatus,
         type,
@@ -303,10 +307,12 @@ export default function Vault() {
   ];
 
   const filteredDocuments = documents.filter((doc) => {
+    const lowerSearch = searchTerm.toLowerCase();
     const matchesSearch =
-      doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.technician.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.category.toLowerCase().includes(searchTerm.toLowerCase());
+      doc.name.toLowerCase().includes(lowerSearch) ||
+      doc.technician.toLowerCase().includes(lowerSearch) ||
+      doc.category.toLowerCase().includes(lowerSearch) ||
+      (doc.certificationNumber && doc.certificationNumber.toLowerCase().includes(lowerSearch));
     const matchesCategory = activeTab === 'ALL DOCS' || doc.category === activeTab;
     return matchesSearch && matchesCategory;
   });
@@ -732,108 +738,82 @@ export default function Vault() {
         }
       `}</style>
 
-      {/* SIDEBAR */}
+      {mobileMenuOpen && (
+        <button type="button" aria-label="Close menu" className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       <aside
         id="sidebar"
-        className={`sidebar w-full md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 ${
+        className={`sidebar fixed md:relative left-0 top-0 bottom-0 z-50 w-64 md:w-64 bg-[#050505] text-white flex flex-col border-r border-[#0038FF]/20 shrink-0 transition-transform duration-200 ease-out ${
           sidebarCollapsed ? 'collapsed' : ''
-        }`}
+        } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="pt-6 pr-6 pb-6 pl-4 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <Link href="/DashboardV2" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <img src="/IronStampLogov3.png" alt="IronStamp" className="h-8 w-auto" />
-              <span className="sidebar-text font-display font-bold text-2xl tracking-tighter transition-opacity">
-                IRONSTAMP
-              </span>
-            </Link>
-            <button
-              onClick={toggleSidebar}
-              className="hidden md:block text-gray-400 hover:text-white transition-colors p-1"
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4" />
-              ) : (
-                <PanelLeftClose className="w-4 h-4" />
-              )}
+              <span className="sidebar-text font-display font-bold text-2xl tracking-tighter transition-opacity">IRONSTAMP</span>
+            </div>
+            <button onClick={toggleSidebar} className="hidden md:block text-gray-400 hover:text-white transition-colors p-1">
+              {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </button>
           </div>
-          <div className="sidebar-text mt-2 text-[10px] font-mono text-gray-500 transition-opacity">
-            SYS.STATUS: ONLINE
-          </div>
+          <div className="sidebar-text mt-2 text-[10px] font-mono text-gray-500 transition-opacity">SYS.STATUS: ONLINE</div>
         </div>
         <nav className="flex-1 py-4 space-y-2">
-          <Link
-            href="/DashboardV2"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/DashboardV2" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={() => setMobileMenuOpen(false)}>
             <Radar className="w-4 h-4" />
             <span className="sidebar-text">THE RADAR</span>
           </Link>
-          <Link
-            href="/Crew"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/Crew" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={() => setMobileMenuOpen(false)}>
             <Users className="w-4 h-4" />
             <span className="sidebar-text">THE CREW</span>
           </Link>
-          <Link
-            href="/calendar-demo"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/calendar-demo" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={() => setMobileMenuOpen(false)}>
             <Calendar className="w-4 h-4" />
             <span className="sidebar-text">CALENDAR</span>
           </Link>
-          <Link
-            href="/vault"
-            className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold"
-          >
+          <Link href="/vault" className="nav-item flex items-center gap-3 px-8 py-3 bg-[#0038FF] text-white font-mono text-sm font-bold" onClick={() => setMobileMenuOpen(false)}>
             <FileCheck className="w-4 h-4" />
             <span className="sidebar-text">THE VAULT</span>
           </Link>
-          <Link
-            href="/config"
-            className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors"
-          >
+          <Link href="/config" className="nav-item flex items-center gap-3 px-8 py-3 text-gray-400 hover:bg-white/5 hover:text-white font-mono text-sm transition-colors" onClick={() => setMobileMenuOpen(false)}>
             <Settings className="w-4 h-4" />
             <span className="sidebar-text">CONFIG</span>
           </Link>
         </nav>
 
-        {/* User Profile Section */}
         <div className="p-4 border-t border-white/10">
           <div className={`flex items-center gap-3 px-2 py-2 ${sidebarCollapsed ? 'justify-center' : ''}`}>
             <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-mono text-sm font-bold">
-                {getInitials(profileName)}
-              </span>
+              <span className="text-white font-mono text-sm font-bold">{getInitials(profileName)}</span>
             </div>
             <div className="flex-1 min-w-0 sidebar-text">
-              <p className="text-white font-mono text-sm font-bold truncate">
-                {profileName}
-              </p>
-              <p className="text-gray-400 font-mono text-xs truncate">
-                {profileEmail}
-              </p>
+              <p className="text-white font-mono text-sm font-bold truncate">{profileName}</p>
+              <p className="text-gray-400 font-mono text-xs truncate">{profileEmail}</p>
             </div>
           </div>
         </div>
 
-        {/* Bottom Action */}
         <div className="p-4 border-t border-white/10">
-          <button 
-            onClick={handleLogout}
-            className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs"
-          >
+          <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="nav-item w-full flex items-center justify-center gap-2 border border-white/20 text-white py-2 hover:bg-white/10 transition-colors font-mono text-xs">
             <LogOut className="w-3 h-3" />
             <span className="sidebar-text">LOGOUT</span>
           </button>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 p-6 md:p-12 overflow-y-auto bg-tech-grid">
-        <header className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+      <main className="flex-1 min-w-0 p-6 md:p-12 overflow-y-auto bg-tech-grid">
+        <div className="md:hidden flex items-center justify-between mb-6 -mt-2 -mx-2 px-2 py-3">
+          <div className="flex items-center gap-2">
+            <img src="/IronStampLogov3.png" alt="IronStamp" className="h-7 w-auto" />
+            <span className="font-display font-bold text-xl tracking-tighter text-[#050505]">IRONSTAMP</span>
+          </div>
+          <button type="button" aria-label="Open menu" onClick={() => setMobileMenuOpen(true)} className="p-2 rounded-lg text-[#050505] hover:bg-[#050505]/10 transition-colors">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
             <p className="font-mono text-[#0038FF] text-xs mb-1">{'///'} DOCUMENT ARCHIVE {'///'}</p>
             <h1 className="font-display text-4xl md:text-5xl font-bold uppercase">The Vault</h1>
@@ -841,8 +821,8 @@ export default function Vault() {
               Secure Storage • {filteredDocuments.length} Documents
             </p>
           </div>
-          <div className="flex gap-4 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
+          <div className="flex flex-col gap-3 w-full md:flex-row md:gap-4 md:w-auto">
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -854,16 +834,16 @@ export default function Vault() {
             </div>
             <button 
               onClick={() => setIsUploadModalOpen(true)}
-              className="bg-[#050505] text-white px-6 py-3 flex items-center gap-3 font-bold font-mono text-sm hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[4px_4px_0px_#0038FF]"
+              className="bg-[#050505] text-white px-4 py-2.5 md:px-6 md:py-3 flex items-center gap-2 md:gap-3 font-bold font-mono text-xs md:text-sm hover:bg-[#0038FF] transition-colors border border-[#050505] shadow-[4px_4px_0px_#0038FF] w-fit"
             >
-              <Upload className="w-4 h-4" /> UPLOAD
+              <Upload className="w-4 h-4 flex-shrink-0" /> UPLOAD
             </button>
           </div>
         </header>
 
         {/* Filter Tabs Container */}
         <div className="relative mb-8 border-b border-gray-200">
-          {/* Scroll Buttons */}
+          {/* Scroll Buttons - desktop only */}
           <button
             onClick={() => scrollTabs('left')}
             className="absolute left-0 top-0 bottom-0 z-10 bg-gradient-to-r from-[#F8FAFC] via-[#F8FAFC] to-transparent px-2 hidden md:flex items-center text-gray-400 hover:text-[#0038FF] transition-colors"
@@ -877,19 +857,19 @@ export default function Vault() {
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          {/* Tabs List */}
+          {/* Tabs List - wrap on mobile, horizontal scroll on desktop */}
           <div
             ref={tabsContainerRef}
-            className="flex gap-4 pb-1 overflow-x-auto scrollbar-hide px-8 scroll-smooth"
+            className="flex flex-wrap gap-2 pb-1 px-0 md:px-8 md:flex-nowrap md:overflow-x-auto md:scrollbar-hide md:scroll-smooth"
           >
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveTab(category)}
-                className={`px-4 py-2 font-mono text-xs font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
+                className={`px-3 py-2 font-mono text-xs font-bold whitespace-nowrap transition-colors rounded-t ${
                   activeTab === category
-                    ? 'text-[#0038FF] border-b-2 border-[#0038FF]'
-                    : 'text-gray-400 hover:text-[#050505]'
+                    ? 'text-[#0038FF] border-b-2 border-[#0038FF] bg-[#0038FF]/5'
+                    : 'text-gray-400 hover:text-[#050505] hover:bg-gray-50'
                 }`}
               >
                 {category}
@@ -900,10 +880,11 @@ export default function Vault() {
 
         {/* Document List */}
         <div className="bg-white border-tech shadow-sm">
-          {/* Header */}
-          <div className="grid grid-cols-12 gap-3 p-4 border-b border-gray-200 bg-gray-50 font-mono text-xs text-gray-500 font-bold uppercase">
-            <div className="col-span-4">Certification Name</div>
-            <div className="col-span-3">Technician</div>
+          {/* Header - desktop only */}
+          <div className="hidden md:grid grid-cols-12 gap-3 p-4 border-b border-gray-200 bg-gray-50 font-mono text-xs text-gray-500 font-bold uppercase">
+            <div className="col-span-3">Certification Name</div>
+            <div className="col-span-2">Technician</div>
+            <div className="col-span-2">License #</div>
             <div className="col-span-2">Exp. Date</div>
             <div className="col-span-1 text-center">Type</div>
             <div className="col-span-2 text-right">Actions</div>
@@ -928,13 +909,13 @@ export default function Vault() {
             filteredDocuments.map((doc) => (
               <div
                 key={doc.id}
-                className="grid grid-cols-12 gap-3 p-4 border-b border-gray-100 items-center hover:bg-gray-50 transition-colors group last:border-b-0"
+                className="p-4 border-b border-gray-100 flex flex-col gap-3 md:grid md:grid-cols-12 md:gap-3 md:items-center hover:bg-gray-50 transition-colors group last:border-b-0"
               >
-                <div className="col-span-4 flex items-center gap-2 min-w-0">
+                <div className="flex items-start gap-2 min-w-0 md:col-span-3">
                   {doc.type === 'PDF' ? (
-                    <FileText className="w-4 h-4 text-[#0038FF] flex-shrink-0" />
+                    <FileText className="w-4 h-4 text-[#0038FF] flex-shrink-0 mt-0.5" />
                   ) : (
-                    <Image className="w-4 h-4 text-[#0038FF] flex-shrink-0" aria-label="Image file" />
+                    <Image className="w-4 h-4 text-[#0038FF] flex-shrink-0 mt-0.5" aria-label="Image file" />
                   )}
                   <div className="flex items-center gap-2 min-w-0 flex-1 relative">
                     <div className="flex-1 min-w-0 relative">
@@ -943,14 +924,14 @@ export default function Vault() {
                           if (el) nameRefs.current.set(doc.id, el);
                           else nameRefs.current.delete(doc.id);
                         }}
-                        className="font-bold text-sm whitespace-nowrap overflow-x-auto overflow-y-hidden scrollbar-hide block"
+                        className="font-bold text-sm break-words md:whitespace-nowrap md:overflow-x-auto md:overflow-y-hidden md:scrollbar-hide block"
                         title={doc.name}
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
                       >
                         {doc.name}
                       </span>
                       {hasOverflow.get(doc.id) && (
-                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-white to-white group-hover:via-gray-50 group-hover:to-gray-50 pointer-events-none" />
+                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-white to-white group-hover:via-gray-50 group-hover:to-gray-50 pointer-events-none hidden md:block" />
                       )}
                     </div>
                     {doc.hasDocument && (
@@ -960,55 +941,60 @@ export default function Vault() {
                     )}
                   </div>
                 </div>
-                <div className="col-span-3 font-mono text-xs truncate" title={doc.technician}>{doc.technician}</div>
-                <div className={`col-span-2 font-mono text-xs font-bold ${getExpDateColor(doc.expDateStatus)}`}>
+                <div className="font-mono text-xs text-gray-600 break-words md:col-span-2 md:truncate" title={doc.technician}>{doc.technician}</div>
+                <div className="font-mono text-xs text-gray-500 break-words md:col-span-2 md:truncate" title={doc.certificationNumber || ''}>
+                  {doc.certificationNumber || <span className="text-gray-300">—</span>}
+                </div>
+                <div className={`font-mono text-xs font-bold ${getExpDateColor(doc.expDateStatus)} md:col-span-2`}>
                   {doc.expDate}
                 </div>
-                <div className="col-span-1 text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    {doc.hasDocument ? (
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 text-[10px] font-bold rounded">
-                        {doc.type}
-                      </span>
-                    ) : (
-                      <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 text-[9px] font-bold rounded" title="No document attached">
-                        NO DOC
-                      </span>
-                    )}
+                <div className="flex items-center justify-between gap-2 md:contents">
+                  <div className="md:col-span-1 md:text-center">
+                    <div className="flex items-center gap-1 md:justify-center">
+                      {doc.hasDocument ? (
+                        <span className="bg-gray-100 text-gray-600 px-2 py-1 text-[10px] font-bold rounded">
+                          {doc.type}
+                        </span>
+                      ) : (
+                        <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 text-[9px] font-bold rounded" title="No document attached">
+                          NO DOC
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-2 text-right flex items-center justify-end gap-2 flex-shrink-0">
-                  {doc.hasDocument ? (
-                    <button
-                      onClick={() => handleViewFile(doc.id)}
-                      disabled={loadingSignedUrl}
-                      className="text-[#0038FF] font-mono text-xs font-bold hover:underline whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="View certification document"
-                    >
-                      {loadingSignedUrl ? 'LOADING...' : 'VIEW'}
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => handleUploadClick(doc.id)}
-                      disabled={uploadingCertId === doc.id}
-                      className="text-[#0038FF] font-mono text-xs font-bold hover:underline whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Upload document for this certification"
-                    >
-                      {uploadingCertId === doc.id ? 'UPLOADING...' : 'UPLOAD'}
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => handleDeleteCert(doc.id)}
-                    disabled={deletingCertId === doc.id}
-                    className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 p-1"
-                    title="Delete file (keeps certification record)"
-                  >
-                    {deletingCertId === doc.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                  <div className="flex items-center justify-end gap-2 flex-shrink-0 md:col-span-2 md:text-right">
+                    {doc.hasDocument ? (
+                      <button
+                        onClick={() => handleViewFile(doc.id)}
+                        disabled={loadingSignedUrl}
+                        className="text-[#0038FF] font-mono text-xs font-bold hover:underline whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="View certification document"
+                      >
+                        {loadingSignedUrl ? 'LOADING...' : 'VIEW'}
+                      </button>
                     ) : (
-                      <Trash2 className="w-4 h-4" />
+                      <button 
+                        onClick={() => handleUploadClick(doc.id)}
+                        disabled={uploadingCertId === doc.id}
+                        className="text-[#0038FF] font-mono text-xs font-bold hover:underline whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Upload document for this certification"
+                      >
+                        {uploadingCertId === doc.id ? 'UPLOADING...' : 'UPLOAD'}
+                      </button>
                     )}
-                  </button>
+                    <button 
+                      onClick={() => handleDeleteCert(doc.id)}
+                      disabled={deletingCertId === doc.id}
+                      className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 p-1"
+                      title="Delete file (keeps certification record)"
+                    >
+                      {deletingCertId === doc.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
