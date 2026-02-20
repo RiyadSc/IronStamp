@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Archive, Trash2, X, Loader2 } from 'lucide-react';
+import { AlertTriangle, Archive, ArchiveRestore, Trash2, X, Loader2 } from 'lucide-react';
 
 interface ConfirmActionModalProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface ConfirmActionModalProps {
   title: string;
   message: string;
   confirmLabel: string;
-  type: 'archive' | 'delete';
+  type: 'archive' | 'delete' | 'reinstate';
   technicianName?: string;
 }
 
@@ -43,12 +43,15 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
   };
 
   const isDelete = type === 'delete';
-  const Icon = isDelete ? Trash2 : Archive;
-  const iconColor = isDelete ? 'text-red-500' : 'text-yellow-600';
-  const bgColor = isDelete ? 'bg-red-50' : 'bg-yellow-50';
-  const borderColor = isDelete ? 'border-red-200' : 'border-yellow-200';
+  const isReinstate = type === 'reinstate';
+  const Icon = isDelete ? Trash2 : isReinstate ? ArchiveRestore : Archive;
+  const iconColor = isDelete ? 'text-red-500' : isReinstate ? 'text-green-600' : 'text-yellow-600';
+  const bgColor = isDelete ? 'bg-red-50' : isReinstate ? 'bg-green-50' : 'bg-yellow-50';
+  const borderColor = isDelete ? 'border-red-200' : isReinstate ? 'border-green-200' : 'border-yellow-200';
   const buttonClass = isDelete 
     ? 'bg-red-600 hover:bg-red-700 shadow-[4px_4px_0px_#991b1b]' 
+    : isReinstate 
+    ? 'bg-green-600 hover:bg-green-700 shadow-[4px_4px_0px_#166534]' 
     : 'bg-yellow-600 hover:bg-yellow-700 shadow-[4px_4px_0px_#854d0e]';
 
   return (
@@ -89,7 +92,9 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
               <p className="font-mono text-xs text-gray-700">
                 {isDelete 
                   ? 'This action is permanent and cannot be undone. All associated data will be removed.'
-                  : 'Archived technicians can be restored later from the settings page.'
+                  : isReinstate
+                  ? 'The technician will appear in the active crew list again.'
+                  : 'Archived technicians can be restored later from the crew page (Show Archived).'
                 }
               </p>
             </div>

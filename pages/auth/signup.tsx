@@ -129,8 +129,24 @@ export default function SignUp() {
       // Show email verification card instead of redirecting
       setShowEmailVerification(true)
     } catch (error: any) {
+      // Debug: log full auth error for troubleshooting (status, code, message)
       console.error('Error signing up:', error)
-      setErrorMessage(error.message || 'An error occurred during sign up.')
+      if (process.env.NODE_ENV === 'development' && error) {
+        console.debug('[Auth signup]', {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+          name: error.name,
+        })
+      }
+      // User-friendly message for email delivery failures (e.g. SMTP misconfiguration)
+      const isEmailDeliveryError =
+        error?.message?.includes('confirmation email') ||
+        error?.message?.includes('Error sending')
+      const displayMessage = isEmailDeliveryError
+        ? "We couldn't send the verification email right now. Please try again in a few minutes or contact support if it keeps happening."
+        : error?.message || 'An error occurred during sign up.'
+      setErrorMessage(displayMessage)
     } finally {
       setLoading(false)
     }

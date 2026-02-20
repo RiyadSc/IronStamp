@@ -186,7 +186,7 @@ export default function Crew() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'archive' | 'delete'>('archive');
+  const [confirmAction, setConfirmAction] = useState<'archive' | 'delete' | 'reinstate'>('archive');
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
   const [selectedCertification, setSelectedCertification] = useState<CertificationDetails | null>(null);
@@ -277,6 +277,13 @@ export default function Crew() {
     setIsConfirmModalOpen(true);
   };
 
+  const handleReinstateMember = (techId: string) => {
+    const member = teamMembers.find((m) => m.id === techId) ?? null;
+    setSelectedMember(member);
+    setConfirmAction('reinstate');
+    setIsConfirmModalOpen(true);
+  };
+
   const handleNotify = (techId: string) => {
     const member = teamMembers.find((m) => m.id === techId);
     if (!member) return;
@@ -358,6 +365,52 @@ export default function Crew() {
       showToast({
         title: "Error",
         description: error.message || "Failed to archive team member.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const executeReinstate = async (): Promise<boolean> => {
+    const member = selectedMember;
+    if (!member) return false;
+
+    try {
+      const response = await apiRequest('/api/team/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: member.id,
+          name: member.name,
+          email: member.email,
+          phone: member.phone,
+          role: member.role,
+          status: 'Active'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to reinstate team member');
+      }
+
+      try {
+        await fetchData();
+      } catch (refreshError) {
+        console.warn('Data refresh failed after reinstate:', refreshError);
+      }
+
+      showToast({
+        title: "Technician Reinstated",
+        description: `${member.name} has been restored to the active crew.`,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('Error reinstating crew member:', error);
+      showToast({
+        title: "Error",
+        description: error.message || "Failed to reinstate team member.",
         variant: "destructive"
       });
       return false;
@@ -699,13 +752,23 @@ export default function Crew() {
                       EDIT PROFILE
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={(e) => { e.stopPropagation(); handleArchiveMember(tech.id); }}
-                      className="cursor-pointer text-yellow-600 focus:text-yellow-600"
-                    >
-                      <Archive className="w-4 h-4 mr-2" />
-                      ARCHIVE
-                    </DropdownMenuItem>
+                    {tech.status === 'ARCHIVED' ? (
+                      <DropdownMenuItem 
+                        onClick={(e) => { e.stopPropagation(); handleReinstateMember(tech.id); }}
+                        className="cursor-pointer text-green-600 focus:text-green-600"
+                      >
+                        <Archive className="w-4 h-4 mr-2" />
+                        REINSTATE
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem 
+                        onClick={(e) => { e.stopPropagation(); handleArchiveMember(tech.id); }}
+                        className="cursor-pointer text-yellow-600 focus:text-yellow-600"
+                      >
+                        <Archive className="w-4 h-4 mr-2" />
+                        ARCHIVE
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem 
                       onClick={(e) => { e.stopPropagation(); handleDeleteMember(tech.id); }}
                       className="cursor-pointer text-red-600 focus:text-red-600"
@@ -810,14 +873,28 @@ export default function Crew() {
           <ConfirmActionModal
             isOpen={isConfirmModalOpen}
             onClose={() => setIsConfirmModalOpen(false)}
-            onConfirm={confirmAction === 'archive' ? executeArchive : executeDelete}
-            title={confirmAction === 'archive' ? 'Archive Technician' : 'Delete Technician'}
+            onConfirm={
+              confirmAction === 'archive' ? executeArchive
+              : confirmAction === 'reinstate' ? executeReinstate
+              : executeDelete
+            }
+            title={
+              confirmAction === 'archive' ? 'Archive Technician'
+              : confirmAction === 'reinstate' ? 'Reinstate Technician'
+              : 'Delete Technician'
+            }
             message={
               confirmAction === 'archive'
                 ? `Are you sure you want to archive this technician? They will be removed from the active crew roster but their records will be preserved.`
+                : confirmAction === 'reinstate'
+                ? `Are you sure you want to reinstate this technician? They will be restored to the active crew roster.`
                 : `Are you sure you want to permanently delete this technician? This will remove all their data from the system.`
             }
-            confirmLabel={confirmAction === 'archive' ? 'ARCHIVE' : 'DELETE'}
+            confirmLabel={
+              confirmAction === 'archive' ? 'ARCHIVE'
+              : confirmAction === 'reinstate' ? 'REINSTATE'
+              : 'DELETE'
+            }
             type={confirmAction}
             technicianName={selectedMember?.name}
           />
