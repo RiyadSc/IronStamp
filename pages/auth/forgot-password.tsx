@@ -1,119 +1,116 @@
 import { useState } from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
-import { ArrowLeft } from '@/lib/icons'
+import { ArrowLeft } from 'lucide-react'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
     setLoading(true)
-    
+
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/reset-password`,
       })
-      
-      if (error) throw error
-      
+
+      if (resetError) throw resetError
+
       setSent(true)
-    } catch (error) {
-      console.error('Error sending reset email:', error)
-      // Handle error (show toast, etc.)
+    } catch (err) {
+      console.error('Error sending reset email:', err)
+      setError(err instanceof Error ? err.message : 'Failed to send reset link. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative">
-      <Link href="/" className="absolute top-4 left-4 text-xs text-gray-700 hover:underline flex items-center gap-1">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-        Return
-      </Link>
-      <div className="w-full max-w-sm space-y-4">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-end mb-4">
-            <img src="/IronStampLogov3.png" alt="IronStamp" className="w-12 h-12" />
-          </div>
-          
-          <div className="space-y-1">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            
-            {!sent ? (
-              <>
-                <h1 className="text-xl font-semibold text-gray-900">Forgot your password?</h1>
-                <p className="text-sm text-gray-600">Enter your email address and we&apos;ll send you a link to reset your password.</p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-xl font-semibold text-gray-900">Check your email</h1>
-                <p className="text-sm text-gray-600">We&apos;ve sent a password reset link to your email address.</p>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#F0F4F8] flex font-mono">
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12 bg-tech-grid relative">
+        <Link
+          href="/auth/signin"
+          className="absolute top-6 left-6 flex items-center gap-2 text-xs text-gray-600 hover:text-[#0038FF] transition-colors font-mono uppercase tracking-wider"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Return
+        </Link>
 
-        {!sent ? (
-          <form onSubmit={handleResetPassword} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-xs font-medium text-gray-700">
-                Email Address <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="hello@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-10 text-sm"
-              />
-            </div>
+        <div className="w-full max-w-md">
+          <div className="mb-4">
+            <p className="text-[#0038FF] font-mono text-xs mb-1 uppercase tracking-wider">{'/// PASSWORD RECOVERY ///'}</p>
+            <h1 className="font-display text-4xl md:text-5xl font-bold uppercase text-[#050505]">
+              {sent ? 'Check your email' : 'Forgot password?'}
+            </h1>
+            <p className="text-gray-600 font-mono text-sm mt-1">
+              {sent
+                ? "We've sent a password reset link to your email address."
+                : "Enter your email address and we'll send you a link to reset your password."}
+            </p>
+          </div>
 
-            <Button
-              type="submit"
-              className="w-full h-10 bg-gray-900 hover:bg-gray-800 text-white text-sm"
-              disabled={loading}
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </Button>
-          </form>
-        ) : (
-          <div className="space-y-3">
-            <div className="text-center text-xs text-gray-600">
-              Didn&apos;t receive the email? Check your spam folder or{' '}
+          {!sent ? (
+            <form onSubmit={handleResetPassword} className="space-y-3">
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-3">
+                  <p className="text-sm text-red-700 font-mono">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <Label htmlFor="email" className="text-[10px] font-mono font-bold text-gray-700 uppercase tracking-wider">
+                  Email address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="operator@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-9 font-mono text-sm border-2 border-gray-200 focus:border-[#0038FF] focus:ring-0 bg-white"
+                />
+              </div>
+
               <button
-                onClick={() => setSent(false)}
-                className="text-gray-900 hover:underline"
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#050505] text-white px-6 py-2.5 font-bold font-mono text-sm uppercase tracking-wider hover:bg-[#0038FF] transition-colors shadow-[4px_4px_0px_#0038FF] hover:shadow-[4px_4px_0px_#050505] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                try again
+                {loading ? 'SENDING...' : 'SEND RESET LINK'}
               </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-xs text-gray-600 font-mono">
+                Didn&apos;t receive the email? Check your spam folder or{' '}
+                <button
+                  type="button"
+                  onClick={() => { setSent(false); setError(''); }}
+                  className="text-[#0038FF] hover:underline font-bold uppercase"
+                >
+                  try again
+                </button>
+              </p>
             </div>
+          )}
+
+          <div className="mt-4 text-center">
+            <Link href="/auth/signin" className="text-sm text-[#0038FF] hover:underline font-mono font-bold uppercase">
+              Back to sign in
+            </Link>
           </div>
-        )}
 
-        <div className="text-center">
-          <Link href="/auth/signin" className="inline-flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-3 h-3" />
-            <span>Back to sign in</span>
-          </Link>
+          <p className="font-mono text-xs text-gray-500 mt-6">© 2026 IRONSTAMP</p>
         </div>
-
-        <div className="text-xs text-gray-500 mt-4 text-left">© 2025 IronStamp</div>
       </div>
-
     </div>
   )
-} 
+}

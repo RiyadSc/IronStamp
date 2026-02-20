@@ -16,6 +16,13 @@ export default function AuthCallback() {
     let mounted = true
     let _timeoutId: NodeJS.Timeout
 
+    // Password reset (recovery) links must go to the reset-password page, not here.
+    // If the user landed on callback with a recovery hash, send them to reset-password with the hash preserved.
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+      window.location.replace(`${window.location.origin}/auth/reset-password${window.location.hash}`)
+      return () => {}
+    }
+
     // Set a timeout to prevent infinite loading
     const callbackTimeout = setTimeout(() => {
       if (mounted) {

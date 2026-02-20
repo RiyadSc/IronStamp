@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, CheckCircle } from '@/lib/icons'
+import { ArrowLeft } from 'lucide-react'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -15,194 +15,270 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [authState, setAuthState] = useState<'checking' | 'ready' | 'expired'>('checking')
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is authenticated (from email link)
+    let mounted = true
+
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/auth/signin')
+      // If URL has recovery hash, Supabase may need a moment to process it
+      const hasRecoveryHash = typeof window !== 'undefined' && window.location.hash.includes('type=recovery')
+
+      if (hasRecoveryHash) {
+        // Give Supabase time to parse the hash and set the session
+        await new Promise((r) => setTimeout(r, 600))
+      }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!mounted) return
+
+      if (session?.user) {
+        setAuthState('ready')
+        return
+      }
+
+      if (hasRecoveryHash) {
+        // Retry once more in case session wasn't ready
+        await new Promise((r) => setTimeout(r, 800))
+        const { data: { session: retrySession } } = await supabase.auth.getSession()
+        if (!mounted) return
+        if (retrySession?.user) {
+          setAuthState('ready')
+          return
+        }
+        setAuthState('expired')
+      } else {
+        router.replace('/auth/signin')
       }
     }
-    
+
     checkUser()
+    return () => { mounted = false }
   }, [router])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    
+
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
     }
-    
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
       return
     }
-    
+
     setLoading(true)
-    
+
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      })
-      
-      if (error) throw error
-      
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+
+      if (updateError) throw updateError
+
       setSuccess(true)
-      
-      // Redirect to sign in after 3 seconds
-      setTimeout(() => {
-        router.push('/auth/signin')
-      }, 3000)
-      
-    } catch (error: any) {
-      setError(error.message || 'An error occurred while resetting your password')
+      setTimeout(() => router.push('/auth/signin'), 3000)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred while resetting your password')
     } finally {
       setLoading(false)
     }
   }
 
+  // Success state – IronStamp UI
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative">
-        <Link href="/" className="absolute top-4 left-4 text-xs text-gray-700 hover:underline flex items-center gap-1">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-          Return
-        </Link>
-        <div className="w-full max-w-sm space-y-4 text-center">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <CheckCircle className="w-6 h-6 text-green-600" />
-          </div>
-          
-          <div className="space-y-1">
-            <h1 className="text-xl font-semibold text-gray-900">Password Updated!</h1>
-            <p className="text-sm text-gray-600">Your password has been successfully updated. You&apos;ll be redirected to the sign in page shortly.</p>
-          </div>
-          
-          <Link href="/auth/signin">
-            <Button className="w-full h-10 bg-gray-900 hover:bg-gray-800 text-white text-sm">
-              Continue to Sign In
-            </Button>
+      <div className="min-h-screen bg-[#F0F4F8] flex font-mono">
+        <div className="flex-1 flex items-center justify-center p-6 md:p-12 bg-tech-grid relative">
+          <Link
+            href="/auth/signin"
+            className="absolute top-6 left-6 flex items-center gap-2 text-xs text-gray-600 hover:text-[#0038FF] transition-colors font-mono uppercase tracking-wider"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Return
           </Link>
+          <div className="w-full max-w-md space-y-6 text-center">
+            <div className="w-14 h-14 bg-[#0038FF]/10 border-2 border-[#0038FF] flex items-center justify-center mx-auto">
+              <CheckCircle className="w-7 h-7 text-[#0038FF]" />
+            </div>
+            <div>
+              <p className="text-[#0038FF] font-mono text-xs mb-1 uppercase tracking-wider">{'/// PASSWORD UPDATED ///'}</p>
+              <h1 className="font-display text-2xl md:text-3xl font-bold uppercase text-[#050505]">Password Updated</h1>
+              <p className="text-gray-600 font-mono text-sm mt-2">
+                Your password has been successfully updated. You&apos;ll be redirected to sign in shortly.
+              </p>
+            </div>
+            <Link
+              href="/auth/signin"
+              className="inline-block w-full bg-[#050505] text-white px-6 py-2.5 font-bold font-mono text-sm uppercase tracking-wider hover:bg-[#0038FF] transition-colors shadow-[4px_4px_0px_#0038FF]"
+            >
+              Continue to Sign In
+            </Link>
+          </div>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative">
-      <Link href="/" className="absolute top-4 left-4 text-xs text-gray-700 hover:underline flex items-center gap-1">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-        Return
-      </Link>
-      <div className="w-full max-w-sm space-y-4">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-end mb-4">
-            <img src="/IronStampLogov3.png" alt="IronStamp" className="w-12 h-12" />
-          </div>
-          
-          <div className="space-y-1">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            
-            <h1 className="text-xl font-semibold text-gray-900">Reset your password</h1>
-            <p className="text-sm text-gray-600">Enter your new password below.</p>
-          </div>
+  // Checking session (recovery hash present)
+  if (authState === 'checking') {
+    return (
+      <div className="min-h-screen bg-[#F0F4F8] flex font-mono items-center justify-center p-6 bg-tech-grid">
+        <div className="w-full max-w-md text-center">
+          <div className="w-12 h-12 border-2 border-[#0038FF] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#050505] font-mono text-sm uppercase tracking-wider">Confirming your link...</p>
+          <p className="text-gray-600 font-mono text-xs mt-1">Please wait.</p>
         </div>
-
-        <form onSubmit={handleResetPassword} className="space-y-3">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-2">
-              <p className="text-xs text-red-600">{error}</p>
-            </div>
-          )}
-          
-          <div className="space-y-1">
-            <Label htmlFor="password" className="text-xs font-medium text-gray-700">
-              New Password <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="• • • • • • • • •"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-10 pr-8 text-sm"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-2 flex items-center"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-3 w-3 text-gray-400" />
-                ) : (
-                  <Eye className="h-3 w-3 text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="confirmPassword" className="text-xs font-medium text-gray-700">
-              Confirm New Password <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="• • • • • • • • •"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="h-10 pr-8 text-sm"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-2 flex items-center"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-3 w-3 text-gray-400" />
-                ) : (
-                  <Eye className="h-3 w-3 text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="text-xs text-gray-600">
-            <p>Password must be at least 6 characters long.</p>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-10 bg-gray-900 hover:bg-gray-800 text-white text-sm"
-            disabled={loading}
-          >
-            {loading ? 'Updating Password...' : 'Update Password'}
-          </Button>
-        </form>
-
-        <div className="text-center">
-          <Link href="/auth/signin" className="text-xs text-gray-600 hover:text-gray-900">
-            Back to sign in
-          </Link>
-        </div>
-
-        <div className="text-xs text-gray-500 mt-4 text-left">© 2025 IronStamp</div>
       </div>
+    )
+  }
 
+  // Link expired (recovery hash but no session)
+  if (authState === 'expired') {
+    return (
+      <div className="min-h-screen bg-[#F0F4F8] flex font-mono">
+        <div className="flex-1 flex items-center justify-center p-6 md:p-12 bg-tech-grid relative">
+          <Link
+            href="/auth/signin"
+            className="absolute top-6 left-6 flex items-center gap-2 text-xs text-gray-600 hover:text-[#0038FF] transition-colors font-mono uppercase tracking-wider"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Return
+          </Link>
+          <div className="w-full max-w-md space-y-4 text-center">
+            <p className="text-[#0038FF] font-mono text-xs uppercase tracking-wider">{'/// LINK EXPIRED ///'}</p>
+            <h1 className="font-display text-2xl font-bold uppercase text-[#050505]">Reset link expired</h1>
+            <p className="text-gray-600 font-mono text-sm">
+              This password reset link has expired or was already used. Request a new link below.
+            </p>
+            <Link
+              href="/auth/forgot-password"
+              className="inline-block w-full bg-[#050505] text-white px-6 py-2.5 font-bold font-mono text-sm uppercase tracking-wider hover:bg-[#0038FF] transition-colors shadow-[4px_4px_0px_#0038FF]"
+            >
+              Request new reset link
+            </Link>
+            <Link href="/auth/signin" className="block text-sm text-[#0038FF] hover:underline font-mono uppercase">
+              Back to sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Not ready yet (e.g. redirecting to signin)
+  if (authState !== 'ready') {
+    return null
+  }
+
+  // Reset form – IronStamp UI (match signin)
+  return (
+    <div className="min-h-screen bg-[#F0F4F8] flex font-mono">
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12 bg-tech-grid relative">
+        <Link
+          href="/auth/signin"
+          className="absolute top-6 left-6 flex items-center gap-2 text-xs text-gray-600 hover:text-[#0038FF] transition-colors font-mono uppercase tracking-wider"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Return
+        </Link>
+
+        <div className="w-full max-w-md">
+          <div className="mb-4">
+            <p className="text-[#0038FF] font-mono text-xs mb-1 uppercase tracking-wider">{'/// RESET PASSWORD ///'}</p>
+            <h1 className="font-display text-4xl md:text-5xl font-bold uppercase text-[#050505]">
+              Set new password
+            </h1>
+            <p className="text-gray-600 font-mono text-sm mt-1">
+              Enter your new password below.
+            </p>
+          </div>
+
+          <form onSubmit={handleResetPassword} className="space-y-3">
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-3">
+                <p className="text-sm text-red-700 font-mono">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-[10px] font-mono font-bold text-gray-700 uppercase tracking-wider">
+                New password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-9 font-mono text-sm border-2 border-gray-200 focus:border-[#0038FF] focus:ring-0 pr-12 bg-white"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-[#0038FF] transition-colors" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400 hover:text-[#0038FF] transition-colors" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword" className="text-[10px] font-mono font-bold text-gray-700 uppercase tracking-wider">
+                Confirm new password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="••••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="h-9 font-mono text-sm border-2 border-gray-200 focus:border-[#0038FF] focus:ring-0 pr-12 bg-white"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400 hover:text-[#0038FF] transition-colors" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400 hover:text-[#0038FF] transition-colors" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 font-mono">Password must be at least 6 characters.</p>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#050505] text-white px-6 py-2.5 font-bold font-mono text-sm uppercase tracking-wider hover:bg-[#0038FF] transition-colors shadow-[4px_4px_0px_#0038FF] hover:shadow-[4px_4px_0px_#050505] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'UPDATING...' : 'UPDATE PASSWORD'}
+            </button>
+          </form>
+
+          <div className="mt-4 text-center">
+            <Link href="/auth/signin" className="text-sm text-[#0038FF] hover:underline font-mono font-bold uppercase">
+              Back to sign in
+            </Link>
+          </div>
+
+          <p className="font-mono text-xs text-gray-500 mt-6">© 2026 IRONSTAMP</p>
+        </div>
+      </div>
     </div>
   )
-} 
+}
